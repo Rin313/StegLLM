@@ -1,6 +1,4 @@
 # StegLLM
-[![GitHub stars](https://img.shields.io/github/stars/Rin313/StegLLM.svg?style=social)](https://github.com/Rin313/StegLLM/stargazers)
-<!-- 增加其他你觉得有用的徽章，比如license, 贡献者数量等 -->
 
 StegLLM 是一个利用LLM进行文本隐写的项目，目前只开发了针对中文的加密。
 
