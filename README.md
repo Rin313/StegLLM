@@ -1,5 +1,7 @@
 # StegLLM
 
+特别感谢：[LLM-Steganography](https://github.com/HighDoping/LLM-Steganography/)
+
 StegLLM 是一个利用LLM进行文本隐写的项目，目前只开发了针对中文的加密。
 
 **注意：本项目目前处于实验阶段，隐写效果和稳定性有待进一步提高。**
@@ -66,7 +68,7 @@ Linux、macOS或其他平台的脚本写法请自行查阅相关资料。
 
 ### 4. 安装油猴脚本 (Tampermonkey Script)
 
-1.  安装浏览器扩展 [Tampermonkey](https://www.tampermonkey.net/)。
+1.  安装浏览器扩展 [Tampermonkey](https://www.tampermonkey.net/) 或 [Violentmonkey](https://violentmonkey.github.io/)。
 2.  安装 StegLLM 用户脚本: [点击这里安装](https://greasyfork.org/zh-CN/scripts/525684-stegllm)
 3.  **配置脚本 (可选):**
     *   打开 Tampermonkey 的管理面板，找到 StegLLM 脚本，在脚本设置中，您可以自定义 prompt。
@@ -76,6 +78,9 @@ Linux、macOS或其他平台的脚本写法请自行查阅相关资料。
 *   由于加密过程可能需要较长时间，请将页面保持在后台运行。
 *   由于语法惯性和模型体量的限制，加密过程可能无法找到合适的词汇进行编码。遇到这种情况时，请重新尝试。
 *   加解密必须在同一网站进行。
+## 原理图
+
+![StegLLM](mermaid-diagram-2025-02-03-060006.png "StegLLM 原理图")
 
 ## 贡献
 
