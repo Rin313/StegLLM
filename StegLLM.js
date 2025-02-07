@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         StegLLM
 // @namespace    https://github.com/Rin313
-// @version      1.02
+// @version      1.03
 // @description  Long live freedom!
 // @author       Rin
 // @match        *://*/*
@@ -9,7 +9,6 @@
 // @grant        GM_getValue
 // @grant        GM_registerMenuCommand
 // @license      MIT
-// @require      https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.min.js
 // @require      https://cdn.jsdelivr.net/npm/xxhash-wasm@1.1.0/umd/xxhash-wasm.min.js
 // ==/UserScript==
 (function() {
@@ -47,9 +46,10 @@
     ];
     let codes,table;
     const punctuations=["？","?","！","!","。","）",")","……"];//,"\n"
-    const logitBias=[["　",false],["\n\n",false],["  \n",false],[" \n",false],["�",false],[" �",false]]
+    const logitBias=[["　",false],[" ",false],["   ",false],["\n\n",false],["  \n",false],[" \n",false],["�",false],[" �",false],["．",false],["【",false],["】",false],["〈",false],["〉",false]]
     const intercept=2;
     const tokens=1;// const tokens=Math.ceil(intercept/0.75);
+    const probs=10;
     function shuffle(array) {
       for (let i = array.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1)); // 生成 0 到 i 之间的随机整数
@@ -95,6 +95,31 @@
         }
       }
       return buf.subarray(0, n);
+    }
+    async function readStream(stream) {
+      const reader = stream.getReader();
+      const chunks = [];
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          break;
+        }
+        chunks.push(value);
+      }
+      const compressedData = new Uint8Array(chunks.reduce((acc, val) => acc + val.length, 0));
+      let offset = 0;
+      for (const chunk of chunks) {
+        compressedData.set(chunk, offset);
+        offset += chunk.length;
+      }
+      return compressedData;
+    }
+    async function decompress(stream) {
+      const ds = new DecompressionStream("deflate-raw");
+      const decompressedStream = stream.pipeThrough(ds);
+      return readStream(decompressedStream).then(data => {
+        return data; // 或者在这里进行一些额外的处理
+      });
     }
     // async function passwordToAesCtrKey(password) {
     //   const passwordBuffer = utf8Encoder.encode(password);
@@ -163,38 +188,39 @@
       return new Uint8Array(decrypted);
     }
     async function chat(str,complete=false) {
-      const body={//有些参数不生效，响应格式也和llama.cpp的api略有不同
+      const body={//有些参数不生效，响应格式也和llama.cpp的api略有不同//在api中设置system_prompt会导致性能严重下降
           // "stream": true,
           "n_predict": tokens,//生成的token数，-1-2048
-          "temperature": 2.0,//影响文本的随机性，0-2
+          "temperature": 1.4,//影响文本的随机性，0-2//较高的温度会增加计算量，较低的温度会导致重复
           // "stop": punctuations,
           "repeat_last_n": 256,
-          "repeat_penalty": 1.18,
-          "top_k": 40,//选词范围，默认40
-          "top_p": 0.95,//大概是影响选词准确度，默认0.95
-          "min_p": 0.05,
-          "tfs_z": 1,
-          "typical_p": 1,
-          "presence_penalty": 0,
-          "frequency_penalty": 0,
-          "mirostat": 0,
-          "mirostat_tau": 5,
-          "mirostat_eta": 0.1,
-          "grammar": "",
-          "min_keep": 0,
+          "repeat_penalty": 1.18,//重复惩罚，1.0为无惩罚
+          // "top_p": 0.95,//默认0.95，增大后似乎能增加更多的选词可能性
+          // "min_p": 0.05,
+          // "tfs_z": 1,
+          // "typical_p": 1,
+          // "presence_penalty": 0,
+          // "frequency_penalty": 0,
+          // "mirostat": 0,//关闭mirostat
+          // "mirostat_tau": 5,
+          // "mirostat_eta": 0.1,
+          // "grammar": "",
+          // "min_keep": 0,
           // "image_data": [],
           "cache_prompt": true,//提示词复用
           "api_key": "",
           "slot_id": -1,
-          "prompt": str,
+          "prompt": str,//支持输入多个prompt
           // "response_fields": ["content"],//不生效？
-          "n_probs": 8,//选词范围，太大容易降低隐写效果
+          "top_k": probs,//选词范围，默认40
+          "n_probs": probs,//按概率排序的前10个选词，太大或太小都会降低隐写效果
           "logit_bias": logitBias//禁用一些不自然的字符，注意空白符有非常多种
       }
       if(complete){
         body["n_predict"]=9;
         body["stop"]=punctuations;//动态截断
         body["n_probs"]=0;
+        body["top_k"]=40;
       }
       const response = await fetch('http://localhost:8080/completion', {
         method: 'POST',
@@ -214,9 +240,17 @@
         if(plainText){
           const { h32 } = await xxhash();
           let bytes= encodeToGBK(plainText);
-          // const result=fflate.deflateSync(bytes,{level: 9,mem: 12});// 最大压缩级别// 最大内存级别
-          // if(result.length<bytes.length)
-          //   bytes=result;
+          console.log(bytes);
+          const stream=new ReadableStream({
+            start(controller) {
+              controller.enqueue(bytes);
+              controller.close();
+            }
+          });
+          const compressedStream = stream.pipeThrough(new CompressionStream("deflate-raw"),);
+          const result=await readStream(compressedStream);
+          if(bytes.length>result.length)
+            bytes=result;
           console.log(bytes);
           bytes=(await encryptAesCtr(bytes,hostname));
           console.log(bytes);
@@ -253,7 +287,7 @@
               alert("选词失败，请重新再试");
               return;
             }
- 
+
           }
           console.log(coverText.length);
           if(!punctuations.includes(coverText[coverText.length-1])){
@@ -284,19 +318,26 @@
             t='';
           }
         }
-        let data = new Uint8Array(base2.length/8);let k=0;
+        let bytes = new Uint8Array(base2.length/8);let k=0;
         console.log(base2);
         for(let i=0;i<base2.length;){
-          data[k++]=base2[i]*128+base2[i+1]*64+base2[i+2]*32+base2[i+3]*16+base2[i+4]*8+base2[i+5]*4+base2[i+6]*2+base2[i+7];
+          bytes[k++]=base2[i]*128+base2[i+1]*64+base2[i+2]*32+base2[i+3]*16+base2[i+4]*8+base2[i+5]*4+base2[i+6]*2+base2[i+7];
           i+=8;
         }
-        console.log(data)
-        data=(await decryptAesCtr(data,hostname));
-        // const result=fflate.inflateSync(data).catch(error => {console.log(error)
-        // });
-        // console.log(result)
-        console.log(data)
-        alert(gbkDecoder.decode(data));
+        console.log(bytes)
+        bytes=(await decryptAesCtr(bytes,hostname));
+        console.log(bytes)
+        const stream=new ReadableStream({
+            start(controller) {
+              controller.enqueue(bytes);
+              controller.close();
+            }
+        });
+        await decompress(stream)
+          .then(data=>{bytes=data;})
+          .catch(error=>{console.log(error)});
+        console.log(bytes)
+        alert(gbkDecoder.decode(bytes));
       }
     }
     function swapColors(){
@@ -349,7 +390,7 @@ const showCustomAlert = (text) => {
         alignItems: 'center',
         zIndex: 9999,
     });
- 
+
     // 创建弹出框容器
     const alertBox = createElement('div', {}, {
         backgroundColor: '#fff',
@@ -359,7 +400,7 @@ const showCustomAlert = (text) => {
         textAlign: 'center',
         width: '300px',
     });
- 
+
     // 创建显示的文本
     const message = createElement('p', { textContent: text }, {
         margin: '0 0 20px',
@@ -367,14 +408,14 @@ const showCustomAlert = (text) => {
         color: '#333',
         wordBreak: 'break-word',
     });
- 
+
     // 创建按钮容器
     const buttonContainer = createElement('div', {}, {
         display: 'flex',
         justifyContent: 'space-between',
         marginTop: '20px',
     });
- 
+
     // 创建复制按钮
     const copyButton = createElement('button', { textContent: 'Copy' }, {
         padding: '10px 20px',
@@ -387,7 +428,7 @@ const showCustomAlert = (text) => {
         flex: '1',
         marginRight: '10px',
     });
- 
+
     // 按钮点击事件 - 复制文本
     copyButton.onclick = () => {
         navigator.clipboard.writeText(text).then(() => {
@@ -395,7 +436,7 @@ const showCustomAlert = (text) => {
             document.body.removeChild(overlay);
         });
     };
- 
+
     // 创建关闭按钮
     const closeButton = createElement('button', { textContent: 'Close' }, {
         padding: '10px 20px',
@@ -407,16 +448,16 @@ const showCustomAlert = (text) => {
         fontSize: '14px',
         flex: '1',
     });
- 
+
     // 关闭按钮点击事件
     closeButton.onclick = () => {
         document.body.removeChild(overlay);
     };
- 
+
     // 组装按钮容器
     buttonContainer.appendChild(copyButton);
     buttonContainer.appendChild(closeButton);
- 
+
     // 组装弹出框
     alertBox.appendChild(message);
     alertBox.appendChild(buttonContainer);
@@ -438,7 +479,7 @@ const createCustomPrompt = (placeholder = "请输入内容...") => {
       alignItems: 'center',
       zIndex: '1000',
     });
- 
+
     // 创建一个容器来放置textarea和按钮
     const promptContainer = createElement('div', {}, {
       backgroundColor: '#fff',
@@ -450,7 +491,7 @@ const createCustomPrompt = (placeholder = "请输入内容...") => {
       alignItems: 'center',
       minWidth: '300px',
     });
- 
+
     // 创建textarea
     const textarea = createElement(
       'textarea',
@@ -469,7 +510,7 @@ const createCustomPrompt = (placeholder = "请输入内容...") => {
         resize: 'none',
       }
     );
- 
+
     // 创建提交按钮
     const submitButton = createElement(
       'button',
@@ -491,7 +532,7 @@ const createCustomPrompt = (placeholder = "请输入内容...") => {
         cursor: 'pointer',
       }
     );
- 
+
     // 提交按钮 hover 样式
     submitButton.addEventListener('mouseover', () => {
       submitButton.style.backgroundColor = '#0056b3';
@@ -508,10 +549,10 @@ const createCustomPrompt = (placeholder = "请输入内容...") => {
     // 把textarea和按钮添加到容器中
     promptContainer.appendChild(textarea);
     promptContainer.appendChild(submitButton);
- 
+
     // 把容器添加到遮罩层中
     overlay.appendChild(promptContainer);
- 
+
     // 把遮罩层添加到body中
     document.body.appendChild(overlay);
   });
