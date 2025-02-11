@@ -8,7 +8,7 @@ StegLLM 是一个完全离线的使用LLM进行文本隐写的项目，无需安
 
 # 快速开始
 
-下载预构建版本[StegLLM-1.0.zip](https://github.com/Rin313/StegLLM/releases/tag/release-1.0)，默认使用的模型是 `Qwen2.5-0.5B-Instruct-Q6_K`
+下载预构建版本[StegLLM-1.0.zip](https://github.com/Rin313/StegLLM/releases)，默认使用的模型是 `Qwen2.5-0.5B-Instruct-Q6_K`
 
 Windows：运行 `windows.bat`
 
@@ -19,13 +19,13 @@ chmod +x *
 ```
 2. 运行 `linux_mac.sh`
 
-UI界面预览
+隐写示例及UI界面预览
 
-![StegLLM](img.png "UI界面预览图")
+![StegLLM](img.png "隐写示例及UI界面预览")
 
 # 使用自定义的模型构建
 
-1. 下载[StegLLM-1.0-pure.zip](https://github.com/Rin313/StegLLM/releases/tag/release-1.0)
+1. 下载[StegLLM-1.0-pure.zip](https://github.com/Rin313/StegLLM/releases)
 2. 从 **Hugging Face** 或 **ModelScope** 等任何来源获取希望使用的llamafile文件，放置到项目目录下的**data**文件夹中。
 
 一般来说，使用参数较大的模型，可以获得更好的隐写效果。
