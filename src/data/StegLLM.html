@@ -1,0 +1,470 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <title>StegLLM</title>
+    <meta charset="utf-8">
+  </head>
+  <body>
+  </body>
+  <script src="./xxhash-wasm.js"></script>
+  <script src="./unishox2.js"></script>
+  <script src="../prompts.txt"></script>
+  <script type="module">
+    const hostname="Long live freedom!";
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    window.onerror = function(message, source, lineno, colno, error) {
+      alert(`Error:${error.message}`);
+    }
+    window.onunhandledrejection = (event) => {
+      alert(`Error:${event.reason}`);
+    };
+    const createElement = (tag, props = {}, styles = {}) => {
+        const el = Object.assign(document.createElement(tag), props);//创建元素
+        Object.assign(el.style, styles);//配置styles
+        return el;
+    };
+    const utf8Encoder= new TextEncoder();
+    const gbkDecoder = new TextDecoder('gb18030');//能解码gbk不支持的符号，比如欧元、表意文字
+    const ranges = [
+      [0xA1, 0xA9,  0xA1, 0xFE],
+      [0xB0, 0xF7,  0xA1, 0xFE],
+      [0x81, 0xA0,  0x40, 0xFE],//从这里开始的三个扩展区，第二个字节要排除0x7F
+      [0xAA, 0xFE,  0x40, 0xA0],
+      [0xA8, 0xA9,  0x40, 0xA0],
+      [0xAA, 0xAF,  0xA1, 0xFE],//自定义区，似乎有部分被使用到
+      [0xF8, 0xFE,  0xA1, 0xFE],
+      [0xA1, 0xA7,  0x40, 0xA0],
+    ];
+    let codes,table;//位于脚本中时，不直接初始化下面几行代码，而是判断!codes来确定是否执行，避免占用计算资源
+    codes=new Uint16Array(23940);//先把全部gbk字符都保存到一个16位整型数组里//不考虑自定义区22046
+    let i = 0,t;
+    for (const [b1Begin, b1End, b2Begin, b2End] of ranges) {
+      for (let b2 = b2Begin; b2 <= b2End; b2++) {
+        if (b2 !== 0x7F) {//反过来遍历，减少判断0x7F的次数
+          t = b2 << 8; //不能用16位的codes[i]
+          for (let b1 = b1Begin; b1 <= b1End; b1++)
+            codes[i++] = t | b1;
+        }
+      }
+    }
+    const punctuations=["？","?","！","!","。","）",")","…","}","]"];//,"\n"
+    const logitBias=[["　",false],[" ",false],["   ",false],["\n\n",false],["。\n\n",false],["  \n",false],[" \n",false],["．",false],["【",false],["】",false],["〈",false],["〉",false],//["�",false],[" �",false],
+      ["《",false],["》",false],//避免出现一些没头没尾的引用文章
+      ["A",false],["B",false],["C",false],["D",false],]//避免续写选择题
+    const intercept=2;
+    const tokens=1;// const tokens=Math.ceil(intercept/0.75);
+    const probs=10;
+    const { h32 } = await xxhash();
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1)); // 生成 0 到 i 之间的随机整数
+        [array[i], array[j]] = [array[j], array[i]]; // 交换元素
+      }
+      return array;
+    }
+    function encodeToGBK(str) {
+      if(!table){
+        table = new Uint16Array(65509);//gbk包含¤164，将164左移到0也才省一点点空间
+        const str = gbkDecoder.decode(codes);//解码为包含全部gbk字符的字符串
+        for (let i = 0; i < str.length; i++){
+          table[str.charCodeAt(i)] = codes[i];//unicode到gbk的映射
+        }
+      }
+      const buf = new Uint8Array(str.length * 2);
+      let n = 0;
+      for (let i = 0; i < str.length; i++) {
+        const code = str.charCodeAt(i);
+        if (code < 128)
+          buf[n++] = code;
+        else{
+          const gbk = table[code];
+          if (gbk === 0)
+            return null;//不支持的符号或者四字节部分的字符，有些编码器会用问号替换来避免报错，但这实际已经发生信息丢失了
+          else {
+            buf[n++] = gbk;
+            buf[n++] = gbk >> 8;
+          }
+        }
+      }
+      return buf.subarray(0, n);
+    }
+    async function readStream(stream) {
+      const reader = stream.getReader();
+      const chunks = [];
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          break;
+        }
+        chunks.push(value);
+      }
+      const compressedData = new Uint8Array(chunks.reduce((acc, val) => acc + val.length, 0));
+      let offset = 0;
+      for (const chunk of chunks) {
+        compressedData.set(chunk, offset);
+        offset += chunk.length;
+      }
+      return compressedData;
+    }
+    async function decompress(stream) {
+      const ds = new DecompressionStream("deflate-raw");
+      const decompressedStream = stream.pipeThrough(ds);
+      return readStream(decompressedStream).then(data => {
+        return data;
+      });
+    }
+    async function encryptAesCtr(data, str) {
+      const buffer=await crypto.subtle.digest('SHA-256', utf8Encoder.encode(str));
+      const iv=new Uint8Array(buffer).subarray(0, 16);
+      const key= await crypto.subtle.importKey(
+              "raw",
+              buffer,
+              { name: "AES-CTR", length: 256},
+              false,
+              ["encrypt", "decrypt"]
+      );
+      const encrypted = await crypto.subtle.encrypt(
+              {
+                name: "AES-CTR",
+                counter: iv,
+                length: 64, // 计数器块大小（以位为单位），通常为 64 或 128
+              },
+              key,data
+      );
+      return new Uint8Array(encrypted);
+    }
+    async function decryptAesCtr(data, str) {
+      const buffer=await crypto.subtle.digest('SHA-256', utf8Encoder.encode(str));
+      const iv=new Uint8Array(buffer).subarray(0, 16);
+      const key= await crypto.subtle.importKey(
+              "raw",
+              buffer,
+              { name: "AES-CTR", length: 256},
+              false,
+              ["encrypt", "decrypt"]
+      );
+      const decrypted = await crypto.subtle.decrypt(
+              {
+                name: "AES-CTR",
+                counter: iv,
+                length: 64,
+              },
+              key,
+              data
+      );
+      return new Uint8Array(decrypted);
+    }
+    async function chat(str,complete) {
+      let body={//有些参数不生效，响应格式也和llama.cpp的api略有不同//在api中设置system_prompt会导致性能严重下降
+        // "stream": true,
+        "n_predict": tokens,//生成的token数，-1-2048
+        "temperature": 2.0,//影响文本的随机性，0-2
+        // "stop": punctuations,
+        "repeat_last_n": 256,
+        "repeat_penalty": 1.18,//重复惩罚，1.0为无惩罚
+        // "top_p": 0.95,//默认0.95，增大后似乎能增加更多的选词可能性
+        // "min_p": 0.05,
+        // "tfs_z": 1,//默认1.0，禁用
+        // "typical_p": 1,//默认1.0，禁用
+        // "presence_penalty": 0,
+        // "frequency_penalty": 0,
+        // "mirostat": 0,//关闭mirostat
+        // "mirostat_tau": 5,
+        // "mirostat_eta": 0.1,
+        // "grammar": "",
+        // "min_keep": 10,
+        // "image_data": [],
+        "samplers": ["top_k"],//响应上看似乎没有使用top_p,min_p,temperature等？
+        "cache_prompt": true,//提示词复用
+        "api_key": "",
+        // "slot_id": -1,
+        "prompt": str,//支持输入多个prompt
+        // "response_fields": ["content"],//不生效？
+        "top_k": probs,//选词范围，默认40
+        "n_probs": probs,//按概率排序的前10个选词，太大或太小都会降低隐写效果
+        "logit_bias": logitBias//禁用一些不自然的字符，注意空白符有非常多种
+      }
+      if(complete){
+        body["n_predict"]=11;
+        body["stop"]=punctuations;//动态截断
+        body["n_probs"]=0;
+        body["top_k"]=40;
+      }
+      const response = await fetch('http://127.0.0.1:8090/completion', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      });
+      const json=(await response.json());
+      if(complete)
+        return json.content+json.stopping_word;
+      const t=json.completion_probabilities[0];
+      if(!t)return chat(str);
+      else return shuffle(t.probs);
+    }
+    async function encrypt(prompt,plainText) {
+      if(plainText){
+        let sign=0;
+        let bytes= encodeToGBK(plainText);
+        // console.log(bytes);
+        let t = new Uint8Array(plainText.length*4);
+        const len = unishox2_compress_simple(plainText, plainText.length, t);//用simple就好，js版没有内置c中的全部选项
+        t=t.subarray(0,Math.ceil(len));
+        // console.log(t);
+        if(bytes===null||t.length<bytes.length){
+          bytes=t;
+          sign=1;
+        }
+        console.log(bytes);
+        const stream=new ReadableStream({
+          start(controller) {
+            controller.enqueue(bytes);
+            controller.close();
+          }
+        });
+        const compressedStream = stream.pipeThrough(new CompressionStream("deflate-raw"),);
+        const result=await readStream(compressedStream);
+        if(bytes.length>result.length)
+          bytes=result;
+        console.log(bytes);
+        bytes=(await encryptAesCtr(bytes,hostname));
+        console.log(bytes);
+        let base2=[sign];
+        for (let b of bytes) {
+          for(let i=7;i>=0;i--){
+            base2.push(b>>i & 0x01);
+          }
+        }
+        console.log(base2);
+        let coverText='';
+        for(let i=0;i<base2.length;i++){
+          const list=(await chat(prompt+coverText,false));
+          let j=0;
+          aaa:for(;j<list.length;j++){
+            const t=list[j].tok_str;
+            if(t.length===2&&!t.includes("\uFFFD")&&!t.includes("�")&&h32(t)%2===base2[i]){
+              coverText+=t;
+              break;
+            }
+            else if(t.length===1){
+              const list2=(await chat(prompt+coverText+t,false));
+              for(let k=0;k<list2.length;k++){
+                const t2=list2[k].tok_str;
+                if(t2.length===1&&!t.includes("\uFFFD")&&!t2.includes("�")&&h32(t+t2)%2===base2[i]){
+                  coverText+=t+t2;
+                  break aaa;
+                }
+              }
+            }
+          }
+          if(j===list.length){
+            alert("选词失败，请重新再试");
+            return;
+          }
+        }
+        // console.log(coverText.length);
+        if(!punctuations.includes(coverText[coverText.length-1])){
+          for(;;){
+            const t=(await chat(prompt+coverText,true));
+            if(t.length<intercept*8&&punctuations.includes(t[t.length-1])){
+              coverText+=t;
+              break;
+            }
+          }
+        }
+        return coverText;
+      }
+    }
+    async function decrypt(input) {//粘贴到prompt会导致空白字符等丢失//粘贴到input会导致换行符丢失
+      if(input){
+        let base2 = [];
+        let t='';
+        //console.log(userInput)
+        console.log(input.length);
+        for (let i = 0; i < input.length; i++) {
+          t+=input[i];
+          if(t.length===intercept){
+            //console.log(t+" "+t.length)
+            base2.push(h32(t)%2);
+            t='';
+          }
+        }
+        console.log(base2);
+        let bytes = new Uint8Array((base2.length-1)/8);let k=0;
+        for(let i=1;i<base2.length;){
+          bytes[k++]=base2[i]*128+base2[i+1]*64+base2[i+2]*32+base2[i+3]*16+base2[i+4]*8+base2[i+5]*4+base2[i+6]*2+base2[i+7];
+          i+=8;
+        }
+        console.log(bytes)
+        bytes=(await decryptAesCtr(bytes,hostname));
+        console.log(bytes)
+        const stream=new ReadableStream({
+          start(controller) {
+            controller.enqueue(bytes);
+            controller.close();
+          }
+        });
+        await decompress(stream)
+                .then(data=>{bytes=data;})
+                .catch(()=>{});
+        console.log(bytes)
+        return base2[0]===0?gbkDecoder.decode(bytes):unishox2_decompress_simple(bytes,bytes.length);
+      }
+    }
+    // 下拉框容器
+    const dropdownContainer = createElement('div', {}, { position: 'relative', width: '100%', marginBottom: '10px' });
+    // 当前选中项显示框
+    const selectedDisplay = createElement(
+            'div',
+            { innerHTML: prompts[0].replace(/\n/g, '<br>') },
+            {
+              padding: '10px',
+              border: '1px solid #ccc',
+              borderRadius: '5px',
+              cursor: 'pointer',
+              backgroundColor: '#fff',
+            }
+    );
+    dropdownContainer.appendChild(selectedDisplay);
+    // 下拉选项列表
+    const listContainer = createElement(
+            'div',
+            {},
+            {
+              position: 'absolute',
+              top: '100%',
+              width: '100%',
+              border: '1px solid #ccc',
+              borderTop: 'none',
+              backgroundColor: '#fff',
+              display: 'none', // 默认隐藏
+              maxHeight: '300px',
+              overflowY: 'auto',
+              borderRadius: '0 0 5px 5px',
+              zIndex: 9999,
+            }
+    );
+    dropdownContainer.appendChild(listContainer);
+    // 更新选中项
+    let currentlySelected = prompts[0];
+    const updateSelection = (newValue) => {
+      currentlySelected = newValue;
+      selectedDisplay.innerHTML = newValue.replace(/\n/g, '<br>');
+      listContainer.style.display = 'none';
+    };
+    // 渲染选项
+    prompts.forEach((optionText) => {
+      const optionElement = createElement(
+              'div',
+              { innerHTML: optionText.replace(/\n/g, '<br>') },
+              {
+                padding: '10px',
+                cursor: 'pointer',
+                borderBottom: '1px solid #eee'
+              }
+      );
+      optionElement.addEventListener('click', () => updateSelection(optionText));
+      optionElement.addEventListener('mouseover', () => (optionElement.style.backgroundColor = '#f0f0f0'));
+      optionElement.addEventListener('mouseout', () => (optionElement.style.backgroundColor = ''));
+      listContainer.appendChild(optionElement);
+    });
+    // 显示/隐藏下拉框
+    selectedDisplay.addEventListener('click', () => {
+      listContainer.style.display = listContainer.style.display === 'none' ? 'block' : 'none';
+    });
+    // 点击外部关闭下拉框
+    document.addEventListener('click', (event) => {
+      if (!dropdownContainer.contains(event.target)) listContainer.style.display = 'none';
+    });
+    const encodeTextarea = createElement(
+            "textarea",
+            {
+              placeholder: "要加密的文本...",
+              rows: 4,
+            },
+            {
+              width: '100%',
+              marginBottom: '10px',
+              border: '1px solid #ccc',
+              borderRadius: '5px',
+              resize: 'none',
+            }
+    );
+    const decodeTextarea = createElement(
+            "textarea",
+            {
+              placeholder: "要解密的文本...",
+              rows: 8,
+            },
+            {
+              width: '100%',
+              marginBottom: '10px',
+              border: '1px solid #ccc',
+              borderRadius: '5px',
+              resize: 'none',
+            }
+    );
+    const encodeButton = createElement(
+            "button",
+            {
+              textContent: "加密",
+              onclick: async () => {
+                const result= (await encrypt(currentlySelected,encodeTextarea.value));
+                decodeTextarea.value = result?result:'';
+              },
+            },
+            {
+              padding: '10px 15px',
+              border: 'none',
+              borderRadius: '5px',
+              backgroundColor: '#007bff',
+              color: '#fff',
+              cursor: 'pointer',
+              marginBottom: '10px',
+            }
+    );
+    const decodeButton = createElement(
+            "button",
+            {
+              textContent: "解密",
+              onclick: async () => {
+                const result=(await decrypt(decodeTextarea.value));
+                encodeTextarea.value = result?result:'';
+              },
+            },
+            {
+              marginRight: "10px",
+              padding: '10px 15px',
+              border: 'none',
+              borderRadius: '5px',
+              backgroundColor: '#28a745',
+              color: '#fff',
+              cursor: 'pointer',
+            }
+    );
+    const copyDecodeButton = createElement(
+            "button",
+            {
+              textContent: "复制",
+              onclick: () => {
+                navigator.clipboard.writeText(decodeTextarea.value).then(() => {
+                  alert('Copied to clipboard!');
+                });
+              },
+            },
+            {
+              padding: '10px 15px',
+              border: 'none',
+              borderRadius: '5px',
+              backgroundColor: '#ffc107',
+              color: '#000',
+              cursor: 'pointer',
+            }
+    );
+    document.body.appendChild(dropdownContainer);
+    document.body.appendChild(encodeTextarea);
+    document.body.appendChild(encodeButton);
+    document.body.appendChild(decodeTextarea);
+    document.body.appendChild(decodeButton);
+    document.body.appendChild(copyDecodeButton);
+  </script>
+</html>
