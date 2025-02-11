@@ -15,7 +15,7 @@ Windows：运行 `windows.bat`
 Linux/MacOS：
 1. 项目目录下执行下列指令，授予llamafile执行权限
 ```bash
-chmod +x *
+chmod +x linux_mac.sh data/*.llamafile
 ```
 2. 运行 `linux_mac.sh`
 
