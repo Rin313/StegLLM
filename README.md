@@ -19,9 +19,9 @@ chmod +x *
 ```
 2. 运行 `linux_mac.sh`
 
-UI界面预览
+隐写示例及UI界面预览
 
-![StegLLM](img.png "UI界面预览图")
+![StegLLM](img.png "隐写示例及UI界面预览")
 
 # 使用自定义的模型构建
 
