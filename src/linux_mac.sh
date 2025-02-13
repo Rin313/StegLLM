@@ -22,7 +22,7 @@ done
 
 # 如果找到了 .llamafile 文件，运行命令；否则提示错误
 if [[ -n "$llamafile" ]]; then
-    "$llamafile" --server -spf system_prompt.txt --port 8090 --nobrowser --log-disable -c 0 --no-mmap --nocompile --unsecure --no-display-prompt --fast
+    "$llamafile" -c 8192 --no-mmap  --log-disable  --nocompile --unsecure --no-display-prompt --fast --server -spf system_prompt.txt --port 8090 --nobrowser
 else
     echo "No .llamafile file found in the data directory."
 fi

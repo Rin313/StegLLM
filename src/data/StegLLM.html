@@ -6,9 +6,9 @@
   </head>
   <body>
   </body>
+  <script src="../prompts.txt"></script>
   <script src="./xxhash-wasm.js"></script>
   <script src="./unishox2.js"></script>
-  <script src="../prompts.txt"></script>
   <script type="module">
     const hostname="Long live freedom!";
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -47,14 +47,11 @@
         }
       }
     }
-    const punctuations=["？","?","！","!","。","）",")","…","}","]"];//,"\n"
-    const logitBias=[["　",false],[" ",false],["   ",false],["\n\n",false],["。\n\n",false],["  \n",false],[" \n",false],["．",false],["【",false],["】",false],["〈",false],["〉",false],//["�",false],[" �",false],
-      ["《",false],["》",false],//避免出现一些没头没尾的引用文章
-      ["A",false],["B",false],["C",false],["D",false],]//避免续写选择题
-    const intercept=2;
-    const tokens=1;// const tokens=Math.ceil(intercept/0.75);
-    const probs=10;
+    const punctuations=["？","?","！","!","。","）",")","…","}","]","\n","”"];//"\n"和"”"有时候并不代表结尾，但是必须尽可能地增加结束符来避免卡住
+    const probs=12;
     const { h32 } = await xxhash();
+    let originLogitBias=[...logitBias];
+    const qwen2_5=[[94,false],[95,false],[96,false],[97,false],[98,false],[99,false],[100,false],[101,false],[102,false],[103,false],[104,false],[105,false],[106,false],[107,false],[108,false],[109,false],[110,false],[111,false],[112,false],[113,false],[114,false],[115,false],[116,false],[117,false],[118,false],[119,false],[120,false],[121,false],[122,false],[123,false],[124,false],[125,false],[126,false],[127,false],[128,false],[129,false],[130,false],[131,false],[132,false],[133,false],[134,false],[135,false],[136,false],[137,false],[138,false],[139,false],[140,false],[141,false],[142,false],[143,false],[144,false],[145,false],[146,false],[147,false],[148,false],[149,false],[150,false],[151,false],[152,false],[153,false],[154,false],[155,false],[156,false],[157,false],[158,false],[159,false],[160,false],[161,false],[162,false],[163,false],[164,false],[165,false],[166,false],[167,false],[168,false],[169,false],[170,false],[171,false],[172,false],[173,false],[174,false],[175,false],[176,false],[177,false],[178,false],[179,false],[180,false],[181,false],[182,false],[183,false],[184,false],[185,false],[186,false],[187,false],[222,false],[223,false],[224,false],[225,false],[226,false],[227,false],[228,false],[229,false],[230,false],[231,false],[232,false],[233,false],[234,false],[235,false],[236,false],[237,false],[238,false],[239,false],[240,false],[241,false],[242,false],[243,false],[244,false],[245,false],[246,false],[247,false],[248,false],[249,false],[250,false],[251,false],[252,false],[253,false],[254,false],[255,false],[378,false],[636,false],[1277,false],[1278,false],[1540,false],[1683,false],[2139,false],[2194,false],[2226,false],[2775,false],[2858,false],[3023,false],[3219,false],[3315,false],[3402,false],[3490,false],[3648,false],[4175,false],[4811,false],[4891,false],[4973,false],[5140,false],[5502,false],[5564,false],[5758,false],[5902,false],[5953,false],[6142,false],[6518,false],[6564,false],[6567,false],[6571,false],[6606,false],[6684,false],[7045,false],[7158,false],[7311,false],[7367,false],[7492,false],[7536,false],[7588,false],[7851,false],[7908,false],[8032,false],[8079,false],[8158,false],[8508,false],[8519,false],[8620,false],[8803,false],[8839,false],[8843,false],[8908,false],[9035,false],[9260,false],[9284,false],[9722,false],[9843,false],[10081,false],[10203,false],[10236,false],[10417,false],[10663,false],[10764,false],[10768,false],[10996,false],[11125,false],[11162,false],[11336,false],[11484,false],[11534,false],[11620,false],[11621,false],[11995,false],[12274,false],[12491,false],[12585,false],[12619,false],[12787,false],[13058,false],[13092,false],[13165,false],[13344,false],[13465,false],[13512,false],[13519,false],[13531,false],[13558,false],[13567,false],[13846,false],[13869,false],[13949,false],[13982,false],[14273,false],[14368,false],[14467,false],[14520,false],[14546,false],[14559,false],[14675,false],[14922,false],[14925,false],[14936,false],[14942,false],[14959,false],[15005,false],[15127,false],[15213,false],[15224,false],[15362,false],[15393,false],[15600,false],[15675,false],[15798,false],[15827,false],[15896,false],[15902,false],[15927,false],[16160,false],[16235,false],[16499,false],[16633,false],[16747,false],[16751,false],[16778,false],[16825,false],[17049,false],[17156,false],[17158,false],[17284,false],[17383,false],[17401,false],[17429,false],[17462,false],[17467,false],[17587,false],[17641,false],[17730,false],[17783,false],[18059,false],[18137,false],[18505,false],[18535,false],[18585,false],[19088,false],[19113,false],[19261,false],[19457,false],[19468,false],[19549,false],[19564,false],[19741,false],[19946,false],[19956,false],[20026,false],[20047,false],[20098,false],[20136,false],[20382,false],[20472,false],[20711,false],[20741,false],[20778,false],[20879,false],[20885,false],[20919,false],[21012,false],[21103,false],[21135,false],[21280,false],[21530,false],[21562,false],[21704,false],[21849,false],[22009,false],[22042,false],[22129,false],[22247,false],[22597,false],[22612,false],[22762,false],[22859,false],[23093,false],[23272,false],[23433,false],[23444,false],[23687,false],[23781,false],[23872,false],[23894,false],[24041,false],[24045,false],[24071,false],[24159,false],[24212,false],[24345,false],[24447,false],[24485,false],[24735,false],[24749,false],[24831,false],[24864,false],[25011,false],[25125,false],[25145,false],[25209,false],[25452,false],[25521,false],[25703,false],[25772,false],[25870,false],[25917,false],[25928,false],[26188,false],[26254,false],[26336,false],[26454,false],[26525,false],[26601,false],[26771,false],[26853,false],[26927,false],[27095,false],[27209,false],[27214,false],[27260,false],[27325,false],[27398,false],[27487,false],[27517,false],[27538,false],[27640,false],[27757,false],[27767,false],[27982,false],[27999,false],[28107,false],[28145,false],[28653,false],[28757,false],[28927,false],[29150,false],[29220,false],[29237,false],[29389,false],[29675,false],[29768,false],[29941,false],[29955,false],[29975,false],[30006,false],[30274,false],[30395,false],[30484,false],[30520,false],[30828,false],[30838,false],[30916,false],[31286,false],[31305,false],[31338,false],[31411,false],[31482,false],[31501,false],[32181,false],[32208,false],[32254,false],[32343,false],[32465,false],[32495,false],[32843,false],[32926,false],[32985,false],[33173,false],[33352,false],[33424,false],[33543,false],[33556,false],[33593,false],[33739,false],[33986,false],[34143,false],[34369,false],[34410,false],[34429,false],[34577,false],[34622,false],[34629,false],[34759,false],[34811,false],[34992,false],[35017,false],[35049,false],[35055,false],[35125,false],[35146,false],[35178,false],[35293,false],[35358,false],[35496,false],[35635,false],[35720,false],[36097,false],[36109,false],[36330,false],[36548,false],[36669,false],[36677,false],[36695,false],[36978,false],[37064,false],[37148,false],[37195,false],[37289,false],[37440,false],[37472,false],[37509,false],[37698,false],[37913,false],[38177,false],[38419,false],[38433,false],[38522,false],[38523,false],[38903,false],[38911,false],[39098,false],[39175,false],[39317,false],[39366,false],[39834,false],[40419,false],[40666,false],[40714,false],[40732,false],[40747,false],[40771,false],[41479,false],[41902,false],[42144,false],[42236,false],[42311,false],[42476,false],[42849,false],[43410,false],[43459,false],[43547,false],[43559,false],[43614,false],[43716,false],[43720,false],[43752,false],[44014,false],[44044,false],[44054,false],[44104,false],[44258,false],[44401,false],[44680,false],[44706,false],[44726,false],[44818,false],[44832,false],[44834,false],[44851,false],[44965,false],[45104,false],[45130,false],[45313,false],[45881,false],[46018,false],[46218,false],[46282,false],[46353,false],[46500,false],[46602,false],[46750,false],[46800,false],[46832,false],[46871,false],[47378,false],[47379,false],[47455,false],[47665,false],[47911,false],[47972,false],[48108,false],[48312,false],[48364,false],[48458,false],[48533,false],[48591,false],[48749,false],[48754,false],[48800,false],[48840,false],[49128,false],[49166,false],[49173,false],[49420,false],[49434,false],[49602,false],[49943,false],[50102,false],[50111,false],[50362,false],[51088,false],[51275,false],[51414,false],[51461,false],[51497,false],[52133,false],[52408,false],[52506,false],[52798,false],[52806,false],[52887,false],[53025,false],[53496,false],[53497,false],[53556,false],[53599,false],[53989,false],[54128,false],[54470,false],[54492,false],[54599,false],[54642,false],[54699,false],[54784,false],[54955,false],[55059,false],[55729,false],[55838,false],[55890,false],[56252,false],[56823,false],[56842,false],[57133,false],[57154,false],[57160,false],[57599,false],[57743,false],[58098,false],[58169,false],[58208,false],[58230,false],[58299,false],[58464,false],[58522,false],[58557,false],[58715,false],[58899,false],[58994,false],[59053,false],[59139,false],[60596,false],[60627,false],[60757,false],[60864,false],[60985,false],[61617,false],[61804,false],[62005,false],[62099,false],[62416,false],[62544,false],[62618,false],[62740,false],[62823,false],[63039,false],[63046,false],[63219,false],[63400,false],[63761,false],[64388,false],[64520,false],[64805,false],[64893,false],[65185,false],[65197,false],[65291,false],[65456,false],[65519,false],[65553,false],[65699,false],[65722,false],[65727,false],[65850,false],[65877,false],[66118,false],[66261,false],[66498,false],[66521,false],[66635,false],[67895,false],[68172,false],[68250,false],[68294,false],[68298,false],[68405,false],[68433,false],[68597,false],[68739,false],[68941,false],[69033,false],[69192,false],[69382,false],[69383,false],[69441,false],[69687,false],[69792,false],[70179,false],[70297,false],[70467,false],[70585,false],[70597,false],[70731,false],[71306,false],[71443,false],[71481,false],[71928,false],[71933,false],[72036,false],[72219,false],[72344,false],[72496,false],[72497,false],[72509,false],[72573,false],[73147,false],[74165,false],[74209,false],[74361,false],[74577,false],[74866,false],[74884,false],[75107,false],[75132,false],[75142,false],[75360,false],[75375,false],[75598,false],[75671,false],[75962,false],[76080,false],[76497,false],[76952,false],[76986,false],[77047,false],[77137,false],[77156,false],[77407,false],[77596,false],[78910,false],[78971,false],[79142,false],[79207,false],[79302,false],[79326,false],[79427,false],[79531,false],[79590,false],[79621,false],[79879,false],[79888,false],[80080,false],[80090,false],[80178,false],[80702,false],[81250,false],[81942,false],[82501,false],[82706,false],[82712,false],[82798,false],[82912,false],[83002,false],[83050,false],[83164,false],[83191,false],[83226,false],[83643,false],[83849,false],[84141,false],[84200,false],[84215,false],[84238,false],[84563,false],[84567,false],[84705,false],[85413,false],[85794,false],[86089,false],[86643,false],[87299,false],[87959,false],[88541,false],[88940,false],[89061,false],[89083,false],[89095,false],[89179,false],[89297,false],[89363,false],[89434,false],[90476,false],[90557,false],[90639,false],[90679,false],[90711,false],[90734,false],[90839,false],[90894,false],[91048,false],[91050,false],[91771,false],[91888,false],[92120,false],[92173,false],[92187,false],[93178,false],[93255,false],[93437,false],[93920,false],[94305,false],[94491,false],[94825,false],[94964,false],[95069,false],[95211,false],[95522,false],[95741,false],[96155,false],[96808,false],[96938,false],[97015,false],[97172,false],[97259,false],[97529,false],[97946,false],[98313,false],[98642,false],[98734,false],[99012,false],[99156,false],[99157,false],[99158,false],[99159,false],[99160,false],[99161,false],[99162,false],[99163,false],[99166,false],[99167,false],[99168,false],[99169,false],[99170,false],[99171,false],[99173,false],[99174,false],[99175,false],[99176,false],[99177,false],[99179,false],[99181,false],[99183,false],[99184,false],[99187,false],[99188,false],[99189,false],[99192,false],[99196,false],[99197,false],[99198,false],[99201,false],[99202,false],[99203,false],[99206,false],[99207,false],[99211,false],[99214,false],[99215,false],[99220,false],[99221,false],[99224,false],[99228,false],[99229,false],[99230,false],[99231,false],[99238,false],[99239,false],[99240,false],[99247,false],[99248,false],[99249,false],[99254,false],[99255,false],[99256,false],[99264,false],[99265,false],[99266,false],[99267,false],[99268,false],[99269,false],[99274,false],[99275,false],[99276,false],[99281,false],[99282,false],[99289,false],[99290,false],[99291,false],[99300,false],[99301,false],[99302,false],[99303,false],[99311,false],[99323,false],[99324,false],[99325,false],[99341,false],[99342,false],[99343,false],[99344,false],[99359,false],[99374,false],[99380,false],[99381,false],[99382,false],[99401,false],[99402,false],[99423,false],[99439,false],[99442,false],[99443,false],[99444,false],[99456,false],[99484,false],[99485,false],[99516,false],[99551,false],[99552,false],[99597,false],[99598,false],[99643,false],[99648,false],[99649,false],[99714,false],[99715,false],[99777,false],[99785,false],[99874,false],[99875,false],[99977,false],[99997,false],[100024,false],[100120,false],[100121,false],[100127,false],[100128,false],[100129,false],[100130,false],[100337,false],[100459,false],[100563,false],[100620,false],[100621,false],[100988,false],[101018,false],[101022,false],[101024,false],[101025,false],[101026,false],[101027,false],[101028,false],[101029,false],[101030,false],[101031,false],[101032,false],[101033,false],[101759,false],[101838,false],[101851,false],[101860,false],[101861,false],[101862,false],[101863,false],[101864,false],[101865,false],[101866,false],[101867,false],[101868,false],[101869,false],[101870,false],[101871,false],[101872,false],[101873,false],[101874,false],[101875,false],[101876,false],[101877,false],[101878,false],[101879,false],[101880,false],[101881,false],[103893,false],[103894,false],[103895,false],[103896,false],[103897,false],[103898,false],[103899,false],[103900,false],[103901,false],[103902,false],[103903,false],[103904,false],[103905,false],[103906,false],[103907,false],[103908,false],[103909,false],[103910,false],[103911,false],[103912,false],[103913,false],[103914,false],[103915,false],[103916,false],[103917,false],[104905,false],[105619,false],[109241,false],[109992,false],[110713,false],[111747,false],[112951,false],[113943,false],[114235,false],[114397,false],[115646,false],[117035,false],[119158,false],[119346,false],[119347,false],[119348,false],[119941,false],[119964,false],[120100,false],[120409,false],[121404,false],[121667,false],[121773,false],[122154,false],[122174,false],[122202,false],[122219,false],[122222,false],[122259,false],[122267,false],[122289,false],[122317,false],[122375,false],[122382,false],[122427,false],[122448,false],[122455,false],[122514,false],[122568,false],[122596,false],[122614,false],[122618,false],[122634,false],[122659,false],[122725,false],[122740,false],[122757,false],[122802,false],[122843,false],[122855,false],[122866,false],[122890,false],[122948,false],[122950,false],[122976,false],[122985,false],[122999,false],[123007,false],[123008,false],[123016,false],[123057,false],[123064,false],[123067,false],[123072,false],[123084,false],[123091,false],[123131,false],[123164,false],[123178,false],[123182,false],[123204,false],[123206,false],[123287,false],[123301,false],[123305,false],[123318,false],[123332,false],[123378,false],[123400,false],[123408,false],[123420,false],[123489,false],[123516,false],[123527,false],[123547,false],[123614,false],[123658,false],[123676,false],[123701,false],[123714,false],[123740,false],[123747,false],[123760,false],[123806,false],[123807,false],[123808,false],[123810,false],[123811,false],[123812,false],[123813,false],[123814,false],[123815,false],[123816,false],[123817,false],[123819,false],[123821,false],[123825,false],[123827,false],[123830,false],[123836,false],[123837,false],[123839,false],[123840,false],[123841,false],[123842,false],[123844,false],[123846,false],[123847,false],[123848,false],[123851,false],[123853,false],[123854,false],[123859,false],[123867,false],[123870,false],[123871,false],[123875,false],[123876,false],[123882,false],[123889,false],[123892,false],[123893,false],[123907,false],[123908,false],[123911,false],[123912,false],[123916,false],[123917,false],[123918,false],[123927,false],[123928,false],[123929,false],[123930,false],[123931,false],[123932,false],[123933,false],[123934,false],[123946,false],[123947,false],[123950,false],[123951,false],[123953,false],[123954,false],[123955,false],[123956,false],[123957,false],[123965,false],[123967,false],[123968,false],[123969,false],[123970,false],[123986,false],[123989,false],[123996,false],[124000,false],[124001,false],[124002,false],[124003,false],[124004,false],[124005,false],[124018,false],[124019,false],[124020,false],[124021,false],[124022,false],[124023,false],[124024,false],[124025,false],[124026,false],[124049,false],[124050,false],[124051,false],[124052,false],[124053,false],[124054,false],[124063,false],[124064,false],[124066,false],[124067,false],[124068,false],[124069,false],[124070,false],[124071,false],[124092,false],[124096,false],[124098,false],[124099,false],[124100,false],[124101,false],[124102,false],[124118,false],[124134,false],[124135,false],[124136,false],[124137,false],[124149,false],[124154,false],[124159,false],[124160,false],[124161,false],[124162,false],[124163,false],[124164,false],[124165,false],[124166,false],[124167,false],[124168,false],[124193,false],[124194,false],[124195,false],[124196,false],[124197,false],[124198,false],[124199,false],[124200,false],[124201,false],[124222,false],[124235,false],[124236,false],[124240,false],[124241,false],[124243,false],[124244,false],[124245,false],[124246,false],[124247,false],[124248,false],[124249,false],[124250,false],[124251,false],[124252,false],[124287,false],[124296,false],[124297,false],[124298,false],[124299,false],[124300,false],[124301,false],[124302,false],[124303,false],[124304,false],[124305,false],[124306,false],[124307,false],[124308,false],[124309,false],[124334,false],[124349,false],[124364,false],[124365,false],[124366,false],[124367,false],[124368,false],[124369,false],[124370,false],[124371,false],[124372,false],[124373,false],[124374,false],[124433,false],[124459,false],[124470,false],[124471,false],[124472,false],[124473,false],[124474,false],[124475,false],[124570,false],[124577,false],[124578,false],[124579,false],[124580,false],[124581,false],[124582,false],[124583,false],[124584,false],[124585,false],[124586,false],[124587,false],[124588,false],[124589,false],[124590,false],[124591,false],[124592,false],[124593,false],[124594,false],[124595,false],[124596,false],[124693,false],[124727,false],[124744,false],[124745,false],[124746,false],[124747,false],[124748,false],[124749,false],[124750,false],[124751,false],[124752,false],[124753,false],[124754,false],[124755,false],[124995,false],[124996,false],[124997,false],[124998,false],[124999,false],[125000,false],[125001,false],[125002,false],[125003,false],[125004,false],[125388,false],[125413,false],[125414,false],[125415,false],[125416,false],[125417,false],[125418,false],[125419,false],[125420,false],[125421,false],[125422,false],[125423,false],[125424,false],[125425,false],[125426,false],[125427,false],[125428,false],[125429,false],[125430,false],[125639,false],[125713,false],[126159,false],[126177,false],[126178,false],[126179,false],[126180,false],[126181,false],[126182,false],[126183,false],[126184,false],[126185,false],[126186,false],[126187,false],[126188,false],[126189,false],[126190,false],[126191,false],[126192,false],[126193,false],[126365,false],[126537,false],[127041,false],[127124,false],[127165,false],[127369,false],[127572,false],[127708,false],[127819,false],[127964,false],[128222,false],[128223,false],[128224,false],[128225,false],[128226,false],[128227,false],[128228,false],[128229,false],[128230,false],[128231,false],[128232,false],[128233,false],[128234,false],[128235,false],[128236,false],[128237,false],[128238,false],[128239,false],[128240,false],[128241,false],[128242,false],[129176,false],[130507,false],[132202,false],[132376,false],[133552,false],[134312,false],[134380,false],[134582,false],[135078,false],[136279,false],[136516,false],[136661,false],[136940,false],[136946,false],[137345,false],[137661,false],[137767,false],[137973,false],[138658,false],[138673,false],[139793,false],[139816,false],[140356,false],[141539,false],[142067,false],[142209,false],[142210,false],[142258,false],[142274,false],[142451,false],[142509,false],[142731,false],[142834,false],[143241,false],[143455,false],[143861,false],[143887,false],[145773,false],[146047,false],[146632,false],[148462,false],[148774,false],[148827,false],[148860,false],[148864,false],[148880,false],[149175,false],[149178,false],[149287,false],[149352,false],[149392,false],[149394,false],[149589,false],[149591,false],[149593,false],[149714,false],[149716,false],[149718,false],[149721,false],[149946,false],[149961,false],[149963,false],[149990,false],[150114,false],[150151,false],[150168,false],[150195,false],[150223,false],[150270,false],[150479,false],[150579,false],[150792,false],[150794,false],[150800,false],[150802,false],[150807,false],[150809,false],[150814,false],[150817,false],[150819,false],[150821,false],[150824,false],[150829,false],[150836,false],[151233,false],[151254,false],[151264,false],[151266,false],[151268,false],[151270,false],[151272,false],[151274,false],[151276,false],[151278,false],[151282,false],[151366,false],[151560,false],];
     function shuffle(array) {
       for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1)); // 生成 0 到 i 之间的随机整数
@@ -157,7 +154,7 @@
     async function chat(str,complete) {
       let body={//有些参数不生效，响应格式也和llama.cpp的api略有不同//在api中设置system_prompt会导致性能严重下降
         // "stream": true,
-        "n_predict": tokens,//生成的token数，-1-2048
+        "n_predict": complete?7:1,//生成的token数，-1-2048
         "temperature": 2.0,//影响文本的随机性，0-2
         // "stop": punctuations,
         "repeat_last_n": 256,
@@ -174,21 +171,19 @@
         // "grammar": "",
         // "min_keep": 10,
         // "image_data": [],
+        // "post_sampling_probs":true,
         "samplers": ["top_k"],//响应上看似乎没有使用top_p,min_p,temperature等？
         "cache_prompt": true,//提示词复用
         "api_key": "",
         // "slot_id": -1,
         "prompt": str,//支持输入多个prompt
         // "response_fields": ["content"],//不生效？
-        "top_k": probs,//选词范围，默认40
-        "n_probs": probs,//按概率排序的前10个选词，太大或太小都会降低隐写效果
-        "logit_bias": logitBias//禁用一些不自然的字符，注意空白符有非常多种
+        "top_k": complete?40:probs,//选词范围，默认40
+        "n_probs": complete?0:probs,//按概率排序的前10个选词，太大或太小都会降低隐写效果
+        "logit_bias": complete?originLogitBias:logitBias//禁用一些不自然的字符，注意空白符有非常多种
       }
       if(complete){
-        body["n_predict"]=11;
         body["stop"]=punctuations;//动态截断
-        body["n_probs"]=0;
-        body["top_k"]=40;
       }
       const response = await fetch('http://127.0.0.1:8090/completion', {
         method: 'POST',
@@ -198,23 +193,52 @@
       if(complete)
         return json.content+json.stopping_word;
       const t=json.completion_probabilities[0];
-      if(!t)return chat(str);
+      if(!t)return chat(str,false);//当采样结果是�，不会返回采样列表，闹麻了
       else return shuffle(t.probs);
+    }
+    async function tokenize(str) {
+      const response = await fetch('http://127.0.0.1:8090/tokenize', {
+        method: 'POST',
+        body: JSON.stringify({content: str}),
+      });
+      const json=(await response.json());
+      return json.tokens;
+    }
+    async function detokenize(tokens) {
+      const response = await fetch('http://127.0.0.1:8090/detokenize', {
+        method: 'POST',
+        body: JSON.stringify({tokens: tokens}),
+      });
+      const json=(await response.json());
+      return json.content;
+    }
+    async function check() {
+      let response;
+      for(let i=0;i<30;i++){
+        try{
+          response = await fetch('http://127.0.0.1:8090/props');
+          console.clear();
+          const json=(await response.json());
+          return json.default_generation_settings.model;
+        }
+        catch{}
+      }
+      console.clear();
+      return '';
     }
     async function encrypt(prompt,plainText) {
       if(plainText){
         let sign=0;
         let bytes= encodeToGBK(plainText);
-        // console.log(bytes);
+        console.log(bytes);
         let t = new Uint8Array(plainText.length*4);
         const len = unishox2_compress_simple(plainText, plainText.length, t);//用simple就好，js版没有内置c中的全部选项
         t=t.subarray(0,Math.ceil(len));
-        // console.log(t);
+        console.log(t);
         if(bytes===null||t.length<bytes.length){
           bytes=t;
           sign=1;
         }
-        console.log(bytes);
         const stream=new ReadableStream({
           start(controller) {
             controller.enqueue(bytes);
@@ -239,20 +263,14 @@
         for(let i=0;i<base2.length;i++){
           const list=(await chat(prompt+coverText,false));
           let j=0;
-          aaa:for(;j<list.length;j++){
-            const t=list[j].tok_str;
-            if(t.length===2&&!t.includes("\uFFFD")&&!t.includes("�")&&h32(t)%2===base2[i]){
-              coverText+=t;
-              break;
-            }
-            else if(t.length===1){
-              const list2=(await chat(prompt+coverText+t,false));
-              for(let k=0;k<list2.length;k++){
-                const t2=list2[k].tok_str;
-                if(t2.length===1&&!t.includes("\uFFFD")&&!t2.includes("�")&&h32(t+t2)%2===base2[i]){
-                  coverText+=t+t2;
-                  break aaa;
-                }
+          for(;j<list.length;j++){
+            const t=list[j].tok_str;//!t.includes("�")&&
+            if(!t.includes("�")&&h32(t)%2===base2[i]){//暂时处理不了�，qwen2.5倒能暴力清理，其他则还不行
+              const last=(await tokenize(t))[0];
+              const current=(await tokenize((coverText+t).slice(-15)));
+              if(last === current[current.length-1]){
+                coverText+=t;
+                break;
               }
             }
           }
@@ -261,13 +279,16 @@
             return;
           }
         }
-        // console.log(coverText.length);
         if(!punctuations.includes(coverText[coverText.length-1])){
+          const tokens=(await tokenize(coverText));
           for(;;){
             const t=(await chat(prompt+coverText,true));
-            if(t.length<intercept*8&&punctuations.includes(t[t.length-1])){
-              coverText+=t;
-              break;
+            if(punctuations.includes(t[t.length-1])){
+              const current=(await tokenize((coverText+t)));
+              if(tokens[tokens.length-1]===current[tokens.length-1]){
+                coverText+=t;
+                break;
+              }
             }
           }
         }
@@ -277,16 +298,10 @@
     async function decrypt(input) {//粘贴到prompt会导致空白字符等丢失//粘贴到input会导致换行符丢失
       if(input){
         let base2 = [];
-        let t='';
-        //console.log(userInput)
-        console.log(input.length);
-        for (let i = 0; i < input.length; i++) {
-          t+=input[i];
-          if(t.length===intercept){
-            //console.log(t+" "+t.length)
-            base2.push(h32(t)%2);
-            t='';
-          }
+        const tokens=(await tokenize(input));
+        for(let i=0;i<tokens.length;i++){
+          const t= (await detokenize([tokens[i]]));
+          base2.push(h32(t)%2);
         }
         console.log(base2);
         let bytes = new Uint8Array((base2.length-1)/8);let k=0;
@@ -297,17 +312,36 @@
         console.log(bytes)
         bytes=(await decryptAesCtr(bytes,hostname));
         console.log(bytes)
-        const stream=new ReadableStream({
-          start(controller) {
-            controller.enqueue(bytes);
-            controller.close();
+        if(base2[0]===0){
+          const stream=new ReadableStream({
+            start(controller) {
+              controller.enqueue(bytes);
+              controller.close();
+            }
+          });
+          await decompress(stream)
+                  .then(data=>{bytes=data;})
+                  .catch(()=>{});
+          console.log(bytes)
+          return gbkDecoder.decode(bytes);
+        }
+        else{
+          for(let i=0;i<bytes.length;i++){
+            const stream=new ReadableStream({
+              start(controller) {
+                controller.enqueue(bytes);
+                controller.close();
+              }
+            });
+            await decompress(stream)
+                    .then(data=>{bytes=data;})
+                    .catch(()=>{});
+            const result=unishox2_decompress_simple(bytes,bytes.length);
+            if(result)
+              return result;
+            bytes=bytes.subarray(0, bytes.length - 1);
           }
-        });
-        await decompress(stream)
-                .then(data=>{bytes=data;})
-                .catch(()=>{});
-        console.log(bytes)
-        return base2[0]===0?gbkDecoder.decode(bytes):unishox2_decompress_simple(bytes,bytes.length);
+        }
       }
     }
     // 下拉框容器
@@ -466,5 +500,22 @@
     document.body.appendChild(decodeTextarea);
     document.body.appendChild(decodeButton);
     document.body.appendChild(copyDecodeButton);
+    if((await check()).startsWith("Qwen2.5"))
+      for(let i=0;i<qwen2_5.length;i++)
+        logitBias.push(qwen2_5[i]);
+    // let cnm=[];
+    // for(let i=0;i<100;i++){
+    //   try{
+    //     const response = await fetch('http://127.0.0.1:8090/detokenize', {
+    //       method: 'POST',
+    //       body: JSON.stringify({tokens: [i]}),
+    //     });
+    //     if(!response.ok)cnm.push('['+i+',false],')
+    //   }
+    //   catch {
+    //     console.log(cnm)
+    //     break;
+    //   }
+    // }
   </script>
 </html>
