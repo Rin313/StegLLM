@@ -1,35 +1,39 @@
 # StegLLM
 
-StegLLM 是一个完全离线的文本隐写项目，它利用大语言模型（LLM）在文本中隐藏秘密信息。无需安装或任何额外配置，即可在本地安全地进行加密操作。
-
-特别感谢：**[LLM-Steganography](https://github.com/HighDoping/LLM-Steganography/),[llamafile](https://github.com/Mozilla-Ocho/llamafile),[Unishox2](https://github.com/siara-cc/Unishox2)**
+StegLLM 是一个离线的文本隐写项目，它利用大语言模型LLM在正常的文本中隐藏秘密信息。无需安装或任何配置，即可在本地安全地进行隐写加密。
 
 ## 什么是文本隐写？
 
-想象一下，你可以把一句话悄悄藏在一篇文章里，不被人轻易发现。这就是文本隐写！它就像一种“秘密墨水”，把你想隐藏的信息融入到看似普通的文字中。和加密不同，隐写的目的是**让人根本不知道信息的存在**。
+想象一下，你可以把一句话悄悄藏在一篇文章里，不被人轻易发现。
 
-## 文本隐写有什么用？
+这就是文本隐写：把你想隐藏的信息融入到看似普通的文字中。
 
-*   **传递小秘密：** 想给朋友发个“只有我们才懂”的暗号？藏在一段看似平常的文字里，让其他人一脸问号。
-*   **给作品加个“防伪码”：** 在你呕心沥血写成的小说里，偷偷藏入一些只有你知道的“彩蛋”，证明这是你的原创。
-*   **躲猫猫游戏：** 在公共场合，我们可能想要让一些信息“隐身”，不被轻易发现。就像玩捉迷藏一样，看看谁能找到我！
+和加密不同，隐写的核心是**让人根本不知道信息的存在**。
+
+## 文本隐写有什么“妙用”？
+
+*   **传递小秘密：** 想给朋友发个“只有我们才懂”的小秘密？藏在一段看似平常的文字里，让其他人完全无法察觉。
+*   **给作品加个“防伪码”：** 在你呕心沥血写成的小说里，偷偷加入一些只有你知道的“彩蛋”，证明这是你的原创。
+*   **躲猫猫游戏：** 在公共场合，我们可能想要让一些信息“隐身”，藏进普通的内容里。就像玩捉迷藏一样，看看谁能找到我！
 
 # 快速开始
 
-下载预构建版本[StegLLM.zip](https://github.com/Rin313/StegLLM/releases)
+下载[StegLLM.zip](https://github.com/Rin313/StegLLM/releases)
 
-Windows：运行 `windows.bat`
+Windows系统：运行 `windows.bat`
 
-Linux/MacOS：
-1. 项目目录下执行下列指令，授予llamafile执行权限
+Linux/MacOS系统：
+1. 项目目录下执行下列指令
 ```bash
 chmod +x linux_mac.sh data/*.llamafile
 ```
 2. 运行 `linux_mac.sh`
 
-隐写示例及UI界面预览
+界面演示
 
-![StegLLM](img.png "隐写示例及UI界面预览")
+![StegLLM](img.png "界面演示")
+
+如图所示，"待到秋来九月八，我花开后百花杀！"这段话可被加密成一段平平无奇的文章。
 
 # 使用自定义的模型构建（可选）
 
@@ -80,10 +84,10 @@ const prompts=[
 
 欢迎提交 Issues 和 Pull Requests！
 
-# 许可证
+# 免责声明
+
+本项目仅供学习和研究使用，请勿用于非法用途。对于因使用本项目造成的任何损失或损害，作者不承担任何责任。
 
 本项目采用 [MIT 许可证](LICENSE)。
 
-# 免责声明
-
-本项目仅供学习和研究使用，请勿用于任何非法活动。对于因使用本项目造成的任何损失或损害，作者不承担任何责任。
+特别感谢：**[LLM-Steganography](https://github.com/HighDoping/LLM-Steganography/),[llamafile](https://github.com/Mozilla-Ocho/llamafile),[Unishox2](https://github.com/siara-cc/Unishox2)**
