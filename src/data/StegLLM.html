@@ -10,6 +10,8 @@
   <script src="./xxhash-wasm.js"></script>
   <script src="./unishox2.js"></script>
   <script type="module">
+    //base2时有足够的补全空间，base4以上就必须加标志或者让用户手动选择一些可用的带乱码的补全语句。
+    //base4选词范围太大，效果很差。
     const hostname="Long live freedom!";
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     window.onerror = function(message, source, lineno, colno, error) {
@@ -24,30 +26,7 @@
         return el;
     };
     const utf8Encoder= new TextEncoder();
-    const gbkDecoder = new TextDecoder('gb18030');//能解码gbk不支持的符号，比如欧元、表意文字
-    const ranges = [
-      [0xA1, 0xA9,  0xA1, 0xFE],
-      [0xB0, 0xF7,  0xA1, 0xFE],
-      [0x81, 0xA0,  0x40, 0xFE],//从这里开始的三个扩展区，第二个字节要排除0x7F
-      [0xAA, 0xFE,  0x40, 0xA0],
-      [0xA8, 0xA9,  0x40, 0xA0],
-      [0xAA, 0xAF,  0xA1, 0xFE],//自定义区，似乎有部分被使用到
-      [0xF8, 0xFE,  0xA1, 0xFE],
-      [0xA1, 0xA7,  0x40, 0xA0],
-    ];
-    let codes,table;//位于脚本中时，不直接初始化下面几行代码，而是判断!codes来确定是否执行，避免占用计算资源
-    codes=new Uint16Array(23940);//先把全部gbk字符都保存到一个16位整型数组里//不考虑自定义区22046
-    let i = 0,t;
-    for (const [b1Begin, b1End, b2Begin, b2End] of ranges) {
-      for (let b2 = b2Begin; b2 <= b2End; b2++) {
-        if (b2 !== 0x7F) {//反过来遍历，减少判断0x7F的次数
-          t = b2 << 8; //不能用16位的codes[i]
-          for (let b1 = b1Begin; b1 <= b1End; b1++)
-            codes[i++] = t | b1;
-        }
-      }
-    }
-    const punctuations=["？","?","！","!","。","）",")","…","}","]","\n","”"];//"\n"和"”"有时候并不代表结尾，但是必须尽可能地增加结束符来避免卡住
+    const punctuations=["？","?","！","!","。","）",")","…","}","]"];//"\n"和"”"有时候并不代表结尾
     const probs=12;
     const { h32 } = await xxhash();
     let originLogitBias=[...logitBias];
@@ -58,32 +37,6 @@
         [array[i], array[j]] = [array[j], array[i]]; // 交换元素
       }
       return array;
-    }
-    function encodeToGBK(str) {
-      if(!table){
-        table = new Uint16Array(65509);//gbk包含¤164，将164左移到0也才省一点点空间
-        const str = gbkDecoder.decode(codes);//解码为包含全部gbk字符的字符串
-        for (let i = 0; i < str.length; i++){
-          table[str.charCodeAt(i)] = codes[i];//unicode到gbk的映射
-        }
-      }
-      const buf = new Uint8Array(str.length * 2);
-      let n = 0;
-      for (let i = 0; i < str.length; i++) {
-        const code = str.charCodeAt(i);
-        if (code < 128)
-          buf[n++] = code;
-        else{
-          const gbk = table[code];
-          if (gbk === 0)
-            return null;//不支持的符号或者四字节部分的字符，有些编码器会用问号替换来避免报错，但这实际已经发生信息丢失了
-          else {
-            buf[n++] = gbk;
-            buf[n++] = gbk >> 8;
-          }
-        }
-      }
-      return buf.subarray(0, n);
     }
     async function readStream(stream) {
       const reader = stream.getReader();
@@ -179,8 +132,8 @@
         "prompt": str,//支持输入多个prompt
         // "response_fields": ["content"],//不生效？
         "top_k": complete?40:probs,//选词范围，默认40
-        "n_probs": complete?0:probs,//按概率排序的前10个选词，太大或太小都会降低隐写效果
-        "logit_bias": complete?originLogitBias:logitBias//禁用一些不自然的字符，注意空白符有非常多种
+        "n_probs": complete?0:probs,//按概率排序的前n个选词，太大或太小都会降低隐写效果
+        "logit_bias": logitBias//补全也用logitBias，因为获取不到tokenId还在用h32，所以如果是问号，detokenize会报错
       }
       if(complete){
         body["stop"]=punctuations;//动态截断
@@ -190,8 +143,11 @@
         body: JSON.stringify(body),
       });
       const json=(await response.json());
-      if(complete)
-        return json.content+json.stopping_word;
+      if(complete){
+        if(json.stopped_word)
+          return json.content+json.stopping_word;
+        return chat(str,true)
+      }
       const t=json.completion_probabilities[0];
       if(!t)return chat(str,false);//当采样结果是�，不会返回采样列表，闹麻了
       else return shuffle(t.probs);
@@ -228,17 +184,10 @@
     }
     async function encrypt(prompt,plainText) {
       if(plainText){
-        let sign=0;
-        let bytes= encodeToGBK(plainText);
+        let bytes = new Uint8Array(plainText.length*4);
+        const len = unishox2_compress_simple(plainText, plainText.length, bytes);//用simple就好，js版没有内置c中的全部选项
+        bytes=bytes.subarray(0,Math.ceil(len));
         console.log(bytes);
-        let t = new Uint8Array(plainText.length*4);
-        const len = unishox2_compress_simple(plainText, plainText.length, t);//用simple就好，js版没有内置c中的全部选项
-        t=t.subarray(0,Math.ceil(len));
-        console.log(t);
-        if(bytes===null||t.length<bytes.length){
-          bytes=t;
-          sign=1;
-        }
         const stream=new ReadableStream({
           start(controller) {
             controller.enqueue(bytes);
@@ -252,7 +201,7 @@
         console.log(bytes);
         bytes=(await encryptAesCtr(bytes,hostname));
         console.log(bytes);
-        let base2=[sign];
+        let base2=[];
         for (let b of bytes) {
           for(let i=7;i>=0;i--){
             base2.push(b>>i & 0x01);
@@ -282,10 +231,11 @@
         if(!punctuations.includes(coverText[coverText.length-1])){
           const tokens=(await tokenize(coverText));
           for(;;){
-            const t=(await chat(prompt+coverText,true));
-            if(punctuations.includes(t[t.length-1])){
-              const current=(await tokenize((coverText+t)));
-              if(tokens[tokens.length-1]===current[tokens.length-1]){
+            const t=(await chat(prompt+coverText,true));//const result=(await decrypt(decodeTextarea.value));
+            const current=(await tokenize((coverText+t)));
+            if(tokens[tokens.length-1]===current[tokens.length-1]){
+              const result=(await decrypt(coverText+t));
+              if(result.trim() === plainText.trim()){
                 coverText+=t;
                 break;
               }
@@ -304,15 +254,15 @@
           base2.push(h32(t)%2);
         }
         console.log(base2);
-        let bytes = new Uint8Array((base2.length-1)/8);let k=0;
-        for(let i=1;i<base2.length;){
+        let bytes = new Uint8Array((base2.length)/8);let k=0;
+        for(let i=0;i<base2.length;){
           bytes[k++]=base2[i]*128+base2[i+1]*64+base2[i+2]*32+base2[i+3]*16+base2[i+4]*8+base2[i+5]*4+base2[i+6]*2+base2[i+7];
           i+=8;
         }
         console.log(bytes)
         bytes=(await decryptAesCtr(bytes,hostname));
         console.log(bytes)
-        if(base2[0]===0){
+        for(let i=0;i<bytes.length;i++){
           const stream=new ReadableStream({
             start(controller) {
               controller.enqueue(bytes);
@@ -322,25 +272,10 @@
           await decompress(stream)
                   .then(data=>{bytes=data;})
                   .catch(()=>{});
-          console.log(bytes)
-          return gbkDecoder.decode(bytes);
-        }
-        else{
-          for(let i=0;i<bytes.length;i++){
-            const stream=new ReadableStream({
-              start(controller) {
-                controller.enqueue(bytes);
-                controller.close();
-              }
-            });
-            await decompress(stream)
-                    .then(data=>{bytes=data;})
-                    .catch(()=>{});
-            const result=unishox2_decompress_simple(bytes,bytes.length);
-            if(result)
-              return result;
-            bytes=bytes.subarray(0, bytes.length - 1);
-          }
+          const result=unishox2_decompress_simple(bytes,bytes.length);
+          if(result)
+            return result;
+          bytes=bytes.subarray(0, bytes.length - 1);
         }
       }
     }
