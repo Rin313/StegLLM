@@ -23,8 +23,8 @@ var USX_HCODES_ALPHA_NUM_SYM_ONLY = new Uint8Array([0x00, 0x80, 0xC0, 0x00, 0x00
 var USX_HCODE_LENS_ALPHA_NUM_SYM_ONLY = new Uint8Array([1, 2, 2, 0, 0]);
 var USX_FREQ_SEQ_DFLT = ["\": \"", "\": ", "</", "=\"", "\":\"", "://"];
 var USX_TEMPLATES = ["tfff-of-tfTtf:rf:rf.fffZ", "tfff-of-tf", "(fff) fff-ffff", "tf:rf:rf", 0];
-const magic = {byt: 0x80, bits: 1};
-
+// const magic = {byt: 0x80, bits: 1};
+const magic = {byt: 0x80, bits: 0};
 const USX_ALPHA = 0;
 const USX_SYM = 1;
 const USX_NUM = 2;
@@ -473,10 +473,11 @@ function unishox2_compress(input, len, out, usx_hcodes, usx_hcode_lens, usx_freq
   prev_uni = 0;
   state = USX_ALPHA;
   is_all_upper = false;
-  console.log(magic.byt);
-  console.log(magic.bits);
+  // console.log(magic.byt);
+  // console.log(magic.bits);
 
   ol = append_bits(out, olen, ol, magic.byt, magic.bits);
+  // console.log(ol)
   for (l=0; l<len; l++) {
 
     if (usx_hcode_lens[USX_DICT] > 0 && l < (len - NICE_LEN + 1)) {

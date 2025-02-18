@@ -1,3 +1,4 @@
+[简体中文](README.md) | [English](README_en.md)
 # StegLLM
 
 StegLLM 是一个离线的文本隐写项目，它利用大语言模型LLM在正常的文本中隐藏秘密信息。无需安装或任何配置，即可在本地安全地进行隐写加密。
@@ -40,7 +41,7 @@ chmod +x linux_mac.sh data/*.llamafile
 *   对于加密后得到的掩饰文本，尾部文本插入对解密的影响较小，头部插入和中间修改则不支持。
 *   由于语法惯性和模型体量的限制，加密过程可能无法找到合适的选词进行编码。遇到这种情况时，请重新尝试。
 
-# 使用自定义的模型构建（可选）
+# 使用自定义的模型（可选）
 
 1. 下载[StegLLM-pure.zip](https://github.com/Rin313/StegLLM/releases)
 2. 从 **Hugging Face** 或 **ModelScope** 等任何来源获取希望使用的llamafile文件，放置到项目目录下的**data**文件夹中。

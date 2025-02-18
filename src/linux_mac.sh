@@ -1,24 +1,27 @@
 #!/bin/bash
 
-# 打开 HTML 文件
-if [[ "$OSTYPE" == "darwin"* ]]; then
+# 打开 HTML 文件 (跨平台)
+open_html() {
+  local file="$1"
+  if [[ "$OSTYPE" == "darwin"* ]]; then
     # macOS
-    open "data/StegLLM.html"
-elif [[ "$OSTYPE" == "linux-gnu"* || "$OSTYPE" == "linux-musl"* || "$OSTYPE" == "cygwin" || "$OSTYPE" == "msys" ]]; then
-    # Linux 或 WSL
-    xdg-open "data/StegLLM.html" &>/dev/null
-else
-    echo "Unsupported OS. Please open data/StegLLM.html manually."
-fi
+    open "$file"
+  elif command -v xdg-open >/dev/null 2>&1; then
+    # Linux (如果 xdg-open 可用)
+    xdg-open "$file"
+  elif [[ "$TERMUX_VERSION" ]]; then
+      #Termux
+      termux-open "$file"
+  else
+    echo "Unsupported OS or browser opener not found. Please open $file manually."
+  fi
+}
 
-# 查找第一个扩展名为 .llamafile 的文件
-llamafile=""
-for file in data/*.llamafile; do
-    if [[ -f "$file" ]]; then
-        llamafile="$file"
-        break
-    fi
-done
+open_html "data/StegLLM.html"
+
+
+# 查找第一个扩展名为 .llamafile 的文件 (更简洁的方式)
+llamafile=$(find data/ -maxdepth 1 -name "*.llamafile" -print -quit)
 
 # 如果找到了 .llamafile 文件，运行命令；否则提示错误
 if [[ -n "$llamafile" ]]; then

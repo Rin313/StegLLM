@@ -3,6 +3,7 @@ const prompts=[
 `续写一段散文：`,
 `续写一段仙侠小说：`,
 `续写一段现代诗歌：`,
+`Continue a paragraph of prose:`,
 `✏️ 在 prompts.txt 中编辑你的续写提示✨`,
 `✏️ 在 system_prompt.txt 中定义你的AI角色📝`
 ];
