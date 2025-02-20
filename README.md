@@ -19,7 +19,8 @@ StegLLM 是一个离线的文本隐写项目，它利用大语言模型LLM在正
 
 # 快速开始
 
-下载[StegLLM.zip](https://github.com/Rin313/StegLLM/releases)
+* **需要隐写和解密：** 下载[StegLLM.zip](https://github.com/Rin313/StegLLM/releases)
+* **仅需要解密：** 下载[StegLLM-pure.zip](https://github.com/Rin313/StegLLM/releases)
 
 Windows系统：运行 `windows.bat`
 
@@ -30,7 +31,7 @@ chmod +x linux_mac.sh data/*.llamafile
 ```
 2. 运行 `linux_mac.sh`
 
-下面是一个简单的示例，你想要加密的话可被加密成一段平平无奇的文章。
+下面是一个简单的示例，如图所示，一句想要隐藏的话可被加密成一段普通的文章。
 
 ![StegLLM](img.png "界面演示")
 
