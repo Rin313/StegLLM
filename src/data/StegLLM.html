@@ -139,7 +139,7 @@
         // "min_keep": 10,
         // "image_data": [],
         // "post_sampling_probs":true,
-        "samplers": ["top_k"],//响应上看似乎没有使用top_p,min_p,temperature等？
+        // "samplers": ["top_k"],//响应上看似乎没有使用top_p,min_p,temperature等？
         "cache_prompt": true,//提示词复用
         "api_key": "",
         // "slot_id": -1,
@@ -151,6 +151,9 @@
       }
       if(complete){
         body["stop"]=punctuations;//动态截断
+      }
+      else{
+        body["samplers"]=["top_k"]
       }
       const response = await fetch('http://127.0.0.1:8090/completion', {
         method: 'POST',
@@ -498,7 +501,6 @@
       for(let i=128000;i<=128255;i++)
         logitBias.push([i,false]);//全是空字符串？
     }
-    console.log("。".codePointAt(0))
     // let cnm='';
     // for(let i=0;;i++){
     //   try{
