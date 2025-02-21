@@ -31,9 +31,11 @@ chmod +x linux_mac.sh data/*.llamafile
 ```
 2. Run `linux_mac.sh`
 
+Here is a simple example
+
 ![StegLLM](img.png "Interface Demo")
 
-This is a simple example where a hidden sentence can be encrypted as a plain text and allows ** arbitrary text insertion at the beginning and end **, meaning you can insert the result into any text.
+As shown in the figure, a sentence that you want to hide can be encrypted into a plain text, and supports **arbitrary insertion of text at the beginning and end**, which means you can insert the result into any text or conversation.
 
 # Using a Custom Model (Optional)
 
