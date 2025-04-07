@@ -1,0 +1,48 @@
+---//此处的初始化js不会包含到页面中
+import '../styles/global.css'
+const { title = 'Astro Basics'} = Astro.props;//传参示例：<Layout title="test">
+---
+<html lang="zh"><!--明确设置一种语言，否则显示问题-->
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />    <!--视口默认宽度和默认缩放级别-->
+    <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64,"><!--<link rel="icon" type="image/svg+xml" href="/favicon.svg" />-->    <!--如果不设计自己的LOGO，随便用一张svg毫无意义，完全不设置又会弹404-->
+    <title>{title}</title>
+</head>
+<!--
+bg-local（默认）:随元素滚动
+bg-fixed:相对视口固定
+bg-scroll:相对元素固定
+tailwind不支持动态类名，此时要用回style内联样式style={{backgroundImage: background?`url(${background.src})`:null,}}
+我的方案是不使用任何背景图片
+-->
+<!--min-h-screen body的宽度为视口宽度，高度取决于内容大小，可设置body高度为视口高度-->
+<!--子元素垂直方向排列-->
+<body class="min-h-screen flex flex-col">
+<dialog id="confirm" class="modal">
+    <div class="modal-box">
+        <h3 class="text-lg font-bold" id="confirmTitle"></h3>
+        <div class="whitespace-pre-wrap py-4" id="confirmMsg"></div>
+        <div class="modal-action">
+            <button class="btn w-20" id="confirmText"></button>
+            <form method="dialog">
+                <!-- if there is a button in form, it will close the modal -->
+                <button class="btn w-20" id="cancel"></button>
+            </form>
+        </div>
+    </div>
+</dialog>
+<dialog id="alert" class="modal">
+    <div class="modal-box">
+        <h3 class="text-lg font-bold" id="alertTitle"></h3>
+        <div class="whitespace-pre-wrap py-4 text-error" id="alertMsg"></div>
+        <div class="modal-action">
+            <form method="dialog">
+                <button class="btn w-20" id="ok"></button>
+            </form>
+        </div>
+    </div>
+</dialog>
+<slot/>
+</body>
+</html>

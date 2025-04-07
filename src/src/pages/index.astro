@@ -1,0 +1,483 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+<Layout title='StegLLM' >
+    <div class="shadow p-4 flex justify-between items-center">
+        <div class="flex-1 gap-2">
+            <button class="btn btn-soft btn-accent btn-sm" id="import"></button>
+            <button class="btn btn-soft btn-accent btn-sm" id="export"></button>
+            <button class="btn btn-soft btn-warning btn-sm" id="generateKeyPair"></button>
+        </div>
+        <div class="flex gap-2 items-center">
+            <a href="https://github.com/Rin313/StegLLM" target="_blank" class="p-2" id="github">
+                <svg class="w-6 h-6" viewBox="0 0 24 24"><path fill="currentColor" d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.332-1.754-1.332-1.754-1.09-.745.083-.73.083-.73 1.205.085 1.838 1.236 1.838 1.236 1.07 1.835 2.807 1.305 3.492.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12z"/></svg>
+            </a>
+            <div class="dropdown dropdown-center">
+                <div tabindex="0" role="button" class="btn btn-ghost p-2" id="language">
+                    <svg class="w-6 h-6" viewBox="0 0 24 24"><path fill="currentColor" d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2m6.93 6h-2.95a15.7 15.7 0 0 0-1.38-3.56A8.03 8.03 0 0 1 18.92 8M12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96M4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56A8 8 0 0 1 5.08 16m2.95-8H5.08a8 8 0 0 1 4.33-3.56A15.7 15.7 0 0 0 8.03 8M12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96M14.34 14H9.66c-.09-.66-.16-1.32-.16-2s.07-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2m.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2z"/></svg>
+                </div>
+                <ul tabindex="0" class="dropdown-content bg-base-200 z-1 py-1 w-20">
+                    <li>
+                        <input
+                                type="radio"
+                                name="language-dropdown"
+                                class="btn btn-sm btn-block btn-ghost"
+                                aria-label="简体中文"
+                                value="simplifiedChinese" />
+                    </li>
+                    <li>
+                        <input
+                                type="radio"
+                                name="language-dropdown"
+                                class="btn btn-sm btn-block btn-ghost"
+                                aria-label="正體中文"
+                                value="traditionalChinese" />
+                    </li>
+                    <li>
+                        <input
+                                type="radio"
+                                name="language-dropdown"
+                                class="btn btn-sm btn-block btn-ghost"
+                                aria-label="English"
+                                value="english" />
+                    </li>
+                </ul>
+            </div>
+            <div class="dropdown dropdown-center">
+                <div tabindex="0" role="button" class="btn btn-ghost p-2" id="theme">
+                    <svg class="w-6 h-6" viewBox="0 0 24 24"><path fill="currentColor" d="M12 22C6.49 22 2 17.51 2 12S6.49 2 12 2s10 4.04 10 9c0 3.31-2.69 6-6 6h-1.77c-.28 0-.5.22-.5.5c0 .12.05.23.13.33c.41.47.64 1.06.64 1.67A2.5 2.5 0 0 1 12 22m0-18c-4.41 0-8 3.59-8 8s3.59 8 8 8c.28 0 .5-.22.5-.5a.54.54 0 0 0-.14-.35c-.41-.46-.63-1.05-.63-1.65a2.5 2.5 0 0 1 2.5-2.5H16c2.21 0 4-1.79 4-4c0-3.86-3.59-7-8-7"/><circle cx="6.5" cy="11.5" r="1.5" fill="currentColor"/><circle cx="9.5" cy="7.5" r="1.5" fill="currentColor"/><circle cx="14.5" cy="7.5" r="1.5" fill="currentColor"/><circle cx="17.5" cy="11.5" r="1.5" fill="currentColor"/></svg>
+                </div>
+                <ul tabindex="0" class="dropdown-content bg-base-200 z-1 py-1">
+                    <li>
+                        <input
+                                type="radio"
+                                name="theme-dropdown"
+                                class="theme-controller btn btn-sm btn-block btn-ghost"
+                                aria-label="🌝"
+                                value="default" />
+                    </li>
+                    <li>
+                        <input
+                                type="radio"
+                                name="theme-dropdown"
+                                class="theme-controller btn btn-sm btn-block btn-ghost"
+                                aria-label="🌚"
+                                value="dark" />
+                    </li>
+                    <li>
+                        <input
+                                type="radio"
+                                name="theme-dropdown"
+                                class="theme-controller btn btn-sm btn-block btn-ghost"
+                                aria-label="🌸"
+                                value="valentine" />
+                    </li>
+                    <li>
+                        <input
+                                type="radio"
+                                name="theme-dropdown"
+                                class="theme-controller btn btn-sm btn-block btn-ghost"
+                                aria-label="📜"
+                                value="retro" />
+                    </li>
+                    <li>
+                        <input
+                                type="radio"
+                                name="theme-dropdown"
+                                class="theme-controller btn btn-sm btn-block btn-ghost"
+                                aria-label="☕"
+                                value="coffee" />
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="flex-grow py-6 container mx-auto max-w-6xl">
+        <div class="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-6">
+            <div class="shadow rounded-lg p-6 flex flex-col gap-6">
+                <textarea class="textarea textarea-info w-full h-120 bg-base-200 rounded-lg resize-none" id="secret"></textarea>
+                <fieldset class="fieldset">
+                    <div class="tooltip" id="tooltip">
+                        <legend class="fieldset-legend" id="publicKeyTitle"></legend>
+                    </div>
+                    <input type="file" class="file-input file-input-success" id="publicKey"/>
+                </fieldset>
+                <div class="tooltip" id="tooltip2">
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">
+                            <input type="checkbox" class="toggle toggle-info" id="insertion"/>
+                            <span id="insertionText"></span>
+                        </label>
+                    </fieldset>
+                </div>
+            </div>
+            <div class="flex flex-col items-center justify-center gap-8">
+                <div class="radial-progress text-primary hidden" style="--value:0;--size:4rem" aria-valuenow="0" role="progressbar" id="progress"></div>
+                <button class="btn btn-primary btn-circle btn-xl" id="hide">
+                    <svg class="w-6 h-6" viewBox="0 0 24 24"><path fill="currentColor" d="M10.5 15h3l-.575-3.225q.5-.25.788-.725T14 10q0-.825-.587-1.412T12 8t-1.412.588T10 10q0 .575.288 1.05t.787.725zm1.5 7q-3.475-.875-5.738-3.988T4 11.1V5l8-3l8 3v6.1q0 3.8-2.262 6.913T12 22"/></svg>
+                </button>
+                <button class="btn btn-secondary btn-circle btn-xl" id="extract">
+                    <svg class="w-6 h-6" viewBox="0 0 24 24"><path fill="currentColor" d="M18 1c-2.76 0-5 2.24-5 5v2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12c1.11 0 2-.89 2-2V10a2 2 0 0 0-2-2h-1V6c0-1.66 1.34-3 3-3s3 1.34 3 3v2h2V6c0-2.76-2.24-5-5-5m-8 12a2 2 0 0 1 2 2c0 1.11-.89 2-2 2a2 2 0 1 1 0-4"/></svg>
+                </button>
+            </div>
+            <div class="shadow rounded-lg p-6 flex flex-col gap-6">
+                <textarea class="textarea textarea-info w-full h-120 bg-base-200 rounded-lg resize-none" id='coverText'></textarea>
+                <fieldset class="fieldset">
+                    <legend class="fieldset-legend" id="privateKeyTitle"></legend>
+                    <input type="file" class="file-input file-input-warning" id="privateKey"/>
+                </fieldset>
+            </div>
+        </div>
+    </div>
+    <div class="pl-6 mb-10 container mx-auto max-w-6xl">
+        <div class="flex flex-row gap-4 items-center">
+            <textarea class="textarea textarea-info w-full h-24 bg-base-200 rounded-lg resize-none" id='prompt'></textarea>
+            <div class="flex flex-col">
+                <button class="btn btn-ghost" id="up">▲</button>
+                <button class="btn btn-ghost" id="down">▼</button>
+            </div>
+            <button class="btn btn-ghost" id="save">
+                <svg class="w-8 h-8" viewBox="0 0 24 24"><path fill="currentColor" d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V7zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3s3 1.34 3 3s-1.34 3-3 3m3-10H5V5h10z"/></svg>
+            </button>
+        </div>
+    </div>
+    <script>
+        import el,{setAllButtonTypesToButton,get,save,saveList,runIfMatch,generateKeyPair,exportLocalStorage,importLocalStorage,initDaisyThemeController,initLogitBias,unishoxCompress,readTextFile,eccEncryptToUint8Array,eccDecryptToUint8Array,shuffle,toBinary,toBytes,findSublistIndex,unishoxDecompress,tokenize,stringToUnicode} from '../utils/commonUtils';
+        import xxhash from 'xxhash-wasm';//hash-wasm不提供返回int类型的接口
+        const { h32 } = await xxhash();
+        function confirm(msg=null,title=null){
+            if(title)el.confirmTitle.textContent=title;
+            el.confirmMsg.textContent = msg;
+            el.confirm.showModal();
+        }
+        function alert(msg=null,title=null){
+            el.alertTitle.textContent=title;
+            el.alertMsg.textContent=msg;
+            el.alert.showModal();
+        }
+        setAllButtonTypesToButton();
+        const themeButtons = document.querySelectorAll(`input[name="theme-dropdown"]`);
+        function assignStrs(strs) {
+            [
+                el.import.textContent,
+                el.export.textContent,
+                el.generateKeyPair.textContent,
+                el.publicKeyTitle.textContent,
+                el.privateKeyTitle.textContent,
+                el.publicKey.ariaLabel,
+                el.privateKey.ariaLabel,
+                el.secret.placeholder,
+                el.coverText.placeholder,
+                el.prompt.placeholder,
+                el.ok.textContent,
+                el.github.ariaLabel,
+                el.language.ariaLabel,
+                el.theme.ariaLabel,
+                el.hide.ariaLabel,
+                el.extract.ariaLabel,
+                el.save.ariaLabel,
+                el.progress.ariaLabel,
+                el.insertionText.textContent
+            ] = strs;
+        }
+        function setLanguage(){
+            runIfMatch('language','simplifiedChinese',{
+                simplifiedChinese:['导入配置','导出配置','生成密钥','输入接收方的公钥（可选）','输入你的私钥（可选）','输入接收方的公钥（可选）','输入你的私钥（可选）','请输入需要加密的信息','此处显示生成的掩饰文本','请输入隐写提示，你可以通过右侧的保存按钮来保存当前的提示模板','确定','Github','语言','主题','隐写','提取','保存','进度条','支持前后插入'],
+                traditionalChinese:['導入配置', '導出配置', '生成密鑰', '輸入接收方的公鑰（可選）', '輸入你的私鑰（可選）', '輸入接收方的公鑰（可選）', '輸入你的私鑰（可選）', '請輸入需要加密的信息', '此處顯示生成的掩飾文本', '請輸入隱寫提示，你可以通過右側的保存按鈕來保存當前的提示模板', '確定', 'Github', '語言', '主題', '隱寫', '提取', '保存', '進度條', '支持前後插入'],
+                english:['Import Configuration', 'Export Configuration', 'Generate Key', 'Enter Recipient\'s Public Key (Optional)', 'Enter Your Private Key (Optional)', 'Enter Recipient\'s Public Key (Optional)', 'Enter Your Private Key (Optional)', 'Please Enter the Information to Encrypt', 'The Generated Masked Text is Displayed Here', 'Please Enter Steganography Prompt, You Can Save the Current Prompt Template Using the Save Button on the Right', 'Confirm', 'Github', 'Language', 'Theme', 'Steganography', 'Extract', 'Save', 'Progress Bar', 'Support Front and Back Insertion'],
+            },(strs)=>{
+                assignStrs(strs);
+            });
+            el.tooltip.setAttribute("data-tip",dynamicContent('即使隐写暴露，也能确保原始信息不会被破解','即使隱寫暴露，也能確保原始信息不會被破解','Even if the Steganography is Exposed, It Ensures the Original Information Cannot Be Cracked'))
+            el.tooltip2.setAttribute("data-tip",dynamicContent('生成的掩饰文本嵌入到任意文本后仍能准确解密','生成的掩飾文本嵌入到任意文本後仍能準確解密','The Generated Masked Text Can Still Be Accurately Decrypted After Being Embedded into Any Text'))
+        }
+        function dynamicContent(...strs){
+            return runIfMatch('language','simplifiedChinese',{
+                simplifiedChinese:strs[0],traditionalChinese:strs[1],english:strs[2],
+            },(value)=>{
+                return value;
+            })
+        }
+        function setTheme(){
+            const theme=get('theme','default');
+            for (const button of themeButtons) {
+                if(button.value===theme){
+                    button.checked=true;
+                    return;
+                }
+            }
+            save('theme','default');
+        }
+        function setInsertion(){
+            el.insertion.checked=get('insertion',true);
+        }
+        setTheme();
+        setLanguage();
+        setInsertion();
+        initDaisyThemeController();
+        const languageButtons = document.querySelectorAll(`input[name="language-dropdown"]`);
+        languageButtons.forEach(button => {
+            button.addEventListener('change', function(event) {
+                if (event.target.checked) {
+                    save('language', event.target.value);
+                    setLanguage();
+                }
+            });
+        });
+        el.insertion.addEventListener('change', function(event) {
+            save('insertion',event.target.checked);
+        })
+        el.generateKeyPair.onclick=async ()=>{
+            await generateKeyPair();
+            alert(dynamicContent(`请安全地保存你的私钥，并提前和接收方交换公钥` ,`2`,`3`),dynamicContent('成功！','',''));
+        }
+        el.export.onclick=()=>{
+            exportLocalStorage();
+        }
+        el.import.onclick=async ()=>{
+            await importLocalStorage();
+            setTheme();
+            setLanguage();
+        }
+        let prompts=get('prompts',['']);let i=prompts.length-1;el.prompt.value=prompts[i];
+        el.up.onclick=()=>{
+            i=(i+1)%prompts.length;
+            el.prompt.value=prompts[i];
+        }
+        el.down.onclick=()=>{
+            i=(i-1+prompts.length)%prompts.length;
+            el.prompt.value=prompts[i];
+        }
+        el.save.onclick=()=>{
+            if(el.prompt.value){
+                saveList('prompts',el.prompt.value);
+                prompts=get('prompts',['']);i=prompts.length-1;
+                alert('','保存成功！')
+            }
+            else{
+                saveList('prompts',null,i);
+                prompts=get('prompts',['']);i=prompts.length-1;el.prompt.value=prompts[i];
+                alert('','删除成功！')
+            }
+        }
+        function getWeight(code) {//score值越小，字符被保留的概率越高。
+            //零宽字符：看似在隐写场景中要尽可能保留，但从统计特征上看，这些字符属于非常少见的字符，不应该主动提高分布的频率。
+            //一个token约为1-1.8个汉字，0.75个单词或3-4个字母
+            //必须要保留的字符（随意中断将严重破坏语义）：字母、普通空格、英文逗号、英文句号
+            //尽量保留的字符（哪怕不中断也还有可能续写）：中文逗号、中文句号、中文右引号、
+            if (code===32||code===44||code===46||//普通空格、英文逗号、英文句号
+                (code >= 65 && code <= 90) ||  // 大写字母 A-Z
+                (code >= 97 && code <= 122))  // 小写字母 a-z
+                return 1;
+            if(code===65292||code===12290||code===8221)//中文逗号，中文句号，中文右引号
+                return 2;
+            return 3;
+        }// console.log(')'.codePointAt(0));
+        const punctuations=["？","?","！","!","。","）",")","…","}","]","."];//"\n"和"”"有时候并不代表结尾
+        async function chat(str,progress,tailCompletion) {
+            //let floor=7;//const probs=Math.round(25-Math.pow(progress, 0.1)*(25-floor));//非线性token数的可行性：token数较多时，如果roll到很差的token，这次隐写就烂完了；token较少时，如果失败回溯，上一层剩下的候选token质量只会更差；还不如一开始就选个固定的稳定的值
+            let body={//有些参数不生效，响应格式也和llama.cpp的api略有不同//在api中设置system_prompt会导致性能严重下降
+                // "stream": true,
+                "n_predict": tailCompletion?-1:1,//生成的token数，-1-2048
+                "temperature": 2.0,//影响文本的随机性，0-2
+                // "stop": punctuations,
+                "repeat_last_n": 256,
+                "repeat_penalty": 1.18,//重复惩罚，1.0为无惩罚
+                // "top_p": 0.95,//默认0.95，增大后似乎能增加更多的选词可能性
+                // "min_p": 0.05,
+                // "tfs_z": 1,//默认1.0，禁用
+                // "typical_p": 1,//默认1.0，禁用
+                // "presence_penalty": 0,
+                // "frequency_penalty": 0,
+                // "mirostat": 0,//关闭mirostat
+                // "mirostat_tau": 5,
+                // "mirostat_eta": 0.1,
+                // "grammar": "",
+                // "min_keep": 10,
+                // "image_data": [],
+                // "post_sampling_probs":true,
+                // "samplers": ["top_k"],//响应上看似乎没有使用top_p,min_p,temperature等？
+                "cache_prompt": true,//提示词复用
+                "api_key": "",
+                // "slot_id": -1,
+                "prompt": str,//支持输入多个prompt
+                // "response_fields": ["content"],//不生效？
+                "logit_bias": tailCompletion?originLogitBias:logitBias//补全也用logitBias，因为获取不到tokenId还在用h32，所以如果是问号，detokenize会报错
+            }
+            if(tailCompletion){
+                body["stop"]=punctuations;//动态截断
+            }
+            else if(currentShuffle===0){
+                body["top_k"]= 20;//选词范围，默认40；对于目前的策略，选词数量只影响前期的混淆效果，对隐写效率没多少增益，更不会影响隐写效果
+                body["n_probs"]= 20;//按概率排序的前n个选词
+            }
+            else{
+                body["top_k"]= 10;
+                body["n_probs"]= 10;
+                // body["samplers"]=["top_k",];//不确定是否影响效果
+            }
+            const response = await fetch('http://127.0.0.1:8090/completion', {
+                method: 'POST',
+                body: JSON.stringify(body),
+            });
+            const json=(await response.json());
+            if(tailCompletion){
+                if(json.stopped_word)
+                    return json.content+json.stopping_word;
+                return chat(str,progress,true)
+            }
+            const t=json.completion_probabilities[0];
+            if(!t)return [];//return chat(str,progress,false);//当采样结果是�，不会返回采样列表，闹麻了，而且有可能发生无限采样�导致卡住
+            else {
+                if(currentShuffle<3){//至少shuffle三次才能保证基本的随机性
+                    currentShuffle++;
+                    return shuffle(t.probs);
+                }
+                return progress<=0.08?shuffle(t.probs):t.probs;//根据进度确定是否shuffle
+            }
+        }
+        let base,currentPrompt,currentCoverText,currentShuffle,status,allowInsertion;
+        async function dfs(i,tstr,tscore){
+            const percents=i/base.length;
+            const percent100=percents*100;
+            el.progress.style.setProperty('--value',percent100);el.progress.setAttribute('aria-valuenow', percent100);
+            const list=(await chat(currentPrompt+currentCoverText,percents,false));
+            // for(let j=0;j<list.length;j++){
+            //     const t=list[j].tok_str;
+            //     const xxx=await tokenize(t);
+            //     const xxxy=stringToUnicode(t);
+            //     console.log(`"${t}" "${xxxy}" ${xxx}`)
+            // }
+            for(let j=0;j<list.length;j++){
+                const t=list[j].tok_str;if(!t||t.includes("�"))continue;//TODO：如果api修复回显token值，就能实现传递token序列来避免无法解码的token，只要把两个无法解码的token拼起来就能形成一条有效路径
+                let ttstr=tstr,ttscore=tscore,sections=0;
+                for(let k=0;;k++){
+                    if(k>=t.length){
+                        currentCoverText+=t;
+                        await dfs(i+sections,ttstr,ttscore);
+                        if(status)return;
+                        currentCoverText=currentCoverText.slice(0,-t.length);break;//减少dfs传递的内存占用
+                    }
+                    ttstr+=t[k];ttscore+=getWeight(t.codePointAt(k))
+                    if(t.codePointAt(k) > 0xFFFF)
+                        ttstr+=[++k];
+                    if(ttscore>=3){
+                        if(h32(ttstr)%2!==base[i+sections])
+                            break;
+                        sections++;ttstr='';ttscore=0;
+                        if(i+sections===base.length){//t.length-(k+1)
+                            // progress.style.width=`100%`;
+                            status=true;
+                            currentCoverText+=allowInsertion?t:t.slice(0,k+1);//如果不开启allowInsertion，用上t一样能使尾部稍微自然一点。
+                            return;
+                            // return currentCoverText+t;
+                        }
+                    }
+                }
+            }
+            // console.log('测试映射失败次数')
+        }
+        let init=false,logitBias,originLogitBias=[
+            [" ",false],["   ",false],["       ",false]//不间断空格是用于精确排版的符号，普通人几乎不可能手动使用
+            ,[" \n",false],["  \n",false],[" \n\n",false],["  \n\n",false],
+        ];
+        // let logitBias=[["",false],["　",false],[" ",false],["   ",false],["．",false],["【",false],["】",false],["〈",false],["〉",false],[" 【",false],
+        //     ["《",false],["》",false],//避免出现一些没头没尾的引用文章
+        //     ["A",false],["B",false],["C",false],["D",false],//避免续写选择题
+        //     ["。（",false],["（",false],["）",false],//括号容易引导AI生成注释和要求
+        //     ["，\n\n",false],["；\n",false],["—\n\n",false],["-\n\n",false],["–\n\n",false],["--\n\n",false],[" —\n\n",false],//减少一些标点填充，增加文字密度
+        //     ["\n\n",-3.3],["。\n\n",-3.3],["：\n\n",-3.3],["！\n\n",-3.3],["…\n\n",-3.3],["……\n\n",-3.3],["？\n\n",-3.3],["）\n\n",-3.3],["】\n\n",-3.3],["”\n\n",-3.3],["”。\n\n",-3.3],["\n",-1.2],["，\n",-1.2],["。\n",-1.2],["：\n",-1.2],["”\n",-1.2],[".\n",-1.2],["？\n",-1.2],["…\n",-1.2]];
+        async function encrypt(prompt,plainText) {
+            if(!init){
+                logitBias=await initLogitBias(originLogitBias,8090);
+                init=true;
+            }
+            if(prompt&&plainText){
+                if(el.progress.classList.contains('hidden')){
+                    const compressed = await unishoxCompress(plainText);
+                    let [data,useUnishox]=compressed;
+                    let key=await readTextFile(el.publicKey)
+                    if(key){
+                        data= await eccEncryptToUint8Array(data,JSON.parse(key));
+                    }
+                    allowInsertion=get('insertion',true);
+                    if(allowInsertion){//todo:为该选项添加提示：允许将掩饰文本嵌入到任意文本中，会略微增加隐写暴露的风险
+                        if(data.length>65535)alert('内容过多，请减少内容或关闭前后插入选项')
+                        const t=new Uint8Array(data.length+5);
+                        t.set(data,5);
+                        t[0]=0x0d;t[1]=0x96;t[2]=0xec;t[3]=data.length/256;t[4]=data.length%256;
+                        data=t;
+                    }
+                    //添加纠错码的话，要求用户手动修改不协调的地方，并检测是否仍然能还原。我觉得这个方向走偏了，想办法增强AI的隐写效果才是以后的方向。
+                    console.log(data);//如果先加magic num再加密，那么就要在每个位置都寻找长度>=(67*8)的所有子串，此时尾插无影响（因为是按顺序和最小长度找起），如果头插数量为n bit，则寻找次数为n(n+1)/2，即是说只有少量头插的情况下才能成功。//todo:当用户选中允许头尾插入时，添加选项"隐蔽的加密"：当结合加密使用时，避免增加隐写暴露的风险，但只允许头部插入少量文本。这需求我看了都感觉绷不住。
+                    base=toBinary(data);//处理为二进制序列，在映射时粒度更细，但建议每次只映射1位，减少映射失败率。
+                    console.log(base);
+                    currentPrompt=prompt;currentCoverText='';currentShuffle=0;status=false;el.progress.style.setProperty('--value', 0);el.progress.setAttribute('aria-valuenow', 0);el.progress.classList.remove('hidden');
+                    await dfs(0,'',0);
+                    el.progress.classList.add('hidden');
+                    if(!status){
+                        alert('请尝试减少输入内容，或在github反馈','隐写失败！');
+                    }
+                    if(allowInsertion&&!punctuations.includes(coverText[coverText.length-1])){//如果不开启allowInsertion，就没法对掩饰文本进行尾部自动补全。如果开启allowInsertion，通常很少有enableTailAutocomplete这个选项的需求。
+                        currentCoverText+=(await chat(currentPrompt+currentCoverText,1,true));
+                    }
+                    el.coverText.value= currentCoverText;
+                }
+            }
+        }
+        const magic=[
+            0, 0, 0, 0, 1, 1, 0, 1,
+            1, 0, 0, 1, 0, 1, 1, 0,
+            1, 1, 1, 0, 1, 1, 0, 0,
+        ]
+        async function extract(coverText) {
+            if(coverText){
+                let base = [],tstr='',tscore=0;
+                for(const char of coverText){
+                    tstr+=char;tscore+=getWeight(char.codePointAt(0));
+                    if(tscore>=3){
+                        base.push(h32(tstr)%2);
+                        tstr='';tscore=0;
+                    }
+                }
+                console.log(base)
+                let index=findSublistIndex(base,magic);
+                if(index!=-1){
+                    index+=24;
+                    let length=0;
+                    for(let i=0;i<16;i++){
+                        length+=base[index+i]*(1<<(15-i));
+                    }
+                    index+=16;
+                    base=base.slice(index,index+length*8);
+                }
+                let data=toBytes(base);
+                let key=await readTextFile(el.privateKey)
+                if(key){
+                    data=await eccDecryptToUint8Array(data,JSON.parse(key));
+                }
+                el.secret.value=await unishoxDecompress(data);
+            }
+        }
+        el.hide.onclick=async ()=>{
+            await encrypt(el.prompt.value,el.secret.value);
+        }
+        el.extract.onclick=()=>{
+            extract(el.coverText.value);
+        }
+        // let cnm='';
+        // for(let i=0;;i++){
+        //   try{
+        //     const response = await fetch('http://127.0.0.1:8090/detokenize', {
+        //       method: 'POST',
+        //       body: JSON.stringify({tokens: [i]}),
+        //     });
+        //     if(!response.ok)cnm+='['+i+',false],';
+        //   }
+        //   catch {
+        //     break;
+        //   }
+        // }
+        // console.log(cnm)
+    </script>
+</Layout>

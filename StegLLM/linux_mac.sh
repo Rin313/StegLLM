@@ -32,9 +32,9 @@ open_html() {
 
 open_html "data/StegLLM.html"
 
-# 查找第一个扩展名为 .llamafile 的文件
-llamafile=$(find data/ -maxdepth 1 -name "*.llamafile" -print -quit)
+# 查找第一个扩展名为 .gguf 的文件
+llamafile=$(find data/ -maxdepth 1 -name "*.gguf" -print -quit)
 
-if [[ -n "$llamafile" ]]; then
-    "$llamafile" -c 8192 --no-mmap  --log-disable  --nocompile --unsecure --no-display-prompt --fast --server -spf system_prompt.txt --port 8090 --nobrowser --nologo
+if [[ -n "$gguf" ]]; then
+    data/llamafile-0.9.1 -m "$gguf" -c 8192 --no-mmap  --log-disable  --nocompile --unsecure --no-display-prompt --fast --server -spf system_prompt.txt --port 8090 --nobrowser --nologo
 fi

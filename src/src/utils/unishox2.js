@@ -16,7 +16,7 @@
  * @author Arundale Ramanathan
  *
  */
- 
+
 var USX_HCODES_DFLT = new Uint8Array([0x00, 0x40, 0x80, 0xC0, 0xE0]);
 var USX_HCODE_LENS_DFLT = new Uint8Array([2, 2, 2, 3, 3]);
 var USX_HCODES_ALPHA_NUM_SYM_ONLY = new Uint8Array([0x00, 0x80, 0xC0, 0x00, 0x00]);
@@ -444,7 +444,7 @@ function compare_arr(arr1, arr2, is_str) {
 const usx_spl_code = new Uint8Array([0, 0xE0, 0xC0, 0xF0]);
 const usx_spl_code_len = new Uint8Array([1, 4, 3, 4]);
 
-function unishox2_compress(input, len, out, usx_hcodes, usx_hcode_lens, usx_freq_seq, usx_templates) {
+export function unishox2_compress(input, len, out, usx_hcodes, usx_hcode_lens, usx_freq_seq, usx_templates) {
 
   var state;
 
@@ -764,7 +764,7 @@ function unishox2_compress(input, len, out, usx_hcodes, usx_hcode_lens, usx_freq
           //  break;
           if (readUTF8(input, len, bi) > 0)
             break;
-          if (bi < (len - 4) && c_bi === input[bi - 1] && c_bi === input[bi + 1] 
+          if (bi < (len - 4) && c_bi === input[bi - 1] && c_bi === input[bi + 1]
                 && c_bi === input[bi + 2] && c_bi === input[bi + 3])
             break;
           bin_count++;
@@ -1048,7 +1048,7 @@ function appendString(out_arr, out, str) {
   return out;
 }
 
-function unishox2_decompress(input, len, out_arr, usx_hcodes, usx_hcode_lens, usx_freq_seq, usx_templates) {
+export function unishox2_decompress(input, len, out_arr, usx_hcodes, usx_hcode_lens, usx_freq_seq, usx_templates) {
 
   var dstate;
   var bit_no;
@@ -1103,7 +1103,7 @@ function unishox2_decompress(input, len, out_arr, usx_hcodes, usx_hcode_lens, us
               if (prev_lines_arr == null)
                 [bit_no, out] = decodeRepeat(input, len, out_arr, out, bit_no);
               else {
-                [bit_no, out] = decodeRepeatArray(input, len, out_arr, out, bit_no, 
+                [bit_no, out] = decodeRepeatArray(input, len, out_arr, out, bit_no,
                   prev_lines_arr, prev_lines_idx, usx_hcodes, usx_hcode_lens, usx_freq_seq, usx_templates);
               }
               if (bit_no < 0)
@@ -1187,7 +1187,7 @@ function unishox2_decompress(input, len, out_arr, usx_hcodes, usx_hcode_lens, us
         if (prev_lines_arr == null)
           [bit_no, out] = decodeRepeat(input, len, out_arr, out, bit_no);
         else {
-          [bit_no, out] = decodeRepeatArray(input, len, out_arr, out, bit_no, 
+          [bit_no, out] = decodeRepeatArray(input, len, out_arr, out, bit_no,
             prev_lines_arr, prev_lines_idx, usx_hcodes, usx_hcode_lens, usx_freq_seq, usx_templates);
         }
         if (bit_no < 0)
