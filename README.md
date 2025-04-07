@@ -20,46 +20,21 @@ StegLLM 是一个离线的文本隐写项目，它利用大语言模型LLM在正
 
 # 快速开始
 
-* **需要隐写和解密：** 下载[StegLLM.zip](https://github.com/Rin313/StegLLM/releases)
-* **仅需要解密：** 下载[StegLLM-pure.zip](https://github.com/Rin313/StegLLM/releases)
+下载[StegLLM.zip](https://github.com/Rin313/StegLLM/releases)
 
 Windows系统：运行 `windows.bat`
 
-Linux/MacOS系统：
-1. 项目目录下执行下列指令
-```bash
-chmod +x linux_mac.sh data/*.llamafile
-```
-2. 运行 `linux_mac.sh`
+Linux/MacOS系统：运行 `linux_mac.sh`
 
-下面是一个简单的示例
+界面演示
 
 ![StegLLM](img.png "界面演示")
 
-如图所示，一句想要隐藏的话可加密成一段普通的文字，并且支持**首尾任意插入文本**，即是说你可以把得到的结果插入到任意一篇文章或者对话中。
+如图所示，输入想要隐藏的内容和隐写提示，即可生成一段自然的文本。
 
 # 使用自定义的模型（可选）
 
-1. 下载[StegLLM-pure.zip](https://github.com/Rin313/StegLLM/releases)
-2. 从 **Hugging Face** 或 **ModelScope** 等任何来源获取希望使用的llamafile文件，放置到项目目录下的**data**文件夹中。
-
-默认使用的模型是 `Qwen2.5-0.5B-Instruct-Q6_K`。使用参数较大的模型，通常可以获得更好的隐写效果。
-
-**Windows 用户注意事项:**
-
-如果在 Windows 下运行大于 4GB 的 llamafile，需要进行一些额外的操作。请参考 [Mozilla-Ocho/llamafile](https://github.com/Mozilla-Ocho/llamafile) 的官方文档。
-
-# 续写提示设置（可选）
-
-设置`settings.txt`
-
-```javascript
-const prompts=[
-    `续写一段散文：`,
-    `续写一段仙侠小说：`,
-    `续写一段现代诗歌：`,
-];
-```
+从 **Hugging Face** 或 **ModelScope** 等任何来源获取**gguf**文件，然后对项目目录下的**data**文件夹中的gguf文件进行替换。
 
 # AI角色设置（可选）
 
@@ -68,7 +43,7 @@ const prompts=[
 ```json
 {
   "system_prompt": {
-    "prompt": "You are an assistant skilled in text continuation. Your task is to continue the provided text naturally and creatively, without asking questions, providing hints, stating task requirements, adding explanations, comments, or supplementary remarks. Your continuation should always follow natural language expression and allow blank input.",
+    "prompt": "You are a creative writing assistant.Your task is to continue the input text in a natural, fluent, and imaginative way, following the style and tone of the input.If the input is empty, start a new story or paragraph creatively.Ensure your continuation is grammatically correct and engaging, using natural language expressions.",
     "assistant_name": "Continuation Assistant:"
   }
 }
@@ -76,7 +51,7 @@ const prompts=[
 
 # 原理图
 
-![StegLLM](mermaid-diagram.png "StegLLM 原理图")
+![StegLLM](mermaid.png "StegLLM 原理图")
 
 # 贡献
 
