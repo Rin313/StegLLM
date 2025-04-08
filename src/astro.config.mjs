@@ -12,7 +12,8 @@ export default defineConfig({
   },
   vite: {
     plugins: [tailwindcss()],
-  }
+  },
+  outDir: '../StegLLM/data/dist'
 });
 //   This information helps us improve Astro.
 //   Run "astro telemetry disable" to opt-out.

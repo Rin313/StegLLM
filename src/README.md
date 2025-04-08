@@ -1,6 +1,6 @@
 ```sh
 volta list 查看当前各个工具的版本
-volta i node@latest;volta i node@14.17.0 用于切换版本
+volta install node@latest;volta install node@14.17.0 用于切换版本
 volta uninstall node
 ```
 ```sh
