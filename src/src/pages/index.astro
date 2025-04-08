@@ -189,7 +189,7 @@ import Layout from '../layouts/Layout.astro';
                 assignStrs(strs);
             });
             el.tooltip.setAttribute("data-tip",dynamicContent('即使隐写暴露，也能确保原始信息不会被破解','即使隱寫暴露，也能確保原始信息不會被破解','Even if the Steganography is Exposed, It Ensures the Original Information Cannot Be Cracked'))
-            el.tooltip2.setAttribute("data-tip",dynamicContent('生成的掩饰文本嵌入到任意文本后仍能准确解密','生成的掩飾文本嵌入到任意文本後仍能準確解密','The Generated Masked Text Can Still Be Accurately Decrypted After Being Embedded into Any Text'))
+            el.tooltip2.setAttribute("data-tip",dynamicContent('生成的掩饰文本嵌入到任意文本后仍能准确解密，略微增加隐写暴露的风险','生成的掩飾文本嵌入到任意文本後仍能準確解密，略微增加隱寫暴露的風險','The generated cover text can still be accurately decrypted after being embedded into any text, slightly increasing the risk of steganographic exposure'))
         }
         function dynamicContent(...strs){
             return runIfMatch('language','simplifiedChinese',{
@@ -387,6 +387,11 @@ import Layout from '../layouts/Layout.astro';
         //     ["。（",false],["（",false],["）",false],//括号容易引导AI生成注释和要求
         //     ["，\n\n",false],["；\n",false],["—\n\n",false],["-\n\n",false],["–\n\n",false],["--\n\n",false],[" —\n\n",false],//减少一些标点填充，增加文字密度
         //     ["\n\n",-3.3],["。\n\n",-3.3],["：\n\n",-3.3],["！\n\n",-3.3],["…\n\n",-3.3],["……\n\n",-3.3],["？\n\n",-3.3],["）\n\n",-3.3],["】\n\n",-3.3],["”\n\n",-3.3],["”。\n\n",-3.3],["\n",-1.2],["，\n",-1.2],["。\n",-1.2],["：\n",-1.2],["”\n",-1.2],[".\n",-1.2],["？\n",-1.2],["…\n",-1.2]];
+        const magicNum=[
+            0, 0, 0, 0, 1, 1, 0, 1,
+            1, 0, 0, 1, 0, 1, 1, 0,
+            1, 1, 1, 0, 1, 1, 0, 0,
+        ]
         async function encrypt(prompt,plainText) {
             if(!init){
                 logitBias=await initLogitBias(originLogitBias,8090);
@@ -400,17 +405,16 @@ import Layout from '../layouts/Layout.astro';
                     if(key){
                         data= await eccEncryptToUint8Array(data,JSON.parse(key));
                     }
-                    allowInsertion=get('insertion',true);
-                    if(allowInsertion){//todo:为该选项添加提示：允许将掩饰文本嵌入到任意文本中，会略微增加隐写暴露的风险
-                        if(data.length>65535)alert('内容过多，请减少内容或关闭前后插入选项')
-                        const t=new Uint8Array(data.length+5);
-                        t.set(data,5);
-                        t[0]=0x0d;t[1]=0x96;t[2]=0xec;t[3]=data.length/256;t[4]=data.length%256;
-                        data=t;
-                    }
                     //添加纠错码的话，要求用户手动修改不协调的地方，并检测是否仍然能还原。我觉得这个方向走偏了，想办法增强AI的隐写效果才是以后的方向。
-                    console.log(data);//如果先加magic num再加密，那么就要在每个位置都寻找长度>=(67*8)的所有子串，此时尾插无影响（因为是按顺序和最小长度找起），如果头插数量为n bit，则寻找次数为n(n+1)/2，即是说只有少量头插的情况下才能成功。//todo:当用户选中允许头尾插入时，添加选项"隐蔽的加密"：当结合加密使用时，避免增加隐写暴露的风险，但只允许头部插入少量文本。这需求我看了都感觉绷不住。
-                    base=toBinary(data);//处理为二进制序列，在映射时粒度更细，但建议每次只映射1位，减少映射失败率。
+                    console.log(data);
+                    base=toBinary(data);//base=[useUnishox,...toBinary(data)];//处理为二进制序列，在映射时粒度更细，但建议每次只映射1位，减少映射失败率。
+                    allowInsertion=get('insertion',true);
+                    if(allowInsertion){
+                        if(data.length>65535)alert('内容过多，请减少内容或关闭前后插入选项')
+                        let length=new Uint8Array(2);//如果先加magic num再加密，那么就要在每个位置都寻找长度>=(67*8)的所有子串，此时尾插无影响（因为是按顺序和最小长度找起），如果头插数量为n bit，则寻找次数为n(n+1)/2，即是说只有少量头插的情况下才能成功。//todo:当用户选中允许头尾插入时，添加选项"隐蔽的加密"：当结合加密使用时，避免增加隐写暴露的风险，但只允许头部插入少量文本。这需求我看了都感觉绷不住。
+                        length[0]=data.length/256;length[1]=data.length%256;
+                        base=[...magicNum,...toBinary(length),...base];
+                    }
                     console.log(base);
                     currentPrompt=prompt;currentCoverText='';currentShuffle=0;status=false;el.progress.style.setProperty('--value', 0);el.progress.setAttribute('aria-valuenow', 0);el.progress.classList.remove('hidden');
                     await dfs(0,'',0);
@@ -425,11 +429,6 @@ import Layout from '../layouts/Layout.astro';
                 }
             }
         }
-        const magic=[
-            0, 0, 0, 0, 1, 1, 0, 1,
-            1, 0, 0, 1, 0, 1, 1, 0,
-            1, 1, 1, 0, 1, 1, 0, 0,
-        ]
         async function extract(coverText) {
             if(coverText){
                 let base = [],tstr='',tscore=0;
@@ -441,7 +440,7 @@ import Layout from '../layouts/Layout.astro';
                     }
                 }
                 console.log(base)
-                let index=findSublistIndex(base,magic);
+                let index=findSublistIndex(base,magicNum);
                 if(index!=-1){
                     index+=24;
                     let length=0;
@@ -451,16 +450,24 @@ import Layout from '../layouts/Layout.astro';
                     index+=16;
                     base=base.slice(index,index+length*8);
                 }
+                console.log(base)// let useUnishox=base[0];base=base.slice(1);
                 let data=toBytes(base);
                 let key=await readTextFile(el.privateKey)
                 if(key){
                     data=await eccDecryptToUint8Array(data,JSON.parse(key));
                 }
-                el.secret.value=await unishoxDecompress(data);
+                el.secret.value=await unishoxDecompress(data);// el.secret.value=await unishoxDecompress(data,useUnishox);
             }
         }
         el.hide.onclick=async ()=>{
-            await encrypt(el.prompt.value,el.secret.value);
+            // let s=0;
+            // for(let i=0;i<10;i++){
+            //     const start = performance.now();
+                await encrypt(el.prompt.value,el.secret.value);
+            //     const end = performance.now();
+            //     s+=end-start;
+            // }
+            // console.log(s/10);
         }
         el.extract.onclick=()=>{
             extract(el.coverText.value);

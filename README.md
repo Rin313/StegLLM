@@ -34,7 +34,7 @@ Linux/MacOS系统：运行 `linux_mac.sh`
 
 # 使用自定义的模型（可选）
 
-从 **Hugging Face** 或 **ModelScope** 等任何来源获取**gguf**文件，然后对项目目录下的**data**文件夹中的gguf文件进行替换。
+从 **Hugging Face** 或 **ModelScope** 等任何来源获取**gguf**文件，然后在项目目录的**data**文件夹中对gguf文件进行替换。
 
 # AI角色设置（可选）
 

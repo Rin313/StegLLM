@@ -166,6 +166,7 @@ async function decompress(uint8Array,format='deflate-raw') {
 
 import {unishox2_compress, unishox2_decompress} from './unishox2.js';
 const utf8Encoder= new TextEncoder();
+const utf8Decoder=new TextDecoder();
 const USX_HCODES_NO_DICT = new Uint8Array([0x00,0x40,0x80,0x00,0xC0]);//偏爱无重复内容
 const USX_HCODE_LENS_NO_DICT = new Uint8Array([2,2,2,0,2]);
 const USX_FREQ_SEQ_TXT= [" the "," and ","tion"," with","ing","ment","https://"];//中文很难找规律，待定:"我们","一个"
@@ -174,18 +175,19 @@ export async function unishoxCompress(str){//混合使用效果更差
     let t = new Uint8Array(str.length*4);
     const len =unishox2_compress(str,str.length, t,USX_HCODES_NO_DICT, USX_HCODE_LENS_NO_DICT, USX_FREQ_SEQ_TXT,USX_TEMPLATES);
     const result1=t.subarray(0,len);
-    const result2=(await compress(utf8Encoder.encode(str)));
-    return result1.length<result2.length?[result1,true]:[result2,false];//unishox2末尾补齐1，deflate按规范则应该是补齐0，但做截断处理平均减少3.5bit，但长度单位由字节变为bit，可表示量变为8192字节。而且这种方式也不适用加密。
+    const result2=await compress(utf8Encoder.encode(str));
+    return result1.length<result2.length?[result1,1]:[result2,0];//unishox2末尾补齐1，deflate按规范则应该是补齐0，但做截断处理平均减少3.5bit，但长度单位由字节变为bit，可表示量变为8192字节。而且这种方式也不适用加密。
 }
-export async function unishoxDecompress(uint8Array){
-    let data;
+export async function unishoxDecompress(uint8Array,useUnishox=1){
+    //return useUnishox?unishox2_decompress(uint8Array,uint8Array.length,null,USX_HCODES_NO_DICT, USX_HCODE_LENS_NO_DICT, USX_FREQ_SEQ_TXT,USX_TEMPLATES):utf8Decoder.decode(await decompress(uint8Array));
+    let secret;
     try{
-        data=await decompress(uint8Array);
+        secret=utf8Decoder.decode(await decompress(uint8Array));
     }
     catch{
-        data=unishox2_decompress(uint8Array,uint8Array.length,null,USX_HCODES_NO_DICT, USX_HCODE_LENS_NO_DICT, USX_FREQ_SEQ_TXT,USX_TEMPLATES);
+        secret=unishox2_decompress(uint8Array,uint8Array.length,null,USX_HCODES_NO_DICT, USX_HCODE_LENS_NO_DICT, USX_FREQ_SEQ_TXT,USX_TEMPLATES);
     }
-    return data;
+    return secret;
 }
 import {p256} from '@noble/curves/p256';
 function compressPublicKey(uncompressedKey) {
