@@ -440,34 +440,37 @@ import Layout from '../layouts/Layout.astro';
             el.coverText.value= currentCoverText;
         }
         async function extract(coverText) {
-            if(coverText){
-                let base = [],tstr='',tscore=0;
-                for(const char of coverText){
-                    tstr+=char;tscore+=getWeight(char.codePointAt(0));
-                    if(tscore>=3){
-                        base.push(h32(tstr)%2);
-                        tstr='';tscore=0;
-                    }
-                }
-                console.log(base)
-                let index=findSublistIndex(base,magicNum);
-                if(index!=-1){
-                    index+=24;
-                    let length=0;
-                    for(let i=0;i<16;i++){
-                        length+=base[index+i]*(1<<(15-i));
-                    }
-                    index+=16;
-                    base=base.slice(index,index+length*8);
-                }
-                console.log(base)// let useUnishox=base[0];base=base.slice(1);
-                let data=toBytes(base);
-                let key=await readTextFile(el.privateKey)
-                if(key){
-                    data=await eccDecryptToUint8Array(data,JSON.parse(key));
-                }
-                el.secret.value=await unishoxDecompress(data);// el.secret.value=await unishoxDecompress(data,useUnishox);
+            if(!coverText){
+                el.coverText.focus();
+                return;
             }
+            let base = [],tstr='',tscore=0;
+            for(const char of coverText){
+                tstr+=char;tscore+=getWeight(char.codePointAt(0));
+                if(tscore>=3){
+                    base.push(h32(tstr)%2);
+                    tstr='';tscore=0;
+                }
+            }
+            console.log(base)
+            let index=findSublistIndex(base,magicNum);
+            if(index!=-1){
+                index+=24;
+                let length=0;
+                for(let i=0;i<16;i++){
+                    length+=base[index+i]*(1<<(15-i));
+                }
+                index+=16;
+                base=base.slice(index,index+length*8);
+            }
+            console.log(base)// let useUnishox=base[0];base=base.slice(1);
+            let data=toBytes(base);
+            let key=await readTextFile(el.privateKey)
+            if(key){
+                data=await eccDecryptToUint8Array(data,JSON.parse(key));
+            }
+            el.secret.value=await unishoxDecompress(data);// el.secret.value=await unishoxDecompress(data,useUnishox);
+
         }
         el.hide.onclick=async ()=>{
             await encrypt(el.prompt.value,el.secret.value);
