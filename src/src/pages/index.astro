@@ -338,7 +338,7 @@ import Layout from '../layouts/Layout.astro';
             return t.probs;
         }
         let base,currentPrompt,currentCoverText,currentShuffle,status,allowInsertion;
-        async function dfs(i,tstr,tscore){
+        async function dfs(i,tstr,tscore){if(status)return;
             const percents=i/base.length;
             const percent100=percents*100;
             el.progress.style.setProperty('--value',percent100);el.progress.setAttribute('aria-valuenow', percent100);
@@ -350,14 +350,13 @@ import Layout from '../layouts/Layout.astro';
             //     const xxxy=stringToUnicode(t);
             //     console.log(`"${t}" "${xxxy}" ${xxx}`)
             // }
-            for(let j=0;j<list.length;j++){
+            for(let j=0;j<list.length;j++){if(status)return;
                 const t=list[j].tok_str;if(!t||t.includes("�"))continue;//TODO：如果api修复回显token值，就能实现传递token序列来避免无法解码的token，只要把两个无法解码的token拼起来就能形成一条有效路径
                 let ttstr=tstr,ttscore=tscore,sections=0;
-                for(let k=0;;k++){
+                for(let k=0;;k++){if(status)return;
                     if(k>=t.length){
                         currentCoverText+=t;el.coverText.value=currentCoverText;
-                        await dfs(i+sections,ttstr,ttscore);
-                        if(status)return;
+                        await dfs(i+sections,ttstr,ttscore);if(status)return;//在这里return避免currentCoverText逐层回溯为空字符串
                         currentCoverText=currentCoverText.slice(0,-t.length);break;//减少dfs传递的内存占用
                     }
                     ttstr+=t[k];ttscore+=getWeight(t.codePointAt(k))
@@ -370,7 +369,6 @@ import Layout from '../layouts/Layout.astro';
                         if(i+sections===base.length){//t.length-(k+1)
                             status=true;
                             currentCoverText+=allowInsertion?t:t.slice(0,k+1);//如果不开启allowInsertion，用上t一样能使尾部稍微自然一点。
-                            return;
                         }
                     }
                 }
