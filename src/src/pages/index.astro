@@ -113,9 +113,11 @@ import Layout from '../layouts/Layout.astro';
             </div>
             <div class="flex flex-col items-center justify-center gap-8">
                 <div class="radial-progress text-primary hidden" style="--value:0;--size:4rem" aria-valuenow="0" role="progressbar" id="progress"></div>
-                <button class="btn btn-primary btn-circle btn-xl" id="hide">
-                    <svg class="w-6 h-6" viewBox="0 0 24 24"><path fill="currentColor" d="M10.5 15h3l-.575-3.225q.5-.25.788-.725T14 10q0-.825-.587-1.412T12 8t-1.412.588T10 10q0 .575.288 1.05t.787.725zm1.5 7q-3.475-.875-5.738-3.988T4 11.1V5l8-3l8 3v6.1q0 3.8-2.262 6.913T12 22"/></svg>
-                </button>
+                <div class="tooltip invisible" id="tooltip3">
+                    <button class="btn btn-primary btn-circle btn-xl visible" id="hide">
+                        <svg class="w-6 h-6" viewBox="0 0 24 24"><path fill="currentColor" d="M10.5 15h3l-.575-3.225q.5-.25.788-.725T14 10q0-.825-.587-1.412T12 8t-1.412.588T10 10q0 .575.288 1.05t.787.725zm1.5 7q-3.475-.875-5.738-3.988T4 11.1V5l8-3l8 3v6.1q0 3.8-2.262 6.913T12 22"/></svg>
+                    </button>
+                </div>
                 <button class="btn btn-secondary btn-circle btn-xl" id="extract">
                     <svg class="w-6 h-6" viewBox="0 0 24 24"><path fill="currentColor" d="M18 1c-2.76 0-5 2.24-5 5v2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12c1.11 0 2-.89 2-2V10a2 2 0 0 0-2-2h-1V6c0-1.66 1.34-3 3-3s3 1.34 3 3v2h2V6c0-2.76-2.24-5-5-5m-8 12a2 2 0 0 1 2 2c0 1.11-.89 2-2 2a2 2 0 1 1 0-4"/></svg>
                 </button>
@@ -182,14 +184,15 @@ import Layout from '../layouts/Layout.astro';
         }
         function setLanguage(){
             runIfMatch('language','simplifiedChinese',{
-                simplifiedChinese:['导入配置','导出配置','生成密钥','输入接收方的公钥（可选）','输入你的私钥（可选）','输入接收方的公钥（可选）','输入你的私钥（可选）','请输入需要加密的信息','此处显示生成的掩饰文本',`请输入隐写提示，例如："续写一段散文："\n你可以通过右侧的保存按钮来保存当前的提示模板`,'确定','Github','语言','主题','隐写','提取','保存','进度条','支持前后插入'],
-                traditionalChinese:['導入配置', '導出配置', '生成密鑰', '輸入接收方的公鑰（可選）', '輸入你的私鑰（可選）', '輸入接收方的公鑰（可選）', '輸入你的私鑰（可選）', '請輸入需要加密的信息', '此處顯示生成的掩飾文本', `請輸入隱寫提示，例如：「續寫一段散文：」\n您可以通過右側的儲存按鈕來儲存當前的提示模板`, '確定', 'Github', '語言', '主題', '隱寫', '提取', '保存', '進度條', '支持前後插入'],
-                english:['Import Configuration', 'Export Configuration', 'Generate Key', 'Enter Recipient\'s Public Key (Optional)', 'Enter Your Private Key (Optional)', 'Enter Recipient\'s Public Key (Optional)', 'Enter Your Private Key (Optional)', 'Please Enter the Information to Encrypt', 'The Generated Masked Text is Displayed Here', `Please enter a steganography prompt, for example: "Continue writing a prose passage:"\nYou can save the current prompt template using the save button on the right.`, 'Confirm', 'Github', 'Language', 'Theme', 'Steganography', 'Extract', 'Save', 'Progress Bar', 'Support Front and Back Insertion'],
+                simplifiedChinese:['导入配置','导出配置','生成密钥','输入接收方的公钥（可选）','输入你的私钥（可选）','输入接收方的公钥（可选）','输入你的私钥（可选）','请输入需要加密的信息','此处显示生成的掩饰文本',`请输入任务提示，例如："续写一段散文："\n你可以通过右侧的保存按钮来保存当前的提示模板`,'确定','Github','语言','主题','隐写','提取','保存','进度条','支持前后插入'],
+                traditionalChinese:['導入配置', '導出配置', '生成密鑰', '輸入接收方的公鑰（可選）', '輸入你的私鑰（可選）', '輸入接收方的公鑰（可選）', '輸入你的私鑰（可選）', '請輸入需要加密的信息', '此處顯示生成的掩飾文本', `請輸入任務提示，例如：「續寫一段散文：」\n您可以通過右側的儲存按鈕來儲存當前的提示模板。`, '確定', 'Github', '語言', '主題', '隱寫', '提取', '保存', '進度條', '支持前後插入'],
+                english:['Import Configuration', 'Export Configuration', 'Generate Key', 'Enter Recipient\'s Public Key (Optional)', 'Enter Your Private Key (Optional)', 'Enter Recipient\'s Public Key (Optional)', 'Enter Your Private Key (Optional)', 'Please Enter the Information to Encrypt', 'The Generated Masked Text is Displayed Here', `Please enter a task prompt, for example: "Continue writing a prose passage:"\nYou can save the current prompt template using the save button on the right.`, 'Confirm', 'Github', 'Language', 'Theme', 'Steganography', 'Extract', 'Save', 'Progress Bar', 'Support Front and Back Insertion'],
             },(strs)=>{
                 assignStrs(strs);
             });
             el.tooltip.setAttribute("data-tip",dynamicContent('即使隐写暴露，也能确保原始信息不会被破解','即使隱寫暴露，也能確保原始信息不會被破解','Even if the Steganography is Exposed, It Ensures the Original Information Cannot Be Cracked'))
             el.tooltip2.setAttribute("data-tip",dynamicContent('生成的掩饰文本嵌入到任意文本后仍能准确解密，略微增加隐写暴露的风险','生成的掩飾文本嵌入到任意文本後仍能準確解密，略微增加隱寫暴露的風險','The generated cover text can still be accurately decrypted after being embedded into any text, slightly increasing the risk of steganographic exposure'))
+            el.tooltip3.setAttribute("data-tip",dynamicContent('再次点击以停止隐写','再次點擊以停止隱寫','Click again to stop steganography'));
         }
         function dynamicContent(...strs){
             return runIfMatch('language','simplifiedChinese',{
@@ -281,8 +284,8 @@ import Layout from '../layouts/Layout.astro';
                 "n_predict": tailCompletion?-1:1,//生成的token数，-1-2048
                 // "temperature": 2.0,//影响文本的随机性，0-2，但是目前的选词完全基于top_k//todo:如果新版的sampler配置可用，尝试关掉top_k之外的采样器
                 // "stop": punctuations,
-                "repeat_last_n": 256,
-                "repeat_penalty": 1.1,//重复惩罚，1.0为无惩罚，默认1.1
+                "repeat_last_n": 128,//默认64
+                "repeat_penalty": 1.18,//重复惩罚，1.0为无惩罚，默认1.1，实测偶尔确实会出不少重复
                 // "top_p": 0.95,//默认0.95，增大后似乎能增加更多的选词可能性
                 // "min_p": 0.05,
                 // "tfs_z": 1,//默认1.0，禁用
@@ -352,7 +355,7 @@ import Layout from '../layouts/Layout.astro';
                 let ttstr=tstr,ttscore=tscore,sections=0;
                 for(let k=0;;k++){
                     if(k>=t.length){
-                        currentCoverText+=t;
+                        currentCoverText+=t;el.coverText.value=currentCoverText;
                         await dfs(i+sections,ttstr,ttscore);
                         if(status)return;
                         currentCoverText=currentCoverText.slice(0,-t.length);break;//减少dfs传递的内存占用
@@ -375,7 +378,7 @@ import Layout from '../layouts/Layout.astro';
             // console.log('测试映射失败次数')
         }
         let init=false,logitBias,originLogitBias=[
-            [" ",false],["   ",false],["       ",false]//不间断空格是用于精确排版的符号，正常人几乎不可能手动使用
+            [" ",false],["  ",false],["   ",false],["    ",false],["     ",false],["      ",false],["       ",false],["        ",false]//不间断空格是用于精确排版的符号，正常人几乎不可能手动使用
             ,[" \n",false],["  \n",false],[" \n\n",false],["  \n\n",false],
         ];
         // let logitBias=[["",false],["　",false],[" ",false],["   ",false],["．",false],["【",false],["】",false],["〈",false],["〉",false],[" 【",false],
@@ -390,41 +393,53 @@ import Layout from '../layouts/Layout.astro';
             1, 1, 1, 0, 1, 1, 0, 0,
         ]
         async function encrypt(prompt,plainText) {
+            if(!el.progress.classList.contains('hidden')){
+                status=true;
+                return;
+            }
             if(!init){
                 logitBias=await initLogitBias(originLogitBias,8090);
                 init=true;
             }
-            if(prompt&&plainText){
-                if(el.progress.classList.contains('hidden')){
-                    const compressed = await unishoxCompress(plainText);
-                    let [data,useUnishox]=compressed;
-                    let key=await readTextFile(el.publicKey)
-                    if(key){
-                        data= await eccEncryptToUint8Array(data,JSON.parse(key));
-                    }
-                    //添加纠错码的话，要求用户手动修改不协调的地方，并检测是否仍然能还原。我觉得这个方向走偏了，想办法增强AI的隐写效果才是以后的方向。
-                    console.log(data);
-                    base=toBinary(data);//base=[useUnishox,...toBinary(data)];//处理为二进制序列，在映射时粒度更细，但建议每次只映射1位，减少映射失败率。
-                    allowInsertion=get('insertion',true);
-                    if(allowInsertion){
-                        if(data.length>65535)alert('内容过多，请减少内容或关闭前后插入选项')
-                        let length=new Uint8Array(2);//如果先加magic num再加密，那么就要在每个位置都寻找长度>=(67*8)的所有子串，此时尾插无影响（因为是按顺序和最小长度找起），如果头插数量为n bit，则寻找次数为n(n+1)/2，即是说只有少量头插的情况下才能成功。//todo:当用户选中允许头尾插入时，添加选项"隐蔽的加密"：当结合加密使用时，避免增加隐写暴露的风险，但只允许头部插入少量文本。这需求我看了都感觉绷不住。
-                        length[0]=data.length/256;length[1]=data.length%256;
-                        base=[...magicNum,...toBinary(length),...base];
-                    }
-                    console.log(base);
-                    currentPrompt=prompt;currentCoverText='';currentShuffle=0;status=false;el.progress.style.setProperty('--value', 0);el.progress.setAttribute('aria-valuenow', 0);el.progress.classList.remove('hidden');
-                    await dfs(0,'',0);
-                    el.progress.classList.add('hidden');
-                    if(!status){
-                        alert('请尝试减少输入内容，或在github反馈','隐写失败！');
-                    }
-                    if(allowInsertion&&!punctuations.includes(coverText[coverText.length-1])){//如果不开启allowInsertion，就没法对掩饰文本进行尾部自动补全。如果开启allowInsertion，通常很少有enableTailAutocomplete这个选项的需求。
-                        currentCoverText+=(await chat(currentPrompt+currentCoverText,1,true));
-                    }
-                    el.coverText.value= currentCoverText;
-                }
+            if(!plainText){
+                el.secret.focus();
+                return;
             }
+            if(!prompt){
+                el.prompt.focus();
+                return;
+            }
+            const compressed = await unishoxCompress(plainText);
+            let [data,useUnishox]=compressed;
+            let key=await readTextFile(el.publicKey)
+            if(key){
+                data= await eccEncryptToUint8Array(data,JSON.parse(key));
+            }
+            //添加纠错码的话，要求用户手动修改不协调的地方，并检测是否仍然能还原。我觉得这个方向走偏了，想办法增强AI的隐写效果才是以后的方向。
+            console.log(data);
+            base=toBinary(data);//base=[useUnishox,...toBinary(data)];//处理为二进制序列，在映射时粒度更细，但建议每次只映射1位，减少映射失败率。
+            allowInsertion=get('insertion',true);
+            if(allowInsertion){
+                if(data.length>65535){
+                    alert('内容过多，请减少内容或关闭前后插入选项')
+                    return;
+                }
+                let length=new Uint8Array(2);//如果先加magic num再加密，那么就要在每个位置都寻找长度>=(67*8)的所有子串，此时尾插无影响（因为是按顺序和最小长度找起），如果头插数量为n bit，则寻找次数为n(n+1)/2，即是说只有少量头插的情况下才能成功。//todo:当用户选中允许头尾插入时，添加选项"隐蔽的加密"：当结合加密使用时，避免增加隐写暴露的风险，但只允许头部插入少量文本。这需求我看了都感觉绷不住。
+                length[0]=data.length/256;length[1]=data.length%256;
+                base=[...magicNum,...toBinary(length),...base];
+            }
+            console.log(base);
+            currentPrompt=prompt;currentCoverText='';currentShuffle=0;status=false;el.progress.style.setProperty('--value', 0);el.progress.setAttribute('aria-valuenow', 0);el.progress.classList.remove('hidden');el.tooltip3.classList.remove('invisible')
+            await dfs(0,'',0);
+            el.tooltip3.classList.add('invisible');el.progress.classList.add('hidden');
+            if(!status){
+                alert('请尝试减少输入内容，或在github反馈','隐写失败！');
+                return;
+            }
+            if(allowInsertion&&!punctuations.includes(coverText[coverText.length-1])){//如果不开启allowInsertion，就没法对掩饰文本进行尾部自动补全。如果开启allowInsertion，通常很少有enableTailAutocomplete这个选项的需求。
+                currentCoverText+=(await chat(currentPrompt+currentCoverText,1,true));
+            }
+            el.coverText.value= currentCoverText;
         }
         async function extract(coverText) {
             if(coverText){
@@ -457,14 +472,21 @@ import Layout from '../layouts/Layout.astro';
             }
         }
         el.hide.onclick=async ()=>{
-            // let s=0;
+            await encrypt(el.prompt.value,el.secret.value);
+            // let s=0;//耗时测试
             // for(let i=0;i<10;i++){
             //     const start = performance.now();
-                await encrypt(el.prompt.value,el.secret.value);
+            //     await encrypt(el.prompt.value,el.secret.value);
             //     const end = performance.now();
             //     s+=end-start;
             // }
             // console.log(s/10);
+            // let s=0;//隐写容量
+            // for(let i=0;i<10;i++){
+            //     await encrypt(el.prompt.value,el.secret.value);
+            //     s+=currentCoverText.length;
+            // }
+            // console.log(`${base.length} ${s/10} ${base.length/(s/10)}`);//测量隐写容量
         }
         el.extract.onclick=()=>{
             extract(el.coverText.value);

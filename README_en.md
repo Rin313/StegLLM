@@ -54,7 +54,7 @@ Configure `system_prompt.txt`
 
 ```mermaid
 flowchart TD
-    A[Start] --> compress[Compression - Unishox or Deflate-Raw]
+    A[Start] --> compress[Compression<br>Unishox or Deflate-Raw]
     compress --> encrypt[ECC Encryption - Optional]
     public[Recipient's Public Key] --> encrypt
     encrypt --> magicNum[Add Magic Number and Length Field - Optional]

@@ -53,7 +53,7 @@ Linux/MacOS系统：运行 `linux_mac.sh`
 
 ```mermaid
 flowchart TD
-    A[开始] --> compress[压缩 - Unishox或Deflate-Raw];
+    A[开始] --> compress[压缩<br>Unishox或Deflate-Raw];
     compress --> encrypt[ECC加密 - 可选];
     public[接收方的公钥] -->encrypt;
     encrypt --> magicNum[添加魔数和长度字段 - 可选]
