@@ -276,13 +276,13 @@ import Layout from '../layouts/Layout.astro';
         const punctuations=["？","?","！","!","。","）",")","…","}","]","."];//"\n"和"”"有时候并不代表结尾
         async function chat(str,progress,tailCompletion) {
             //let floor=7;//const probs=Math.round(25-Math.pow(progress, 0.1)*(25-floor));//非线性token数的可行性：token数较多时，如果roll到很差的token，这次隐写就烂完了；token较少时，如果失败回溯，上一层剩下的候选token质量只会更差；还不如一开始就选个固定的稳定的值
-            let body={//有些参数不生效，响应格式也和llama.cpp的api略有不同//在api中设置system_prompt会导致性能严重下降
+            let body={//在api中设置system_prompt会导致性能严重下降
                 // "stream": true,
                 "n_predict": tailCompletion?-1:1,//生成的token数，-1-2048
-                "temperature": 2.0,//影响文本的随机性，0-2
+                // "temperature": 2.0,//影响文本的随机性，0-2，但是目前的选词完全基于top_k//todo:如果新版的sampler配置可用，尝试关掉top_k之外的采样器
                 // "stop": punctuations,
                 "repeat_last_n": 256,
-                "repeat_penalty": 1.18,//重复惩罚，1.0为无惩罚
+                "repeat_penalty": 1.1,//重复惩罚，1.0为无惩罚，默认1.1
                 // "top_p": 0.95,//默认0.95，增大后似乎能增加更多的选词可能性
                 // "min_p": 0.05,
                 // "tfs_z": 1,//默认1.0，禁用
@@ -298,9 +298,10 @@ import Layout from '../layouts/Layout.astro';
                 // "post_sampling_probs":true,
                 // "samplers": ["top_k"],//响应上看似乎没有使用top_p,min_p,temperature等？
                 "cache_prompt": true,//提示词复用
-                "api_key": "",
-                // "slot_id": -1,
+                // "api_key": "",
+                "slot_id": 0,//默认-1，分配到空闲插槽
                 "prompt": str,//支持输入多个prompt
+                // "seed":-1,
                 // "response_fields": ["content"],//不生效？
                 "logit_bias": tailCompletion?originLogitBias:logitBias//补全也用logitBias，因为获取不到tokenId还在用h32，所以如果是问号，detokenize会报错
             }
@@ -308,19 +309,18 @@ import Layout from '../layouts/Layout.astro';
                 body["stop"]=punctuations;//动态截断
             }
             else if(currentShuffle===0){
-                body["top_k"]= 20;//选词范围，默认40；对于目前的策略，选词数量只影响前期的混淆效果，对隐写效率没多少增益，更不会影响隐写效果
-                body["n_probs"]= 20;//按概率排序的前n个选词
+                body["top_k"]= 24;//选词范围，默认40
+                body["n_probs"]= 24;//按概率排序的前n个选词，如果top_k不够好像会拿0开始的token补全
             }
             else{
-                body["top_k"]= 10;
-                body["n_probs"]= 10;
-                // body["samplers"]=["top_k",];//不确定是否影响效果
+                body["top_k"]= 12;//一个合适的值能够平衡好映射失败次数和文本质量，嵌入一个短句出现二三十次失败其实还能接受。
+                body["n_probs"]= 12;
             }
             const response = await fetch('http://127.0.0.1:8090/completion', {
                 method: 'POST',
                 body: JSON.stringify(body),
             });
-            const json=(await response.json());
+            const json=(await response.json());//todo:目前的json解析高达1-2秒，怀疑是logitBias过大的缘故，待API哪天更新后再测一次//const start = performance.now();//const end = performance.now();//console.log(end-start);
             if(tailCompletion){
                 if(json.stopped_word)
                     return json.content+json.stopping_word;
@@ -328,20 +328,19 @@ import Layout from '../layouts/Layout.astro';
             }
             const t=json.completion_probabilities[0];
             if(!t)return [];//return chat(str,progress,false);//当采样结果是�，不会返回采样列表，闹麻了，而且有可能发生无限采样�导致卡住
-            else {
-                if(currentShuffle<3){//至少shuffle三次才能保证基本的随机性
-                    currentShuffle++;
-                    return shuffle(t.probs);
-                }
-                return progress<=0.08?shuffle(t.probs):t.probs;//根据进度确定是否shuffle
+            if(currentShuffle<3||progress<=0.08){//至少shuffle三次才能保证基本的随机性//根据进度确定是否shuffle
+                currentShuffle++;
+                return shuffle(t.probs);
             }
+            return t.probs;
         }
         let base,currentPrompt,currentCoverText,currentShuffle,status,allowInsertion;
         async function dfs(i,tstr,tscore){
             const percents=i/base.length;
             const percent100=percents*100;
             el.progress.style.setProperty('--value',percent100);el.progress.setAttribute('aria-valuenow', percent100);
-            const list=(await chat(currentPrompt+currentCoverText,percents,false));
+            const list=(await chat(currentPrompt+currentCoverText,percents,false));//整个dfs除了chat，几乎不耗时间，因此哪怕提前尝试第二次请求也是没有意义的
+            // if(list.length===0)return;//测试映射失败次数时避免干扰
             // for(let j=0;j<list.length;j++){
             //     const t=list[j].tok_str;
             //     const xxx=await tokenize(t);
@@ -366,11 +365,9 @@ import Layout from '../layouts/Layout.astro';
                             break;
                         sections++;ttstr='';ttscore=0;
                         if(i+sections===base.length){//t.length-(k+1)
-                            // progress.style.width=`100%`;
                             status=true;
                             currentCoverText+=allowInsertion?t:t.slice(0,k+1);//如果不开启allowInsertion，用上t一样能使尾部稍微自然一点。
                             return;
-                            // return currentCoverText+t;
                         }
                     }
                 }
@@ -378,7 +375,7 @@ import Layout from '../layouts/Layout.astro';
             // console.log('测试映射失败次数')
         }
         let init=false,logitBias,originLogitBias=[
-            [" ",false],["   ",false],["       ",false]//不间断空格是用于精确排版的符号，普通人几乎不可能手动使用
+            [" ",false],["   ",false],["       ",false]//不间断空格是用于精确排版的符号，正常人几乎不可能手动使用
             ,[" \n",false],["  \n",false],[" \n\n",false],["  \n\n",false],
         ];
         // let logitBias=[["",false],["　",false],[" ",false],["   ",false],["．",false],["【",false],["】",false],["〈",false],["〉",false],[" 【",false],

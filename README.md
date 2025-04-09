@@ -51,7 +51,27 @@ Linux/MacOS系统：运行 `linux_mac.sh`
 
 # 原理图
 
-![StegLLM](mermaid.png "StegLLM 原理图")
+```mermaid
+flowchart TD
+    A[开始] --> compress[压缩 - Unishox或Deflate-Raw];
+    compress --> encrypt[ECC加密 - 可选];
+    public[接收方的公钥] -->encrypt;
+    encrypt --> magicNum[添加魔数和长度字段 - 可选]
+    magicNum -->base[编码为二进制序列]
+    base -->prompt[初始化prompt]
+    prompt-->dfs[以DFS方式构建token生成树]
+    dfs --> weightsNum{加权和>=阈值?}
+    weightsNum --> |是|mapping{xxhash%2=bit?}
+    weightsNum --> |否|dfs;
+    mapping --> |是|mappingDone{当前token映射完成?}
+    mapping --> |否|dfs;
+    mappingDone -->|是|coverText[更新掩饰文本和上下文]
+    mappingDone -->|否|dfs;
+    coverText --> done{嵌入完成?};
+    done -->|是|tail[尾部补全 - 可选];
+    done -->|否|dfs;
+tail -->endd[结束];
+```
 
 # 贡献
 
