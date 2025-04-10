@@ -144,7 +144,7 @@ import Layout from '../layouts/Layout.astro';
         </div>
     </div>
     <script>
-        import el,{setAllButtonTypesToButton,get,save,saveList,runIfMatch,generateKeyPair,exportLocalStorage,importLocalStorage,initDaisyThemeController,initLogitBias,unishoxCompress,readTextFile,eccEncryptToUint8Array,eccDecryptToUint8Array,shuffle,toBinary,toBytes,findSublistIndex,unishoxDecompress,tokenize,stringToUnicode} from '../utils/commonUtils';
+        import el,{setAllButtonTypesToButton,get,save,saveList,runIfMatch,generateKeyPair,exportLocalStorage,importLocalStorage,initDaisyThemeController,initLogitBias,unishoxCompress,readTextFile,eccEncryptToUint8Array,eccDecryptToUint8Array,shuffle,toBinary,toBytes,findSublistIndex,unishoxDecompress,tokenize,stringToUnicode,exportFile} from '../utils/commonUtils';
         import xxhash from 'xxhash-wasm';//hash-wasm不提供返回int类型的接口
         const { h32 } = await xxhash();
         function confirm(msg=null,title=null){
@@ -184,9 +184,9 @@ import Layout from '../layouts/Layout.astro';
         }
         function setLanguage(){
             runIfMatch('language','simplifiedChinese',{
-                simplifiedChinese:['导入配置','导出配置','生成密钥','输入接收方的公钥（可选）','输入你的私钥（可选）','输入接收方的公钥（可选）','输入你的私钥（可选）','请输入需要加密的信息','此处显示生成的掩饰文本',`请输入任务提示，例如："续写一段散文："\n你可以通过右侧的保存按钮来保存当前的提示模板`,'确定','Github','语言','主题','隐写','提取','保存','进度条','支持前后插入'],
-                traditionalChinese:['導入配置', '導出配置', '生成密鑰', '輸入接收方的公鑰（可選）', '輸入你的私鑰（可選）', '輸入接收方的公鑰（可選）', '輸入你的私鑰（可選）', '請輸入需要加密的信息', '此處顯示生成的掩飾文本', `請輸入任務提示，例如：「續寫一段散文：」\n您可以通過右側的儲存按鈕來儲存當前的提示模板。`, '確定', 'Github', '語言', '主題', '隱寫', '提取', '保存', '進度條', '支持前後插入'],
-                english:['Import Configuration', 'Export Configuration', 'Generate Key', 'Enter Recipient\'s Public Key (Optional)', 'Enter Your Private Key (Optional)', 'Enter Recipient\'s Public Key (Optional)', 'Enter Your Private Key (Optional)', 'Please Enter the Information to Encrypt', 'The Generated Masked Text is Displayed Here', `Please enter a task prompt, for example: "Continue writing a prose passage:"\nYou can save the current prompt template using the save button on the right.`, 'Confirm', 'Github', 'Language', 'Theme', 'Steganography', 'Extract', 'Save', 'Progress Bar', 'Support Front and Back Insertion'],
+                simplifiedChinese:['导入配置','导出配置','生成密钥','输入接收方的公钥（可选）','输入你的私钥（可选）','输入接收方的公钥（可选）','输入你的私钥（可选）','请输入需要加密的信息','请输入需要解密的掩饰文本',`请输入任务提示，例如："续写一段散文："\n你可以通过右侧的保存按钮来保存当前的提示模板`,'确定','Github','语言','主题','隐写','提取','保存','进度条','支持前后插入'],
+                traditionalChinese:['導入配置', '導出配置', '生成密鑰', '輸入接收方的公鑰（可選）', '輸入你的私鑰（可選）', '輸入接收方的公鑰（可選）', '輸入你的私鑰（可選）', '請輸入需要加密的信息', '請輸入需要解密的掩飾文本', `請輸入任務提示，例如：「續寫一段散文：」\n您可以通過右側的儲存按鈕來儲存當前的提示模板。`, '確定', 'Github', '語言', '主題', '隱寫', '提取', '保存', '進度條', '支持前後插入'],
+                english:['Import Configuration', 'Export Configuration', 'Generate Key', 'Enter Recipient\'s Public Key (Optional)', 'Enter Your Private Key (Optional)', 'Enter Recipient\'s Public Key (Optional)', 'Enter Your Private Key (Optional)', 'Please Enter the Information to Encrypt', 'Please enter the disguised text to be decrypted', `Please enter a task prompt, for example: "Continue writing a prose passage:"\nYou can save the current prompt template using the save button on the right.`, 'Confirm', 'Github', 'Language', 'Theme', 'Steganography', 'Extract', 'Save', 'Progress Bar', 'Support Front and Back Insertion'],
             },(strs)=>{
                 assignStrs(strs);
             });
@@ -242,7 +242,7 @@ import Layout from '../layouts/Layout.astro';
             setTheme();
             setLanguage();
         }
-        let prompts=get('prompts',['']);let i=prompts.length-1;el.prompt.value=prompts[i];
+        let prompts=get('prompts',['']);let i=prompts.length-1;el.prompt.value=prompts[i];//todo:记住最后的模板选项
         el.up.onclick=()=>{
             i=(i+1)%prompts.length;
             el.prompt.value=prompts[i];
@@ -277,7 +277,25 @@ import Layout from '../layouts/Layout.astro';
             return 3;
         }// console.log(')'.codePointAt(0));
         const punctuations=["？","?","！","!","。","）",")","…","}","]","."];//"\n"和"”"有时候并不代表结尾
-        async function chat(str,progress,tailCompletion) {
+        async function chat(str,n_predict){
+            let body={//在api中设置system_prompt会导致性能严重下降
+                stop: ["</s>"],//chat模式下默认为["</s>", "Llama:", "User:"]
+                "n_predict": n_predict,//生成的token数，-1-2048
+                "repeat_last_n": 128,//默认64
+                "repeat_penalty": 1.18,//重复惩罚，1.0为无惩罚，默认1.1，实测偶尔确实会出不少重复
+                "cache_prompt": false,//提示词复用
+                "slot_id": 0,//默认-1，分配到空闲插槽
+                "prompt": str,//支持输入多个prompt
+                "logit_bias": originLogitBias//补全也用logitBias，因为获取不到tokenId还在用h32，所以如果是问号，detokenize会报错
+            }
+            const response = await fetch('http://127.0.0.1:8090/completion', {
+                method: 'POST',
+                body: JSON.stringify(body),
+            });
+            const json=(await response.json());
+            return json.content;
+        }
+        async function completion(str, progress, tailCompletion) {
             //let floor=7;//const probs=Math.round(25-Math.pow(progress, 0.1)*(25-floor));//非线性token数的可行性：token数较多时，如果roll到很差的token，这次隐写就烂完了；token较少时，如果失败回溯，上一层剩下的候选token质量只会更差；还不如一开始就选个固定的稳定的值
             let body={//在api中设置system_prompt会导致性能严重下降
                 // "stream": true,
@@ -327,10 +345,10 @@ import Layout from '../layouts/Layout.astro';
             if(tailCompletion){
                 if(json.stopped_word)
                     return json.content+json.stopping_word;
-                return chat(str,progress,true)
+                return completion(str,progress,true)
             }
             const t=json.completion_probabilities[0];
-            if(!t)return [];//return chat(str,progress,false);//当采样结果是�，不会返回采样列表，闹麻了，而且有可能发生无限采样�导致卡住
+            if(!t)return [];//return completion(str,progress,false);//当采样结果是�，不会返回采样列表，闹麻了，而且有可能发生无限采样�导致卡住
             if(currentShuffle<3||progress<=0.08){//至少shuffle三次才能保证基本的随机性//根据进度确定是否shuffle
                 currentShuffle++;
                 return shuffle(t.probs);
@@ -342,7 +360,7 @@ import Layout from '../layouts/Layout.astro';
             const percents=i/base.length;
             const percent100=percents*100;
             el.progress.style.setProperty('--value',percent100);el.progress.setAttribute('aria-valuenow', percent100);
-            const list=(await chat(currentPrompt+currentCoverText,percents,false));//整个dfs除了chat，几乎不耗时间，因此哪怕提前尝试第二次请求也是没有意义的
+            const list=(await completion(currentPrompt+currentCoverText,percents,false));//整个dfs除了completion，几乎不耗时间，因此哪怕提前尝试第二次请求也是没有意义的
             // if(list.length===0)return;//测试映射失败次数时避免干扰
             // for(let j=0;j<list.length;j++){
             //     const t=list[j].tok_str;
@@ -435,7 +453,7 @@ import Layout from '../layouts/Layout.astro';
                 return;
             }
             if(allowInsertion&&!punctuations.includes(coverText[coverText.length-1])){//如果不开启allowInsertion，就没法对掩饰文本进行尾部自动补全。如果开启allowInsertion，通常很少有enableTailAutocomplete这个选项的需求。
-                currentCoverText+=(await chat(currentPrompt+currentCoverText,1,true));
+                currentCoverText+=(await completion(currentPrompt+currentCoverText,1,true));
             }
             el.coverText.value= currentCoverText;
         }
@@ -482,15 +500,42 @@ import Layout from '../layouts/Layout.astro';
             //     s+=end-start;
             // }
             // console.log(s/10);
-            // let s=0;//隐写容量
+            // let s=0;//隐写容量测试
             // for(let i=0;i<10;i++){
             //     await encrypt(el.prompt.value,el.secret.value);
             //     s+=currentCoverText.length;
             // }
-            // console.log(`${base.length} ${s/10} ${base.length/(s/10)}`);//测量隐写容量
+            // console.log(`${base.length} ${s/10} ${base.length/(s/10)}`);
+            // let cover=[];//掩饰文本测试
+            // for(let i=0;i<150;i++){
+            //     await encrypt(el.prompt.value,el.secret.value);
+            //     cover.push(currentCoverText);
+            // }
+            // exportFile(JSON.stringify(cover),"cover1.json");
+            // let cover=[];
+            // for(let i=0;i<20;i++){
+            //     await encrypt(el.prompt.value,el.secret.value);
+            //     cover.push(currentCoverText);
+            // }
+            // exportFile(JSON.stringify(cover),"cover2.json");
+            // let normal=[];//正常文本测试
+            // for(let i=0;i<150;i++){
+            //     normal.push(await chat(el.prompt.value,8));
+            // }
+            // exportFile(JSON.stringify(normal),"normal1.json");
+            // normal=[];
+            // for(let i=0;i<20;i++){
+            //     normal.push(await chat(el.prompt.value,80));
+            // }
+            // exportFile(JSON.stringify(normal),"normal2.json");
+            // normal=[];
+            // for(let i=0;i<10;i++){
+            //     normal.push(await chat(el.prompt.value,600));
+            // }
+            // exportFile(JSON.stringify(normal),"normal3.json");
         }
-        el.extract.onclick=()=>{
-            extract(el.coverText.value);
+        el.extract.onclick=async ()=>{
+            await extract(el.coverText.value);
         }
         // let cnm='';
         // for(let i=0;;i++){

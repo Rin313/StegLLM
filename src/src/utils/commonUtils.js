@@ -46,7 +46,7 @@ function createElement(tag,props={},styles={},parent=null){//
     if(parent)parent.appendChild(el);
     return el;
 }
-function exportFile(content,filename){
+export function exportFile(content,filename){
     const blob = new Blob([content], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     createElement('a',{
