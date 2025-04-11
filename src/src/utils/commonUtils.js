@@ -178,7 +178,7 @@ export async function unishoxCompress(str){//混合使用效果更差
     const result2=await compress(utf8Encoder.encode(str));
     return result1.length<result2.length?[result1,1]:[result2,0];//unishox2末尾补齐1，deflate按规范则应该是补齐0，但做截断处理平均减少3.5bit，但长度单位由字节变为bit，可表示量变为8192字节。而且这种方式也不适用加密。
 }
-export async function unishoxDecompress(uint8Array,useUnishox=1){
+export async function unishoxDecompress(uint8Array){
     //return useUnishox?unishox2_decompress(uint8Array,uint8Array.length,null,USX_HCODES_NO_DICT, USX_HCODE_LENS_NO_DICT, USX_FREQ_SEQ_TXT,USX_TEMPLATES):utf8Decoder.decode(await decompress(uint8Array));
     let secret;
     try{

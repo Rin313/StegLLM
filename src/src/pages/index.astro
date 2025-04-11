@@ -242,24 +242,24 @@ import Layout from '../layouts/Layout.astro';
             setTheme();
             setLanguage();
         }
-        let prompts=get('prompts',['']);let i=prompts.length-1;el.prompt.value=prompts[i];//todo:记住最后的模板选项
+        let prompts=get('prompts',['']);let i=get('promptIndex',prompts.length-1);el.prompt.value=prompts[i];
         el.up.onclick=()=>{
-            i=(i+1)%prompts.length;
+            i=(i+1)%prompts.length;save('promptIndex',i);
             el.prompt.value=prompts[i];
         }
         el.down.onclick=()=>{
-            i=(i-1+prompts.length)%prompts.length;
+            i=(i-1+prompts.length)%prompts.length;save('promptIndex',i);
             el.prompt.value=prompts[i];
         }
         el.save.onclick=()=>{
             if(el.prompt.value){
                 saveList('prompts',el.prompt.value);
-                prompts=get('prompts',['']);i=prompts.length-1;
+                prompts=get('prompts',['']);i=prompts.length-1;save('promptIndex',i);
                 alert('','保存成功！')
             }
             else{
                 saveList('prompts',null,i);
-                prompts=get('prompts',['']);i=prompts.length-1;el.prompt.value=prompts[i];
+                prompts=get('prompts',['']);i=prompts.length-1;el.prompt.value=prompts[i];save('promptIndex',i);
                 alert('','删除成功！')
             }
         }
@@ -275,7 +275,7 @@ import Layout from '../layouts/Layout.astro';
             if(code===65292||code===12290||code===8221)//中文逗号，中文句号，中文右引号
                 return 2;
             return 3;
-        }// console.log(')'.codePointAt(0));
+        }//console.log('\n'.codePointAt(0));
         const punctuations=["？","?","！","!","。","）",")","…","}","]","."];//"\n"和"”"有时候并不代表结尾
         async function chat(str,n_predict){
             let body={//在api中设置system_prompt会导致性能严重下降
@@ -395,7 +395,8 @@ import Layout from '../layouts/Layout.astro';
         }
         let init=false,logitBias,originLogitBias=[
             [" ",false],["  ",false],["   ",false],["    ",false],["     ",false],["      ",false],["       ",false],["        ",false]//不间断空格是用于精确排版的符号，正常人几乎不可能手动使用
-            ,[" \n",false],["  \n",false],[" \n\n",false],["  \n\n",false],
+            ,["　",false]//全角空格，一般只用于段首排版，非常傻逼
+            ,[" \n",false],["  \n",false],[" \n\n",false],["  \n\n",false]
         ];
         // let logitBias=[["",false],["　",false],[" ",false],["   ",false],["．",false],["【",false],["】",false],["〈",false],["〉",false],[" 【",false],
         //     ["《",false],["》",false],//避免出现一些没头没尾的引用文章
