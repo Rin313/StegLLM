@@ -144,7 +144,7 @@ import Layout from '../layouts/Layout.astro';
         </div>
     </div>
     <script>
-        import el,{setAllButtonTypesToButton,get,save,saveList,runIfMatch,generateKeyPair,exportLocalStorage,importLocalStorage,initDaisyThemeController,initLogitBias,unishoxCompress,readTextFile,eccEncryptToUint8Array,eccDecryptToUint8Array,shuffle,toBinary,toBytes,findSublistIndex,unishoxDecompress,tokenize,stringToUnicode,exportFile} from '../utils/commonUtils';
+        import el,{setAllButtonTypesToButton,get,save,saveList,runIfMatch,generateKeyPair,exportLocalStorage,importLocalStorage,initDaisyThemeController,initLogitBias,unishoxCompress,readTextFile,eccEncryptToUint8Array,eccDecryptToUint8Array,shuffle,toBinary,toBytes,findSublistIndex,unishoxDecompress,tokenize,stringToUnicode,exportFile,containsInvisibleChar} from '../utils/commonUtils';
         import xxhash from 'xxhash-wasm';//hash-wasm不提供返回int类型的接口
         const { h32 } = await xxhash();
         function confirm(msg=null,title=null){
@@ -267,15 +267,23 @@ import Layout from '../layouts/Layout.astro';
             //零宽字符：看似在隐写场景中要尽可能保留，但从统计特征上看，这些字符属于非常少见的字符，不应该主动提高分布的频率。
             //一个token约为1-1.8个汉字，0.75个单词或3-4个字母
             //必须要保留的字符（随意中断将严重破坏语义）：字母、普通空格、英文逗号、英文句号
-            //尽量保留的字符（哪怕不中断也还有可能续写）：中文逗号、中文句号、中文右引号、
+            //尽量保留的字符（哪怕不中断也还有可能续写）：中文逗号、中文句号、中文右双引号、的（使用频率最高的汉字）
             if (code===32||code===44||code===46||//普通空格、英文逗号、英文句号
                 (code >= 65 && code <= 90) ||  // 大写字母 A-Z
                 (code >= 97 && code <= 122))  // 小写字母 a-z
                 return 1;
-            if(code===65292||code===12290||code===8221)//中文逗号，中文句号，中文右引号
+            if(code===65292||code===12290||code===8221||code===30340)//中文逗号，中文句号，中文右双引号，中文右单引号、的、(||code===8217)
                 return 2;
             return 3;
-        }//console.log('\n'.codePointAt(0));
+        }
+        function testWeight(str){
+            let s=0;
+            for(const char of str){
+                s+=getWeight(char.codePointAt(0));
+            }
+            return s;
+        }
+        console.log('的'.codePointAt(0));
         const punctuations=["？","?","！","!","。","）",")","…","}","]","."];//"\n"和"”"有时候并不代表结尾
         async function chat(str,n_predict){
             let body={//在api中设置system_prompt会导致性能严重下降
@@ -349,9 +357,8 @@ import Layout from '../layouts/Layout.astro';
             }
             const t=json.completion_probabilities[0];
             if(!t)return [];//return completion(str,progress,false);//当采样结果是�，不会返回采样列表，闹麻了，而且有可能发生无限采样�导致卡住
-            if(currentShuffle<3||progress<=0.08){//至少shuffle三次才能保证基本的随机性//根据进度确定是否shuffle
-                currentShuffle++;
-                return shuffle(t.probs);
+            if(currentShuffle<t.probs.length-1){//一个token的映射成功率保守估计为1/3左右（1/2映射失败，加一部分存在多次映射），那么shuffle x次的种数有2*(y/3)^x，shuffle数量线性递减+总数9次+n取12，总数约为8005。但有一点需要注意，尽可能引导用户使用丰富的任务模板和system prompt，避免内置这些配置
+                return shuffle(t.probs,0,t.probs.length-currentShuffle++);//此前根据进度来判断是否混淆，但这样对于短文本混淆次数不够，对于长文本又显得多余
             }
             return t.probs;
         }
@@ -362,12 +369,18 @@ import Layout from '../layouts/Layout.astro';
             el.progress.style.setProperty('--value',percent100);el.progress.setAttribute('aria-valuenow', percent100);
             const list=(await completion(currentPrompt+currentCoverText,percents,false));//整个dfs除了completion，几乎不耗时间，因此哪怕提前尝试第二次请求也是没有意义的
             // if(list.length===0)return;//测试映射失败次数时避免干扰
+            // let s=0;
             // for(let j=0;j<list.length;j++){
             //     const t=list[j].tok_str;
-            //     const xxx=await tokenize(t);
-            //     const xxxy=stringToUnicode(t);
-            //     console.log(`"${t}" "${xxxy}" ${xxx}`)
+            //     // if(containsInvisibleChar(t)){
+            //     //     const xxx=await tokenize(t);
+            //     //     const xxxy=stringToUnicode(t);
+            //     //     console.log(`"${t}" "${xxxy}" ${xxx}`)
+            //     // }
+            //     s+=testWeight(t);
+            //     // console.log(`"${t}" "${testWeight(t)}"`)
             // }
+            // console.log(s/list.length);
             for(let j=0;j<list.length;j++){if(status)return;
                 const t=list[j].tok_str;if(!t||t.includes("�"))continue;//TODO：如果api修复回显token值，就能实现传递token序列来避免无法解码的token，只要把两个无法解码的token拼起来就能形成一条有效路径
                 let ttstr=tstr,ttscore=tscore,sections=0;
@@ -383,7 +396,7 @@ import Layout from '../layouts/Layout.astro';
                     if(ttscore>=3){
                         if(h32(ttstr)%2!==base[i+sections])
                             break;
-                        sections++;ttstr='';ttscore=0;
+                        sections++;ttstr='';ttscore=0;//如果使用-=3，相对于提高token的平均映射次数，长短token的不平衡会更加明显
                         if(i+sections===base.length){//t.length-(k+1)
                             status=true;
                             currentCoverText+=allowInsertion?t:t.slice(0,k+1);//如果不开启allowInsertion，用上t一样能使尾部稍微自然一点。
@@ -394,13 +407,79 @@ import Layout from '../layouts/Layout.astro';
             // console.log('测试映射失败次数')
         }
         let init=false,logitBias,originLogitBias=[
-            [" ",false],["  ",false],["   ",false],["    ",false],["     ",false],["      ",false],["       ",false],["        ",false]//不间断空格是用于精确排版的符号，正常人几乎不可能手动使用
-            ,["　",false]//全角空格，一般只用于段首排版，非常傻逼
-            ,[" \n",false],["  \n",false],[" \n\n",false],["  \n\n",false]
+            ["\x00", false], // NUL
+            ["\x01", false], // SOH
+            ["\x02", false], // STX
+            ["\x03", false], // ETX
+            ["\x04", false], // EOT
+            ["\x05", false], // ENQ
+            ["\x06", false], // ACK
+            ["\x07", false], // BEL
+            ["\x08", false], // BS
+            ["\v", false],   // VT (垂直制表符)
+            ["\f", false],   // FF (换页符)
+            ["\0x0D", false],    // 单独的回车符几乎不被使用
+            ["\x0E", false], // SO
+            ["\x0F", false], // SI
+            ["\x10", false], // DLE
+            ["\x11", false], // DC1
+            ["\x12", false], // DC2
+            ["\x13", false], // DC3
+            ["\x14", false], // DC4
+            ["\x15", false], // NAK
+            ["\x16", false], // SYN
+            ["\x17", false], // ETB
+            ["\x18", false], // CAN
+            ["\x19", false], // EM
+            ["\x1A", false], // SUB
+            ["\x1B", false], // ESC
+            ["\x1C", false], // FS
+            ["\x1D", false], // GS
+            ["\x1E", false], // RS
+            ["\x1F", false], // US
+            ["\x7F", false], // DEL
+            ["\x80", false], // PAD
+            ["\x81", false], // HOP
+            ["\x82", false], // BPH
+            ["\x83", false], // NBH
+            ["\x84", false], // IND
+            ["\x85", false], // NEL
+            ["\x86", false], // SSA
+            ["\x87", false], // ESA
+            ["\x88", false], // HTS
+            ["\x89", false], // HTJ
+            ["\x8A", false], // VTS
+            ["\x8B", false], // PLD
+            ["\x8C", false], // PLU
+            ["\x8D", false], // RI
+            ["\x8E", false], // SS2
+            ["\x8F", false], // SS3
+            ["\x90", false], // DCS
+            ["\x91", false], // PU1
+            ["\x92", false], // PU2
+            ["\x93", false], // STS
+            ["\x94", false], // CCH
+            ["\x95", false], // MW
+            ["\x96", false], // SPA
+            ["\x97", false], // EPA
+            ["\x98", false], // SOS
+            ["\x99", false], // SGCI
+            ["\x9A", false], // SCI
+            ["\x9B", false], // CSI
+            ["\x9C", false], // ST
+            ["\x9D", false], // OSC
+            ["\x9E", false], // PM
+            ["\x9F", false], // APC
+            [" ",false],["  ",false],["   ",false],["    ",false],["     ",false],["      ",false],["       ",false],["        ",false],//不间断空格是用于精确排版的符号，正常人几乎不可能手动使用
+            ["　",false],//全角空格，一般只用于段首排版，非常傻逼
+            ["0x200B",false], // 零宽空格 (Zero Width Space)，似乎常用于html的格式隔断
+            ["�",false],
+            ["\uFEFF",false],//BOM(字节顺序标记)，用于标记大端序或者小端序
+            ["\r\n",false],["\r\n\r\n",false],//windows系统的换行，但现代的编程中应该不用手动处理
+            [" \n",false],["  \n",false],[" \n\n",false],["  \n\n",false],//实在不明白空格后再换行有什么意义
         ];
-        // let logitBias=[["",false],["　",false],[" ",false],["   ",false],["．",false],["【",false],["】",false],["〈",false],["〉",false],[" 【",false],
+        // let logitBias=[["　",false],[" ",false],["   ",false],["．",false],["【",false],["】",false],["〈",false],["〉",false],[" 【",false],
         //     ["《",false],["》",false],//避免出现一些没头没尾的引用文章
-        //     ["A",false],["B",false],["C",false],["D",false],//避免续写选择题
         //     ["。（",false],["（",false],["）",false],//括号容易引导AI生成注释和要求
         //     ["，\n\n",false],["；\n",false],["—\n\n",false],["-\n\n",false],["–\n\n",false],["--\n\n",false],[" —\n\n",false],//减少一些标点填充，增加文字密度
         //     ["\n\n",-3.3],["。\n\n",-3.3],["：\n\n",-3.3],["！\n\n",-3.3],["…\n\n",-3.3],["……\n\n",-3.3],["？\n\n",-3.3],["）\n\n",-3.3],["】\n\n",-3.3],["”\n\n",-3.3],["”。\n\n",-3.3],["\n",-1.2],["，\n",-1.2],["。\n",-1.2],["：\n",-1.2],["”\n",-1.2],[".\n",-1.2],["？\n",-1.2],["…\n",-1.2]];
@@ -463,17 +542,20 @@ import Layout from '../layouts/Layout.astro';
                 el.coverText.focus();
                 return;
             }
-            let base = [],tstr='',tscore=0;
-            for(const char of coverText){
-                tstr+=char;tscore+=getWeight(char.codePointAt(0));
-                if(tscore>=3){
-                    base.push(h32(tstr)%2);
-                    tstr='';tscore=0;
+            let data;
+            for(;coverText;coverText=coverText.slice(1)){
+                // console.log(coverText)
+                let base = [],tstr='',tscore=0;
+                for(const char of coverText){
+                    tstr+=char;tscore+=getWeight(char.codePointAt(0));
+                    if(tscore>=3){
+                        base.push(h32(tstr)%2);
+                        tstr='';tscore=0;
+                    }
                 }
-            }
-            console.log(base)
-            let index=findSublistIndex(base,magicNum);
-            if(index!=-1){
+                let index=findSublistIndex(base,magicNum);
+                if(index==-1) continue;
+                console.log(base)
                 index+=24;
                 let length=0;
                 for(let i=0;i<16;i++){
@@ -481,9 +563,10 @@ import Layout from '../layouts/Layout.astro';
                 }
                 index+=16;
                 base=base.slice(index,index+length*8);
+                data=toBytes(base);
+                break;
             }
-            console.log(base)// let useUnishox=base[0];base=base.slice(1);
-            let data=toBytes(base);
+            // console.log(base)// let useUnishox=base[0];base=base.slice(1);
             let key=await readTextFile(el.privateKey)
             if(key){
                 data=await eccDecryptToUint8Array(data,JSON.parse(key));

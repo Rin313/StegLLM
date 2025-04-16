@@ -10,6 +10,7 @@ npm i hash-wasm
 npm i @tailwindcss/vite@latest
 npm i daisyui@latest
 npm i astro@latest
+npm install @noble/curves
 ```
 ```
 Invoke-WebRequest -Uri "https://github.com/Rin313/StegLLM/archive/refs/heads/main.zip" -OutFile "../StegLLM/源码.zip" 打包源码

@@ -126,9 +126,10 @@ export function initDaisyThemeController(){
         });
     })
 }
-export function shuffle(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
+export function shuffle(array, start = 0, end = array.length) {
+    // console.log(end)
+    for (let i = end - 1; i > start; i--) {
+        const j = Math.floor(Math.random() * (i - start + 1)) + start;
         [array[i], array[j]] = [array[j], array[i]];
     }
     return array;
@@ -391,41 +392,55 @@ export function toBytes(base){
     return bytes;
 }
 function isInvisibleChar(codePoint) {
-    // 1. 控制字符 (C0 和 C1 控制字符, U+0000 到 U+001F, U+007F 到 U+009F)
-    if ((codePoint >= 0x0000 && codePoint <= 0x001F) || (codePoint >= 0x007F && codePoint <= 0x009F)) {
+    // 1. 控制字符 (C0 和 C1 控制字符)
+    if ((codePoint >= 0x0000 && codePoint <= 0x0008) || (codePoint >= 0x000B && codePoint <= 0x001F) ||(codePoint >= 0x007F && codePoint <= 0x009F)) {
         return true;
     }
-
-    // 2. 零宽字符
-    const zeroWidthChars = [
+    const invisibleChars = new Set([
+        // 零宽字符
         0x200B, // 零宽空格 (Zero Width Space)
         0x200C, // 零宽非连接符 (Zero Width Non-Joiner)
         0x200D, // 零宽连接符 (Zero Width Joiner)
         0xFEFF, // 零宽非换行空格 (Zero Width No-Break Space, 也叫 BOM)
-    ];
-    if (zeroWidthChars.includes(codePoint)) {
-        return true;
-    }
+        0x200E, // 左至右标记 (Left-to-Right Mark)
+        0x200F, // 右至左标记 (Right-to-Left Mark)
+        0x061C, // 阿拉伯字母标记 (Arabic Letter Mark)
+        0x180E, // 蒙古语变体选择器 (Mongolian Vowel Separator)
 
-    // 3. 其他格式字符 (Unicode 类别 Cf)
-    const formatChars = [
+        // 格式字符 (Unicode 类别 Cf)
         0x00AD, // 软连字符 (Soft Hyphen)
         0x2060, // 单词连接符 (Word Joiner)
         0x2061, // 函数应用 (Function Application)
         0x2062, // 不可见乘号 (Invisible Times)
         0x2063, // 不可见分隔符 (Invisible Separator)
         0x2064, // 不可见加号 (Invisible Plus)
-    ];
-    if (formatChars.includes(codePoint)) {
+        0x0600, // 阿拉伯数字符号 (Arabic Number Sign)
+        0x0601, // 阿拉伯脚注标记 (Arabic Footnote Marker)
+        0x0602, // 阿拉伯数字千分符 (Arabic Number Sign Thousand)
+        0x0603, // 阿拉伯数字分隔符 (Arabic Number Sign Separator)
+        0x0604, // 阿拉伯数字符号扩展 (Arabic Number Sign Extended)
+        0x06DD, // 阿拉伯结束标记 (Arabic End of Ayah)
+        0x070F, // 叙利亚语缩写标记 (Syriac Abbreviation Mark)
+        0x08E2, // 阿拉伯语争议标记 (Arabic Disputed End of Ayah)
+        0x110BD, // 卡伊泰数字符号 (Kaithi Number Sign)
+        0x110CD, // 卡伊泰数字符号扩展 (Kaithi Number Sign Above)
+    ]);
+
+    if (invisibleChars.has(codePoint)) {
         return true;
     }
 
-    // 4. 其他不可见字符范围
+    // 3. 其他不可见字符范围
     const invisibleRanges = [
-        [0x200E, 0x200F], // 左至右标记 (Left-to-Right Mark), 右至左标记 (Right-to-Left Mark)
         [0x202A, 0x202E], // 嵌入和覆盖标记 (Left-to-Right Embedding, etc.)
         [0x2066, 0x206F], // 隔离和禁止标记 (Left-to-Right Isolate, etc.)
+        [0xFFF9, 0xFFFB], // 行间注释字符 (Interlinear Annotation)
+        [0x1BCA0, 0x1BCA3], // 速记格式控制字符 (Shorthand Format Controls)
+        [0x1D165, 0x1D169], // 音乐符号格式控制字符 (Musical Symbol Combining Stems)
+        [0x1D173, 0x1D17A], // 音乐符号格式控制字符 (Musical Symbol Begin/End)
+        [0xE0000, 0xE007F], // 标签字符 (Tags)
     ];
+
     for (const [start, end] of invisibleRanges) {
         if (codePoint >= start && codePoint <= end) {
             return true;
@@ -434,30 +449,11 @@ function isInvisibleChar(codePoint) {
     return false;
 }
 export function containsInvisibleChar(str) {
-    for (let i = 0; i < str.length; i++) {
-        const code = str.charCodeAt(i);
-
-        // 零宽字符
-        if (
-            code === 0x200B || // Zero Width Space
-            code === 0x200C || // Zero Width Non-Joiner
-            code === 0x200D || // Zero Width Joiner
-            code === 0xFEFF    // Zero Width No-Break Space
-        ) {
-            return true;
-        }
-
-        // 控制字符（排除常见空白符：\t, \n, \r）
-        if (code < 0x20 && ![0x09, 0x0A, 0x0D].includes(code)) {
-            return true;
-        }
-
-        // DEL 字符
-        if (code === 0x7F) {
+    for (const codePoint of str) {
+        if (isInvisibleChar(codePoint.codePointAt(0))) {
             return true;
         }
     }
-
     return false;
 }
 export function findSublistIndex(mainList, subList) {
