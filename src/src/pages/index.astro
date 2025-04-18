@@ -283,7 +283,7 @@ import Layout from '../layouts/Layout.astro';
             }
             return s;
         }
-        console.log('的'.codePointAt(0));
+        // console.log('的'.codePointAt(0));
         const punctuations=["？","?","！","!","。","）",")","…","}","]","."];//"\n"和"”"有时候并不代表结尾
         async function chat(str,n_predict){
             let body={//在api中设置system_prompt会导致性能严重下降
@@ -396,7 +396,7 @@ import Layout from '../layouts/Layout.astro';
                     if(ttscore>=3){
                         if(h32(ttstr)%2!==base[i+sections])
                             break;
-                        sections++;ttstr='';ttscore=0;//如果使用-=3，相对于提高token的平均映射次数，长短token的不平衡会更加明显
+                        sections++;ttstr='';ttscore=0;//使用-=3会提高token的平均映射次数，长短token的不平衡会更加明显
                         if(i+sections===base.length){//t.length-(k+1)
                             status=true;
                             currentCoverText+=allowInsertion?t:t.slice(0,k+1);//如果不开启allowInsertion，用上t一样能使尾部稍微自然一点。
@@ -418,7 +418,7 @@ import Layout from '../layouts/Layout.astro';
             ["\x08", false], // BS
             ["\v", false],   // VT (垂直制表符)
             ["\f", false],   // FF (换页符)
-            ["\0x0D", false],    // 单独的回车符几乎不被使用
+            ["\x0D", false],    // 单独的回车符几乎不被使用
             ["\x0E", false], // SO
             ["\x0F", false], // SI
             ["\x10", false], // DLE
@@ -472,7 +472,7 @@ import Layout from '../layouts/Layout.astro';
             ["\x9F", false], // APC
             [" ",false],["  ",false],["   ",false],["    ",false],["     ",false],["      ",false],["       ",false],["        ",false],//不间断空格是用于精确排版的符号，正常人几乎不可能手动使用
             ["　",false],//全角空格，一般只用于段首排版，非常傻逼
-            ["0x200B",false], // 零宽空格 (Zero Width Space)，似乎常用于html的格式隔断
+            ["\u200B",false], // 零宽空格 (Zero Width Space)，似乎常用于html的格式隔断
             ["�",false],
             ["\uFEFF",false],//BOM(字节顺序标记)，用于标记大端序或者小端序
             ["\r\n",false],["\r\n\r\n",false],//windows系统的换行，但现代的编程中应该不用手动处理
