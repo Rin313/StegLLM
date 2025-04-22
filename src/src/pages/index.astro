@@ -214,10 +214,6 @@ import Layout from '../layouts/Layout.astro';
         function setInsertion(){
             el.insertion.checked=get('insertion',true);
         }
-        setTheme();
-        setLanguage();
-        setInsertion();
-        initDaisyThemeController();
         const languageButtons = document.querySelectorAll(`input[name="language-dropdown"]`);
         languageButtons.forEach(button => {
             button.addEventListener('change', function(event) {
@@ -239,10 +235,9 @@ import Layout from '../layouts/Layout.astro';
         }
         el.import.onclick=async ()=>{
             await importLocalStorage();
-            setTheme();
-            setLanguage();
+            initConfig();
         }
-        let prompts=get('prompts',['']);let i=get('promptIndex',prompts.length-1);el.prompt.value=prompts[i];
+        let prompts;let i;
         el.up.onclick=()=>{
             i=(i+1)%prompts.length;save('promptIndex',i);
             el.prompt.value=prompts[i];
@@ -263,6 +258,14 @@ import Layout from '../layouts/Layout.astro';
                 alert('','删除成功！')
             }
         }
+        function initConfig(){
+            setTheme();
+            setInsertion();
+            prompts=get('prompts',['']);i=get('promptIndex',prompts.length-1);el.prompt.value=prompts[i];
+        }
+        setLanguage();
+        initDaisyThemeController();
+        initConfig();
         function getWeight(code) {//score值越小，字符被保留的概率越高。
             //零宽字符：看似在隐写场景中要尽可能保留，但从统计特征上看，这些字符属于非常少见的字符，不应该主动提高分布的频率。
             //一个token约为1-1.8个汉字，0.75个单词或3-4个字母
@@ -539,10 +542,11 @@ import Layout from '../layouts/Layout.astro';
                 return;
             }
             let data;
-            for(;coverText;coverText=coverText.slice(1)){
+            let tcoverText=coverText;
+            for(;tcoverText;tcoverText=tcoverText.slice(1)){
                 // console.log(coverText)
                 let base = [],tstr='',tscore=0;
-                for(const char of coverText){
+                for(const char of tcoverText){
                     tstr+=char;tscore+=getWeight(char.codePointAt(0));
                     if(tscore>=3){
                         base.push(h32(tstr)%2);
@@ -561,6 +565,17 @@ import Layout from '../layouts/Layout.astro';
                 base=base.slice(index,index+length*8);
                 data=toBytes(base);
                 break;
+            }
+            if(!data) {
+                let base = [],tstr='',tscore=0;
+                for(const char of coverText){
+                    tstr+=char;tscore+=getWeight(char.codePointAt(0));
+                    if(tscore>=3){
+                        base.push(h32(tstr)%2);
+                        tstr='';tscore=0;
+                    }
+                }
+                data=toBytes(base);
             }
             // console.log(base)// let useUnishox=base[0];base=base.slice(1);
             let key=await readTextFile(el.privateKey)
