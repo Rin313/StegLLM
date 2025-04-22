@@ -7,9 +7,9 @@ export default defineConfig({
   devToolbar: {
     enabled: false
   },
-  build: {
-    inlineStylesheets: `always`,//内联css
-  },
+  // build: {
+  //   inlineStylesheets: `always`,//内联css
+  // },
   vite: {
     plugins: [tailwindcss()],
   },

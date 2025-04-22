@@ -7,6 +7,8 @@ export default new Proxy({}, {//据说使用缓存会导致可能的奇怪问题
 export function setAllButtonTypesToButton() {
     const buttons = document.querySelectorAll('button:not(form button)');
     buttons.forEach(button => {button.setAttribute('type', 'button');});//button的tupe包括submit、reset和button，显示指定以避免控制台提示。
+    const formButtons = document.querySelectorAll('form button');
+    formButtons.forEach(button => {button.setAttribute('type', 'submit');});
 }
 export function get(key, defaultValue) {
     const obj=localStorage.getItem(key);

@@ -272,7 +272,7 @@ import Layout from '../layouts/Layout.astro';
                 (code >= 65 && code <= 90) ||  // 大写字母 A-Z
                 (code >= 97 && code <= 122))  // 小写字母 a-z
                 return 1;
-            if(code===65292||code===12290||code===8221||code===30340)//中文逗号，中文句号，中文右双引号，中文右单引号、的、(||code===8217)
+            if(code===65292||code===12290||code===8221||code===30340)//中文逗号，中文句号，中文右双引号、的、中文右单引号(||code===8217)
                 return 2;
             return 3;
         }
@@ -294,7 +294,7 @@ import Layout from '../layouts/Layout.astro';
                 "cache_prompt": false,//提示词复用
                 "slot_id": 0,//默认-1，分配到空闲插槽
                 "prompt": str,//支持输入多个prompt
-                "logit_bias": originLogitBias//补全也用logitBias，因为获取不到tokenId还在用h32，所以如果是问号，detokenize会报错
+                "logit_bias": originLogitBias
             }
             const response = await fetch('http://127.0.0.1:8090/completion', {
                 method: 'POST',
@@ -327,19 +327,18 @@ import Layout from '../layouts/Layout.astro';
                 // "post_sampling_probs":true,
                 // "samplers": ["top_k"],//响应上看似乎没有使用top_p,min_p,temperature等？
                 "cache_prompt": true,//提示词复用
-                // "api_key": "",
                 "slot_id": 0,//默认-1，分配到空闲插槽
                 "prompt": str,//支持输入多个prompt
                 // "seed":-1,
                 // "response_fields": ["content"],//不生效？
-                "logit_bias": tailCompletion?originLogitBias:logitBias//补全也用logitBias，因为获取不到tokenId还在用h32，所以如果是问号，detokenize会报错
+                "logit_bias": tailCompletion?originLogitBias:logitBias
             }
             if(tailCompletion){
                 body["stop"]=punctuations;//动态截断
             }
             else if(currentShuffle===0){
-                body["top_k"]= 24;//选词范围，默认40
-                body["n_probs"]= 24;//按概率排序的前n个选词，如果top_k不够好像会拿0开始的token补全
+                body["top_k"]= 27;//选词范围，默认40
+                body["n_probs"]= 27;//按概率排序的前n个选词，如果top_k不够好像会拿0开始的token补全
             }
             else{
                 body["top_k"]= 12;//一个合适的值能够平衡好映射失败次数和文本质量，嵌入一个短句出现二三十次失败其实还能接受。
@@ -387,7 +386,7 @@ import Layout from '../layouts/Layout.astro';
                 for(let k=0;;k++){if(status)return;
                     if(k>=t.length){
                         currentCoverText+=t;el.coverText.value=currentCoverText;
-                        await dfs(i+sections,ttstr,ttscore);if(status)return;//在这里return避免currentCoverText逐层回溯为空字符串
+                        await dfs(i+sections,ttstr,ttscore);if(status)return;//在这里return避免currentCoverText逐层回溯，导致文本框内容变化
                         currentCoverText=currentCoverText.slice(0,-t.length);break;//减少dfs传递的内存占用
                     }
                     ttstr+=t[k];ttscore+=getWeight(t.codePointAt(k))
@@ -397,9 +396,9 @@ import Layout from '../layouts/Layout.astro';
                         if(h32(ttstr)%2!==base[i+sections])
                             break;
                         sections++;ttstr='';ttscore=0;//使用-=3会提高token的平均映射次数，长短token的不平衡会更加明显
-                        if(i+sections===base.length){//t.length-(k+1)
+                        if(i+sections===base.length){
                             status=true;
-                            currentCoverText+=allowInsertion?t:t.slice(0,k+1);//如果不开启allowInsertion，用上t一样能使尾部稍微自然一点。
+                            currentCoverText+=allowInsertion?t:t.slice(0,k+1);
                         }
                     }
                 }
@@ -474,15 +473,12 @@ import Layout from '../layouts/Layout.astro';
             ["　",false],//全角空格，一般只用于段首排版，非常傻逼
             ["\u200B",false], // 零宽空格 (Zero Width Space)，似乎常用于html的格式隔断
             ["�",false],
-            ["\uFEFF",false],//BOM(字节顺序标记)，用于标记大端序或者小端序
+            ["\uFEFF",false],//UTF-8的BOM(字节顺序标记)，用于标记大端序或者小端序
+            ["\xFF\xFE",false],["\"\xFE\xFF",false],//UTF-16的BOM
+            ["\x00\x00\xFE\xFF",false],["\xFF\xFE\x00\x00",false],//UTF-32的BOM
             ["\r\n",false],["\r\n\r\n",false],//windows系统的换行，但现代的编程中应该不用手动处理
             [" \n",false],["  \n",false],[" \n\n",false],["  \n\n",false],//实在不明白空格后再换行有什么意义
         ];
-        // let logitBias=[["　",false],[" ",false],["   ",false],["．",false],["【",false],["】",false],["〈",false],["〉",false],[" 【",false],
-        //     ["《",false],["》",false],//避免出现一些没头没尾的引用文章
-        //     ["。（",false],["（",false],["）",false],//括号容易引导AI生成注释和要求
-        //     ["，\n\n",false],["；\n",false],["—\n\n",false],["-\n\n",false],["–\n\n",false],["--\n\n",false],[" —\n\n",false],//减少一些标点填充，增加文字密度
-        //     ["\n\n",-3.3],["。\n\n",-3.3],["：\n\n",-3.3],["！\n\n",-3.3],["…\n\n",-3.3],["……\n\n",-3.3],["？\n\n",-3.3],["）\n\n",-3.3],["】\n\n",-3.3],["”\n\n",-3.3],["”。\n\n",-3.3],["\n",-1.2],["，\n",-1.2],["。\n",-1.2],["：\n",-1.2],["”\n",-1.2],[".\n",-1.2],["？\n",-1.2],["…\n",-1.2]];
         const magicNum=[
             0, 0, 0, 0, 1, 1, 0, 1,
             1, 0, 0, 1, 0, 1, 1, 0,
@@ -512,7 +508,7 @@ import Layout from '../layouts/Layout.astro';
                 data= await eccEncryptToUint8Array(data,JSON.parse(key));
             }
             //添加纠错码的话，要求用户手动修改不协调的地方，并检测是否仍然能还原。我觉得这个方向走偏了，想办法增强AI的隐写效果才是以后的方向。
-            console.log(data);
+            // console.log(data);
             base=toBinary(data);//base=[useUnishox,...toBinary(data)];//处理为二进制序列，在映射时粒度更细，但建议每次只映射1位，减少映射失败率。
             allowInsertion=get('insertion',true);
             if(allowInsertion){
@@ -524,7 +520,7 @@ import Layout from '../layouts/Layout.astro';
                 length[0]=data.length/256;length[1]=data.length%256;
                 base=[...magicNum,...toBinary(length),...base];
             }
-            console.log(base);
+            // console.log(base);
             currentPrompt=prompt;currentCoverText='';currentShuffle=0;status=false;el.progress.style.setProperty('--value', 0);el.progress.setAttribute('aria-valuenow', 0);el.progress.classList.remove('hidden');el.tooltip3.classList.remove('invisible')
             await dfs(0,'',0);
             el.tooltip3.classList.add('invisible');el.progress.classList.add('hidden');
@@ -555,7 +551,7 @@ import Layout from '../layouts/Layout.astro';
                 }
                 let index=findSublistIndex(base,magicNum);
                 if(index==-1) continue;
-                console.log(base)
+                // console.log(base)
                 index+=24;
                 let length=0;
                 for(let i=0;i<16;i++){
