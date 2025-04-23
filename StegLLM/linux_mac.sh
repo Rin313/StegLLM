@@ -16,13 +16,11 @@ if [ -z "$gguf" ]; then
     exit 1
 fi
 
-# 检查 llamafile 是否存在并添加执行权限
 LLAMAFILE="$DATA_DIR/llamafile-0.9.2"
 
 # 添加执行权限
 chmod +x "$LLAMAFILE"
 
-# 启动 llamafile
 "$LLAMAFILE" \
     --server \
     -spf "$SCRIPT_DIR/system_prompt.json" \
