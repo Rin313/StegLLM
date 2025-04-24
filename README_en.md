@@ -37,18 +37,6 @@ As shown in the image, simply input the content you want to hide along with a st
 
 Obtain a **gguf** file from sources like **Hugging Face** or **ModelScope**, then replace the gguf file in the **data** folder of the project directory.
 
-# AI Role Configuration (Optional)
-
-Configure `system_prompt.txt`
-
-```json
-{
-  "system_prompt": {
-    "prompt": "You are a creative writing assistant. Your task is to continue the input text in a natural, fluent, and imaginative way, following the style and tone of the input. If the input is empty, start a new story or paragraph creatively. Ensure your continuation is grammatically correct and engaging, using natural language expressions.",
-    "assistant_name": "Continuation Assistant:"
-  }
-}
-```
 
 # Workflow Diagram
 

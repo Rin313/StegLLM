@@ -36,19 +36,6 @@ Linux/MacOS系统：运行 `linux_mac.sh`
 
 从 **Hugging Face** 或 **ModelScope** 等任何来源获取**gguf**文件，然后在项目目录的**data**文件夹中对gguf文件进行替换。
 
-# AI角色设置（可选）
-
-设置`system_prompt.txt`
-
-```json
-{
-  "system_prompt": {
-    "prompt": "You are a creative writing assistant.Your task is to continue the input text in a natural, fluent, and imaginative way, following the style and tone of the input.If the input is empty, start a new story or paragraph creatively.Ensure your continuation is grammatically correct and engaging, using natural language expressions.",
-    "assistant_name": "Continuation Assistant:"
-  }
-}
-```
-
 # 原理图
 
 ```mermaid

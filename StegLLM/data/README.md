@@ -1,5 +1,2 @@
-该目录包含：llamafile、模型的gguf、网页资源目录dist
-```sh
-curl -LO https://github.com/Mozilla-Ocho/llamafile/releases/download/0.9.2/llamafile-0.9.2
-```
+该目录包含：llama.cpp预构建包、gguf文件、网页资源目录dist、用于windows判断指令集的cpufetch_x86-64_windows
 
