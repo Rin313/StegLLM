@@ -16,11 +16,6 @@ if [[ "$(uname -m)" == "arm64" || "$(uname -m)" == "aarch64" ]]; then
 elif [[ "$(uname -m)" == "x86_64" ]]; then
     arch="x64"
 fi
-# 检查 unzip 是否存在
-if ! command -v unzip >/dev/null 2>&1; then
-    echo "Error: 'unzip' is not installed on your system."
-    exit 1
-fi
 # 下载 llama.cpp
 name="llama-${buildNum}-bin-${os}-${arch}"
 if [ ! -d "${dataDir}/${name}" ]; then
@@ -48,8 +43,9 @@ if [ -z "$gguf" ]; then
     exit 1
 fi
 # 启动 llama-server
+llamaServer=$(find "${dataDir}/${name}" -type f -name 'llama-server' -perm -u=x | head -n 1)
 port=8090
-"${dataDir}/${name}/llama-server" \
+"$llamaServer" \
     -m "$gguf" \
     --path "${dataDir}/dist" \
     --host 127.0.0.1 \

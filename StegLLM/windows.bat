@@ -24,8 +24,13 @@ for %%a in ("%dataDir%\*.gguf") do (
     if not defined gguf set "gguf=%%a"
 )
 if not defined gguf ( echo No .gguf file found in "%dataDir%" directory. & pause & exit /b 1)
+for /r "%dataDir%\%name%" %%f in (llama-server.exe) do (
+    set "llamaServer=%%f"
+    goto :found
+)
+:found
 set "port=8090"
-start "" "%dataDir%\%name%\llama-server.exe" ^
+start "" "%llamaServer%" ^
     -m "%gguf%" ^
     --path "%dataDir%\dist" ^
     --host 127.0.0.1 ^
