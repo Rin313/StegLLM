@@ -1,5 +1,6 @@
 #!/bin/bash
-buildNum="b5176"
+set -x
+buildNum="b5178"
 scriptDir="$(dirname "$(realpath "$0")")"
 dataDir="${scriptDir}/data"
 # 确定系统和指令集
@@ -9,7 +10,8 @@ if [[ "$(uname -s)" == "Darwin" ]]; then
     os="macos"
 elif [[ "$(uname -s)" == "Linux" ]]; then
     os="ubuntu"
-else exit 1
+else echo "unSupported System."
+    exit 1
 fi
 if [[ "$(uname -m)" == "arm64" || "$(uname -m)" == "aarch64" ]]; then
     arch="arm64"
@@ -43,7 +45,7 @@ if [ -z "$gguf" ]; then
     exit 1
 fi
 # 启动 llama-server
-llamaServer=$(find "${dataDir}/${name}" -type f -name 'llama-server' -perm -u=x | head -n 1)
+llamaServer=$(find "${dataDir}/${name}" -type f -name 'llama-server' | head -n 1)
 port=8090
 "$llamaServer" \
     -m "$gguf" \
