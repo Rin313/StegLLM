@@ -144,7 +144,7 @@ import Layout from '../layouts/Layout.astro';
         </div>
     </div>
     <script>
-        import el,{setAllButtonTypesToButton,get,save,saveList,runIfMatch,generateKeyPair,exportLocalStorage,importLocalStorage,initDaisyThemeController,initLogitBias,unishoxCompress,readTextFile,eccEncryptToUint8Array,eccDecryptToUint8Array,shuffle,toBinary,toBytes,findSublistIndex,unishoxDecompress,tokenize,stringToUnicode,exportFile,containsInvisibleChar} from '../utils/commonUtils';
+        import el,{setAllButtonTypesToButton,get,save,saveList,runIfMatch,generateKeyPair,exportLocalStorage,importLocalStorage,initDaisyThemeController,unishoxCompress,readTextFile,eccEncryptToUint8Array,eccDecryptToUint8Array,shuffle,toBinary,toBytes,findSublistIndex,unishoxDecompress,tokenize,detokenize,stringToUnicode,exportFile,check} from '../utils/commonUtils';
         import xxhash from 'xxhash-wasm';//hash-wasm不提供返回int类型的接口
         const { h32 } = await xxhash();
         function confirm(msg=null,title=null){
@@ -288,109 +288,116 @@ import Layout from '../layouts/Layout.astro';
         }
         // console.log('的'.codePointAt(0));
         const punctuations=["？","?","！","!","。","）",")","…","}","]","."];//"\n"和"”"有时候并不代表结尾
-        async function chat(str,n_predict){
+        // async function chat(str,n_predict){
+        //     let body={//在api中设置system_prompt会导致性能严重下降
+        //         stop: ["</s>"],//chat模式下默认为["</s>", "Llama:", "User:"]
+        //         "n_predict": n_predict,//生成的token数，-1-2048
+        //         "repeat_last_n": 128,//默认64
+        //         "repeat_penalty": 1.18,//重复惩罚，1.0为无惩罚，默认1.1，实测偶尔确实会出不少重复
+        //         "cache_prompt": false,//提示词复用
+        //         "slot_id": 0,//默认-1，分配到空闲插槽
+        //         "prompt": str,//支持输入多个prompt
+        //         "logit_bias": logitBias
+        //     }
+        //     const response = await fetch('http://127.0.0.1:8090/completion', {
+        //         method: 'POST',
+        //         body: JSON.stringify(body),
+        //     });
+        //     const json=(await response.json());
+        //     return json.content;
+        // }
+        async function completion(prompt, progress, tailCompletion) {
+            //let floor=7;//const probs=Math.round(25-Math.pow(progress, 0.1)*(25-floor));//非线性token数的可行性：token数较多时，如果roll到很差的token，这次隐写就烂完了；token较少时，如果失败回溯，上一层剩下的候选token质量只会更差；还不如一开始就选个固定的稳定的值
             let body={//在api中设置system_prompt会导致性能严重下降
-                stop: ["</s>"],//chat模式下默认为["</s>", "Llama:", "User:"]
-                "n_predict": n_predict,//生成的token数，-1-2048
-                "repeat_last_n": 128,//默认64
-                "repeat_penalty": 1.18,//重复惩罚，1.0为无惩罚，默认1.1，实测偶尔确实会出不少重复
-                "cache_prompt": false,//提示词复用
-                "slot_id": 0,//默认-1，分配到空闲插槽
-                "prompt": str,//支持输入多个prompt
-                "logit_bias": originLogitBias
+                "prompt": prompt,//支持输入多个prompt
+                "n_predict": tailCompletion?-1:1,//预测的最大token数，如果最后一个标记是部分多字节字符，则可能会略微超过设置的限制。
+                "post_sampling_probs":true,//返回应用采样链后token的概率，不开启时返回的logprob是和采样无关的，logitBias也不会生效
+                "response_fields":tailCompletion?["content","stopping_word"]:["completion_probabilities","tokens"],
+                "return_tokens":true,//我目前不确定是否还存在返回无法解码的token的情况，这种情况下使用该选项可能是有必要的
+            }
+            if(tailCompletion){
+                body["stop"]=punctuations;//动态截断
+            }
+            else if(currentShuffle===0){
+                body["top_k"]= 45;//选词范围，默认40
+                body["n_probs"]= 45;//按概率排序的前n个选词，如果top_k不够好像会拿0开始的token补全
+            }
+            else{
+                body["top_k"]= 15;//一个合适的值能够平衡好映射失败次数和文本质量，嵌入一个短句出现二三十次失败其实还能接受。
+                body["n_probs"]= 15;
             }
             const response = await fetch('http://127.0.0.1:8090/completion', {
                 method: 'POST',
                 body: JSON.stringify(body),
             });
             const json=(await response.json());
-            return json.content;
-        }
-        async function completion(str, progress, tailCompletion) {
-            //let floor=7;//const probs=Math.round(25-Math.pow(progress, 0.1)*(25-floor));//非线性token数的可行性：token数较多时，如果roll到很差的token，这次隐写就烂完了；token较少时，如果失败回溯，上一层剩下的候选token质量只会更差；还不如一开始就选个固定的稳定的值
-            let body={//在api中设置system_prompt会导致性能严重下降
-                // "stream": true,
-                "n_predict": tailCompletion?-1:1,//生成的token数，-1-2048
-                // "temperature": 2.0,//影响文本的随机性，0-2，但是目前的选词完全基于top_k//todo:如果新版的sampler配置可用，尝试关掉top_k之外的采样器
-                // "stop": punctuations,
-                "repeat_last_n": 128,//默认64
-                "repeat_penalty": 1.18,//重复惩罚，1.0为无惩罚，默认1.1，实测偶尔确实会出不少重复
-                // "top_p": 0.95,//默认0.95，增大后似乎能增加更多的选词可能性
-                // "min_p": 0.05,
-                // "tfs_z": 1,//默认1.0，禁用
-                // "typical_p": 1,//默认1.0，禁用
-                // "presence_penalty": 0,
-                // "frequency_penalty": 0,
-                // "mirostat": 0,//关闭mirostat
-                // "mirostat_tau": 5,
-                // "mirostat_eta": 0.1,
-                // "grammar": "",
-                // "min_keep": 10,
-                // "image_data": [],
-                // "post_sampling_probs":true,
-                // "samplers": ["top_k"],//响应上看似乎没有使用top_p,min_p,temperature等？
-                "cache_prompt": true,//提示词复用
-                "slot_id": 0,//默认-1，分配到空闲插槽
-                "prompt": str,//支持输入多个prompt
-                // "seed":-1,
-                // "response_fields": ["content"],//不生效？
-                "logit_bias": tailCompletion?originLogitBias:logitBias
-            }
             if(tailCompletion){
-                body["stop"]=punctuations;//动态截断
-            }
-            else if(currentShuffle===0){
-                body["top_k"]= 27;//选词范围，默认40
-                body["n_probs"]= 27;//按概率排序的前n个选词，如果top_k不够好像会拿0开始的token补全
-            }
-            else{
-                body["top_k"]= 12;//一个合适的值能够平衡好映射失败次数和文本质量，嵌入一个短句出现二三十次失败其实还能接受。
-                body["n_probs"]= 12;
-            }
-            const response = await fetch('http://127.0.0.1:8090/completion', {
-                method: 'POST',
-                body: JSON.stringify(body),
-            });
-            const json=(await response.json());//todo:目前的json解析高达1-2秒，怀疑是logitBias过大的缘故，待API哪天更新后再测一次//const start = performance.now();//const end = performance.now();//console.log(end-start);
-            if(tailCompletion){
-                if(json.stopped_word)
+                if(json.stopping_word)
                     return json.content+json.stopping_word;
-                return completion(str,progress,true)
+                return await completion(prompt,progress,true)
             }
-            const t=json.completion_probabilities[0];
-            if(!t)return [];//return completion(str,progress,false);//当采样结果是�，不会返回采样列表，闹麻了，而且有可能发生无限采样�导致卡住
-            if(currentShuffle<t.probs.length-1){//一个token的映射成功率保守估计为1/3左右（1/2映射失败，加一部分存在多次映射），那么shuffle x次的种数有2*(y/3)^x，shuffle数量线性递减+总数9次+n取12，总数约为8005。但有一点需要注意，尽可能引导用户使用丰富的任务模板和system prompt，避免内置这些配置
-                return shuffle(t.probs,0,t.probs.length-currentShuffle++);//此前根据进度来判断是否混淆，但这样对于短文本混淆次数不够，对于长文本又显得多余
+            const t=json.completion_probabilities;
+            //当采样结果是无法解码的token�，不会返回采样列表
+            if(!t){
+                return [
+                    {
+                        "id": json.tokens[0],
+                        "token": " ",
+                        "bytes": [255,255],
+                        "prob": 1
+                    }
+                ];
             }
-            return t.probs;
+            let result=t[0].top_probs.filter(item => check(item.token));//手动处理logitBias感觉更加灵活，虽然会导致token数不太稳定
+            if(currentShuffle<result.length-1){//一个token的映射成功率保守估计为1/3左右（1/2映射失败，加一部分存在多次映射），那么shuffle x次的种数有2*(y/3)^x，shuffle数量线性递减+总数9次+n取12，总数约为8005。但有一点需要注意，尽可能引导用户使用丰富的任务模板和system prompt，避免内置这些配置
+                return shuffle(result,0,result.length-currentShuffle++);//此前根据进度来判断是否混淆，但这样对于短文本混淆次数不够，对于长文本又显得多余
+            }
+            return result;
         }
         let base,currentPrompt,currentCoverText,currentShuffle,status,allowInsertion;
-        async function dfs(i,tstr,tscore){if(status)return;
+        async function dfs(i,tstr,tscore,incomplete){if(status)return;
             const percents=i/base.length;
             const percent100=percents*100;
             el.progress.style.setProperty('--value',percent100);el.progress.setAttribute('aria-valuenow', percent100);
-            const list=(await completion(currentPrompt+currentCoverText,percents,false));//整个dfs除了completion，几乎不耗时间，因此哪怕提前尝试第二次请求也是没有意义的
-            // if(list.length===0)return;//测试映射失败次数时避免干扰
+            const list=(await completion(currentPrompt,percents,false));//整个dfs除了completion，几乎不耗时间，因此哪怕提前尝试第二次请求也是没有意义的
+            // console.log(list)
             // let s=0;
             // for(let j=0;j<list.length;j++){
-            //     const t=list[j].tok_str;
-            //     // if(containsInvisibleChar(t)){
-            //     //     const xxx=await tokenize(t);
-            //     //     const xxxy=stringToUnicode(t);
-            //     //     console.log(`"${t}" "${xxxy}" ${xxx}`)
-            //     // }
-            //     s+=testWeight(t);
+            //     const t=list[j].token;
+            //     if(t===' ')console.log(list[j]);
+            //
+            //     // s+=testWeight(t);
             //     // console.log(`"${t}" "${testWeight(t)}"`)
             // }
             // console.log(s/list.length);
             for(let j=0;j<list.length;j++){if(status)return;
-                const t=list[j].tok_str;if(!t||t.includes("�"))continue;//TODO：如果api修复回显token值，就能实现传递token序列来避免无法解码的token，只要把两个无法解码的token拼起来就能形成一条有效路径
+                let t;
+                if(incomplete>0){
+                    const tokens= currentPrompt.slice(-incomplete);tokens.push(list[j].id);
+                    t=(await detokenize(tokens));
+                    if(t.includes("�")){
+                        currentPrompt.push(list[j].id);currentCoverText.push(list[j].id);
+                        await dfs(i,tstr,tscore,incomplete+1);if(status)return;
+                        currentPrompt.pop();currentCoverText.pop();
+                        continue;
+                    }
+                    // console.log(t);
+                }
+                else {
+                    t=list[j].token;//TODO：如果api修复回显token值，就能实现传递token序列来避免无法解码的token，只要把两个无法解码的token拼起来就能形成一条有效路径
+                    if(t===' '&&list[j].bytes.length>=2){
+                        currentPrompt.push(list[j].id);currentCoverText.push(list[j].id);
+                        await dfs(i,tstr,tscore,incomplete+1);if(status)return;
+                        currentPrompt.pop();currentCoverText.pop();
+                        continue;
+                    }
+                }
                 let ttstr=tstr,ttscore=tscore,sections=0;
                 for(let k=0;;k++){if(status)return;
                     if(k>=t.length){
-                        currentCoverText+=t;el.coverText.value=currentCoverText;
-                        await dfs(i+sections,ttstr,ttscore);if(status)return;//在这里return避免currentCoverText逐层回溯，导致文本框内容变化
-                        currentCoverText=currentCoverText.slice(0,-t.length);break;//减少dfs传递的内存占用
+                        currentPrompt.push(list[j].id);currentCoverText.push(list[j].id);el.coverText.value+=t;
+                        await dfs(i+sections,ttstr,ttscore,0);if(status)return;//在这里return避免逐层回溯，导致文本框内容变化
+                        currentPrompt.pop();currentCoverText.pop();el.coverText.value=el.coverText.value.slice(0,-t.length);break;//减少dfs传递的内存占用
                     }
                     ttstr+=t[k];ttscore+=getWeight(t.codePointAt(k))
                     if(t.codePointAt(k) > 0xFFFF)
@@ -401,87 +408,17 @@ import Layout from '../layouts/Layout.astro';
                         sections++;ttstr='';ttscore=0;//使用-=3会提高token的平均映射次数，长短token的不平衡会更加明显
                         if(i+sections===base.length){
                             status=true;
-                            currentCoverText+=allowInsertion?t:t.slice(0,k+1);
+                            if(allowInsertion){
+                                currentCoverText.push(list[j].id);
+                                el.coverText.value+=t;
+                            }
+                            else el.coverText.value+=t.slice(0,k+1);
                         }
                     }
                 }
             }
             // console.log('测试映射失败次数')
         }
-        let init=false,logitBias,originLogitBias=[
-            ["\x00", false], // NUL
-            ["\x01", false], // SOH
-            ["\x02", false], // STX
-            ["\x03", false], // ETX
-            ["\x04", false], // EOT
-            ["\x05", false], // ENQ
-            ["\x06", false], // ACK
-            ["\x07", false], // BEL
-            ["\x08", false], // BS
-            ["\v", false],   // VT (垂直制表符)
-            ["\f", false],   // FF (换页符)
-            ["\x0D", false],    // 单独的回车符几乎不被使用
-            ["\x0E", false], // SO
-            ["\x0F", false], // SI
-            ["\x10", false], // DLE
-            ["\x11", false], // DC1
-            ["\x12", false], // DC2
-            ["\x13", false], // DC3
-            ["\x14", false], // DC4
-            ["\x15", false], // NAK
-            ["\x16", false], // SYN
-            ["\x17", false], // ETB
-            ["\x18", false], // CAN
-            ["\x19", false], // EM
-            ["\x1A", false], // SUB
-            ["\x1B", false], // ESC
-            ["\x1C", false], // FS
-            ["\x1D", false], // GS
-            ["\x1E", false], // RS
-            ["\x1F", false], // US
-            ["\x7F", false], // DEL
-            ["\x80", false], // PAD
-            ["\x81", false], // HOP
-            ["\x82", false], // BPH
-            ["\x83", false], // NBH
-            ["\x84", false], // IND
-            ["\x85", false], // NEL
-            ["\x86", false], // SSA
-            ["\x87", false], // ESA
-            ["\x88", false], // HTS
-            ["\x89", false], // HTJ
-            ["\x8A", false], // VTS
-            ["\x8B", false], // PLD
-            ["\x8C", false], // PLU
-            ["\x8D", false], // RI
-            ["\x8E", false], // SS2
-            ["\x8F", false], // SS3
-            ["\x90", false], // DCS
-            ["\x91", false], // PU1
-            ["\x92", false], // PU2
-            ["\x93", false], // STS
-            ["\x94", false], // CCH
-            ["\x95", false], // MW
-            ["\x96", false], // SPA
-            ["\x97", false], // EPA
-            ["\x98", false], // SOS
-            ["\x99", false], // SGCI
-            ["\x9A", false], // SCI
-            ["\x9B", false], // CSI
-            ["\x9C", false], // ST
-            ["\x9D", false], // OSC
-            ["\x9E", false], // PM
-            ["\x9F", false], // APC
-            [" ",false],["  ",false],["   ",false],["    ",false],["     ",false],["      ",false],["       ",false],["        ",false],//不间断空格是用于精确排版的符号，正常人几乎不可能手动使用
-            ["　",false],//全角空格，一般只用于段首排版，非常傻逼
-            ["\u200B",false], // 零宽空格 (Zero Width Space)，似乎常用于html的格式隔断
-            ["�",false],
-            ["\uFEFF",false],//UTF-8的BOM(字节顺序标记)，用于标记大端序或者小端序
-            ["\xFF\xFE",false],["\"\xFE\xFF",false],//UTF-16的BOM
-            ["\x00\x00\xFE\xFF",false],["\xFF\xFE\x00\x00",false],//UTF-32的BOM
-            ["\r\n",false],["\r\n\r\n",false],//windows系统的换行，但现代的编程中应该不用手动处理
-            [" \n",false],["  \n",false],[" \n\n",false],["  \n\n",false],//实在不明白空格后再换行有什么意义
-        ];
         const magicNum=[
             0, 0, 0, 0, 1, 1, 0, 1,
             1, 0, 0, 1, 0, 1, 1, 0,
@@ -491,10 +428,6 @@ import Layout from '../layouts/Layout.astro';
             if(!el.progress.classList.contains('hidden')){
                 status=true;
                 return;
-            }
-            if(!init){
-                logitBias=await initLogitBias(originLogitBias,8090);
-                init=true;
             }
             if(!plainText){
                 el.secret.focus();
@@ -524,17 +457,16 @@ import Layout from '../layouts/Layout.astro';
                 base=[...magicNum,...toBinary(length),...base];
             }
             // console.log(base);
-            currentPrompt=prompt;currentCoverText='';currentShuffle=0;status=false;el.progress.style.setProperty('--value', 0);el.progress.setAttribute('aria-valuenow', 0);el.progress.classList.remove('hidden');el.tooltip3.classList.remove('invisible')
-            await dfs(0,'',0);
+            currentPrompt=await tokenize(prompt);currentCoverText=[];el.coverText.value='';currentShuffle=0;status=false;el.progress.style.setProperty('--value', 0);el.progress.setAttribute('aria-valuenow', 0);el.progress.classList.remove('hidden');el.tooltip3.classList.remove('invisible')
+            await dfs(0,'',0,0);
             el.tooltip3.classList.add('invisible');el.progress.classList.add('hidden');
             if(!status){
                 alert('请尝试减少输入内容，或在github反馈','隐写失败！');
                 return;
             }
-            if(allowInsertion&&!punctuations.includes(coverText[coverText.length-1])){//如果不开启allowInsertion，就没法对掩饰文本进行尾部自动补全。如果开启allowInsertion，通常很少有enableTailAutocomplete这个选项的需求。
-                currentCoverText+=(await completion(currentPrompt+currentCoverText,1,true));
+            if(allowInsertion&&!punctuations.includes(el.coverText.value[el.coverText.value.length-1])){//如果不开启allowInsertion，就没法对掩饰文本进行尾部自动补全。如果开启allowInsertion，通常很少有enableTailAutocomplete这个选项的需求。
+                el.coverText.value+=(await completion(currentPrompt,1,true));
             }
-            el.coverText.value= currentCoverText;
         }
         async function extract(coverText) {
             if(!coverText){
@@ -632,6 +564,7 @@ import Layout from '../layouts/Layout.astro';
         el.extract.onclick=async ()=>{
             await extract(el.coverText.value);
         }
+        // fetch('http://127.0.0.1:8090/props').then(res=>res.json()).then(json=>console.log(json))
         // let cnm='';
         // for(let i=0;;i++){
         //   try{
