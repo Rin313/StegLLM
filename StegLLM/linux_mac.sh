@@ -46,6 +46,12 @@ if [ -z "$gguf" ]; then
 fi
 # 启动 llama-server
 llamaServer=$(find "${dataDir}/${name}" -type f -name 'llama-server' | head -n 1)
+LIB_DIR="$(dirname "$llamaServer")"
+# 添加临时环境变量
+export LD_LIBRARY_PATH="$LIB_DIR:$LD_LIBRARY_PATH"
+if [ ! -f "$LIB_DIR/libgomp.so.1" ]; then
+    sudo apt-get install -y libcurl4-openssl-dev libgomp1
+fi
 port=8090
 "$llamaServer" \
     -m "$gguf" \
