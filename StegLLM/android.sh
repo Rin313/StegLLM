@@ -1,6 +1,5 @@
 #!/bin/bash
 set -x
-# cp llama.cpp/build/bin StegLLM/data
 scriptDir="$(dirname "$(realpath "$0")")"
 dataDir="${scriptDir}/data"
 # 查找 gguf 文件
