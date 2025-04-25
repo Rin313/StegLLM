@@ -319,12 +319,12 @@ import Layout from '../layouts/Layout.astro';
                 body["stop"]=punctuations;//动态截断
             }
             else if(currentShuffle===0){
-                body["top_k"]= 45;//选词范围，默认40
-                body["n_probs"]= 45;//按概率排序的前n个选词，如果top_k不够好像会拿0开始的token补全
+                body["top_k"]= 60;//选词范围，默认40
+                body["n_probs"]= 60;//按概率排序的前n个选词，如果top_k不够好像会拿0开始的token补全
             }
             else{
-                body["top_k"]= 15;//一个合适的值能够平衡好映射失败次数和文本质量，嵌入一个短句出现二三十次失败其实还能接受。
-                body["n_probs"]= 15;
+                body["top_k"]= 20;//一个合适的值能够平衡好映射失败次数和文本质量，但由于采样的影响，效果很有限
+                body["n_probs"]= 20;
             }
             const response = await fetch('http://127.0.0.1:8090/completion', {
                 method: 'POST',
@@ -565,19 +565,5 @@ import Layout from '../layouts/Layout.astro';
             await extract(el.coverText.value);
         }
         // fetch('http://127.0.0.1:8090/props').then(res=>res.json()).then(json=>console.log(json))
-        // let cnm='';
-        // for(let i=0;;i++){
-        //   try{
-        //     const response = await fetch('http://127.0.0.1:8090/detokenize', {
-        //       method: 'POST',
-        //       body: JSON.stringify({tokens: [i]}),
-        //     });
-        //     if(!response.ok)cnm+='['+i+',false],';
-        //   }
-        //   catch {
-        //     break;
-        //   }
-        // }
-        // console.log(cnm)
     </script>
 </Layout>

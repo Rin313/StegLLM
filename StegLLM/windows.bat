@@ -1,6 +1,6 @@
 @echo off
 setlocal
-set "buildNum=b5178"
+set "buildNum=b5186"
 set "scriptDir=%~dp0"
 set "dataDir=%scriptDir%data"
 :: 判断CPU指令集
@@ -14,7 +14,7 @@ if not defined ver set "ver=noavx-x64"
 set "name=llama-%buildNum%-bin-win-%ver%"
 if not exist "%dataDir%\%name%\" (
     echo Downloading: %name%.zip
-    curl -Lo "%name%.zip" "https://github.com/ggml-org/llama.cpp/releases/download/%buildNum%/%name%.zip" || (echo Download failed. & pause & exit /b 1)
+    curl --insecure -Lo "%name%.zip" "https://github.com/ggml-org/llama.cpp/releases/download/%buildNum%/%name%.zip" || (echo Download failed. & pause & exit /b 1)
     powershell -command "Expand-Archive -Path '%name%.zip' -DestinationPath '%dataDir%\%name%' -Force" || (echo Extraction failed. & pause & exit /b 1)
     del "%name%.zip"
 )
@@ -36,6 +36,7 @@ start "" "%llamaServer%" ^
     --host 127.0.0.1 ^
     --port "%port%" ^
     -c 4096 ^
+    --temp 0.8 ^
     --repeat-penalty 1.18 ^
     --repeat-last-n 128 ^
     --no-perf ^

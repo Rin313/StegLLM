@@ -14,6 +14,7 @@ npm i @noble/curves
 ```
 打包源码
 ```
+cd src
 Invoke-WebRequest -Uri "https://github.com/Rin313/StegLLM/archive/refs/heads/main.zip" -OutFile "../StegLLM/源码.zip"
 ```
 ```

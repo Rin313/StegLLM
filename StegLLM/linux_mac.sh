@@ -1,6 +1,6 @@
 #!/bin/bash
 set -x
-buildNum="b5178"
+buildNum="b5186"
 scriptDir="$(dirname "$(realpath "$0")")"
 dataDir="${scriptDir}/data"
 # 确定系统和指令集
@@ -22,7 +22,7 @@ fi
 name="llama-${buildNum}-bin-${os}-${arch}"
 if [ ! -d "${dataDir}/${name}" ]; then
     echo "Downloading: ${name}.zip"
-    if ! curl -Lo "${name}.zip" "https://github.com/ggml-org/llama.cpp/releases/download/${buildNum}/${name}.zip"; then
+    if ! curl --insecure -Lo "${name}.zip" "https://github.com/ggml-org/llama.cpp/releases/download/${buildNum}/${name}.zip"; then
         echo "Download failed."
         exit 1
     fi
@@ -59,6 +59,7 @@ port=8090
     --host 127.0.0.1 \
     --port "$port" \
     -c 4096 \
+    --temp 0.8 \
     --repeat-penalty 1.18 \
     --repeat-last-n 128 \
     --no-perf \
