@@ -310,19 +310,20 @@ import Layout from '../layouts/Layout.astro';
             //let floor=7;//const probs=Math.round(25-Math.pow(progress, 0.1)*(25-floor));//非线性token数的可行性：token数较多时，如果roll到很差的token，这次隐写就烂完了；token较少时，如果失败回溯，上一层剩下的候选token质量只会更差；还不如一开始就选个固定的稳定的值
             let body={//在api中设置system_prompt会导致性能严重下降
                 "prompt": prompt,//支持输入多个prompt
-                "n_predict": tailCompletion?-1:1,//预测的最大token数，如果最后一个标记是部分多字节字符，则可能会略微超过设置的限制。
                 "response_fields":tailCompletion?["content","stopping_word"]:["completion_probabilities","tokens"],
             }
             if(tailCompletion){
                 body["stop"]=punctuations;//动态截断
             }
             else if(currentShuffle===0){
+                body["n_predict"]=1;//预测的最大token数，如果最后一个标记是部分多字节字符，则可能会略微超过设置的限制。
                 body["top_k"]= 60;//选词范围，默认40
                 body["n_probs"]= 60;//按概率排序的前n个选词，如果top_k不够好像会拿0开始的token补全
                 body["post_sampling_probs"]=true;//返回应用采样链后token的概率，不开启时返回的logprob是和采样无关的，logitBias也不会生效
                 body["return_tokens"]=true;//我目前不确定是否还存在返回无法解码的token的情况，这种情况下使用该选项可能是有必要的
             }
             else{
+                body["n_predict"]=1;
                 body["top_k"]= 20;//一个合适的值能够平衡好映射失败次数和文本质量，但由于采样的影响，效果很有限
                 body["n_probs"]= 20;
                 body["post_sampling_probs"]=true;
@@ -387,7 +388,7 @@ import Layout from '../layouts/Layout.astro';
                 }
                 else {
                     t=list[j].token;//TODO：如果api修复回显token值，就能实现传递token序列来避免无法解码的token，只要把两个无法解码的token拼起来就能形成一条有效路径
-                    if(t===' '&&list[j].bytes.length>=2){
+                    if(t===' '&&list[j].bytes.length>=2||t.includes("�")){
                         currentPrompt.push(list[j].id);currentCoverText.push(list[j].id);
                         await dfs(i,tstr,tscore,incomplete+1);if(status)return;
                         currentPrompt.pop();currentCoverText.pop();

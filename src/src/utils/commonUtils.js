@@ -440,6 +440,7 @@ const defaultOptions = {
 };
 export function check(str, options = {}) {
     const config = { ...defaultOptions, ...options };
+    if(!str)return false;//我不知道为什么会存在空字符串的token
     if(containsInvisibleChar(str)) return false;
     // 检测是否包含特定字符
     const charsValid = config.includeChars.some(char => str.includes(char));
