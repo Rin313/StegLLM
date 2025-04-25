@@ -311,6 +311,7 @@ import Layout from '../layouts/Layout.astro';
             let body={//在api中设置system_prompt会导致性能严重下降
                 "prompt": prompt,//支持输入多个prompt
                 "response_fields":tailCompletion?["content","stopping_word"]:["completion_probabilities","tokens"],
+                "logit_bias":[["�",false]]//避免在判断不可解码的token时产生干扰
             }
             if(tailCompletion){
                 body["stop"]=punctuations;//动态截断

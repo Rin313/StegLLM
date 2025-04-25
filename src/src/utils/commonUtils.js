@@ -434,8 +434,8 @@ const defaultOptions = {
     charRanges: [],
     // 需要检测的子串数组
     includeSubstrings: [
-        "\r\n","\r\n\r\n",//windows系统的换行，但现代的编程中应该不用手动处理
-        " \n","  \n"," \n\n","  \n\n",//实在不明白空格后再换行有什么意义
+        "\r\n",//windows系统的换行，但现代的编程中应该不用手动处理
+        " \n"//实在不明白空格后再换行有什么意义
     ]
 };
 export function check(str, options = {}) {
@@ -453,6 +453,5 @@ export function check(str, options = {}) {
     if (rangesValid) return false;
     // 检测是否包含子串
     const substringsValid = config.includeSubstrings.some(substring => str.includes(substring));
-    if (substringsValid) return false;
-    return true;
+    return !substringsValid;
 }
