@@ -70,4 +70,4 @@ tail -->endd[结束];
 
 本项目采用 [MIT 许可证](LICENSE)。
 
-特别感谢：**[LLM-Steganography](https://github.com/HighDoping/LLM-Steganography/),[llamafile](https://github.com/Mozilla-Ocho/llamafile),[Unishox2](https://github.com/siara-cc/Unishox2)**
+特别感谢：**[LLM-Steganography](https://github.com/HighDoping/LLM-Steganography/),[llama.cpp](https://github.com/ggml-org/llama.cpp),[Unishox2](https://github.com/siara-cc/Unishox2)**

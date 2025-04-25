@@ -72,4 +72,4 @@ This project is intended solely for learning and research purposes. Please do no
 
 This project is licensed under the [MIT License](LICENSE).
 
-Special Thanks: **[LLM-Steganography](https://github.com/HighDoping/LLM-Steganography/), [llamafile](https://github.com/Mozilla-Ocho/llamafile), [Unishox2](https://github.com/siara-cc/Unishox2)**
+Special Thanks: **[LLM-Steganography](https://github.com/HighDoping/LLM-Steganography/), [llama.cpp](https://github.com/ggml-org/llama.cpp), [Unishox2](https://github.com/siara-cc/Unishox2)**
