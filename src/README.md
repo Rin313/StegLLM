@@ -11,8 +11,6 @@ npm i @tailwindcss/vite@latest
 npm i daisyui@latest
 npm i astro@latest
 npm i @noble/curves
-npm install --save-dev gh-pages
-npm run deploy
 ```
 打包源码
 ```
