@@ -36,6 +36,20 @@ Linux/MacOS系统：运行 `linux_mac.sh`
 
 从 **Hugging Face** 或 **ModelScope** 等任何来源获取**gguf**文件，然后在项目目录的**data**文件夹中对gguf文件进行替换。
 
+# 部署到Android（Beta）
+```sh
+apt update && apt upgrade -y
+apt install git cmake
+git clone https://github.com/ggml-org/llama.cpp
+cd llama.cpp
+cmake -B build
+cmake --build build --config Release
+curl -LO https://github.com/Rin313/StegLLM/releases/download/v1.2.1/StegLLM.zip
+unzip StegLLM.zip
+cp -r llama.cpp/build/bin StegLLM/data/
+bash StegLLM/android.sh
+```
+
 # 原理图
 
 ```mermaid

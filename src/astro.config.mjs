@@ -7,6 +7,8 @@ export default defineConfig({
   devToolbar: {
     enabled: false
   },
+  site: 'https://Rin313.github.io',
+  base: '/StegLLM',
   // build: {
   //   inlineStylesheets: `always`,//内联css
   // },

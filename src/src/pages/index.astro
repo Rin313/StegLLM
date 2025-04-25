@@ -184,9 +184,9 @@ import Layout from '../layouts/Layout.astro';
         }
         function setLanguage(){
             runIfMatch('language','simplifiedChinese',{
-                simplifiedChinese:['导入配置','导出配置','生成密钥','输入接收方的公钥（可选）','输入你的私钥（可选）','输入接收方的公钥（可选）','输入你的私钥（可选）','请输入需要加密的信息','请输入需要解密的掩饰文本',`请输入任务提示，例如："续写一段散文："\n你可以通过右侧的保存按钮来保存当前的提示模板`,'确定','Github','语言','主题','隐写','提取','保存','进度条','支持前后插入'],
-                traditionalChinese:['導入配置', '導出配置', '生成密鑰', '輸入接收方的公鑰（可選）', '輸入你的私鑰（可選）', '輸入接收方的公鑰（可選）', '輸入你的私鑰（可選）', '請輸入需要加密的信息', '請輸入需要解密的掩飾文本', `請輸入任務提示，例如：「續寫一段散文：」\n您可以通過右側的儲存按鈕來儲存當前的提示模板。`, '確定', 'Github', '語言', '主題', '隱寫', '提取', '保存', '進度條', '支持前後插入'],
-                english:['Import Configuration', 'Export Configuration', 'Generate Key', 'Enter Recipient\'s Public Key (Optional)', 'Enter Your Private Key (Optional)', 'Enter Recipient\'s Public Key (Optional)', 'Enter Your Private Key (Optional)', 'Please Enter the Information to Encrypt', 'Please enter the disguised text to be decrypted', `Please enter a task prompt, for example: "Continue writing a prose passage:"\nYou can save the current prompt template using the save button on the right.`, 'Confirm', 'Github', 'Language', 'Theme', 'Steganography', 'Extract', 'Save', 'Progress Bar', 'Support Front and Back Insertion'],
+                simplifiedChinese:['导入配置','导出配置','生成密钥','输入接收方的公钥（可选）','输入你的私钥（可选）','输入接收方的公钥（可选）','输入你的私钥（可选）','请输入需要加密的信息','请输入需要解密的掩饰文本',`请输入任务提示，例如："续写一段散文："\n点击右侧的按钮可以保存当前任务提示`,'确定','Github','语言','主题','隐写','提取','保存','进度条','支持前后插入'],
+                traditionalChinese:['導入配置', '導出配置', '生成密鑰', '輸入接收方的公鑰（可選）', '輸入你的私鑰（可選）', '輸入接收方的公鑰（可選）', '輸入你的私鑰（可選）', '請輸入需要加密的信息', '請輸入需要解密的掩飾文本', `請輸入任務提示，例如：「續寫一段散文：」\n您可以通過右側的按鈕來儲存當前的提示模板。`, '確定', 'Github', '語言', '主題', '隱寫', '提取', '保存', '進度條', '支持前後插入'],
+                english:['Import Configuration', 'Export Configuration', 'Generate Key', 'Enter Recipient\'s Public Key (Optional)', 'Enter Your Private Key (Optional)', 'Enter Recipient\'s Public Key (Optional)', 'Enter Your Private Key (Optional)', 'Please Enter the Information to Encrypt', 'Please enter the disguised text to be decrypted', `Please enter a task prompt, for example: "Continue writing a prose passage:"\nYou can save the current prompt template using the button on the right.`, 'Confirm', 'Github', 'Language', 'Theme', 'Steganography', 'Extract', 'Save', 'Progress Bar', 'Support Front and Back Insertion'],
             },(strs)=>{
                 assignStrs(strs);
             });
