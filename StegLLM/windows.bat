@@ -1,6 +1,6 @@
 @echo off
 setlocal
-set "buildNum=b5187"
+set "buildNum=b5193"
 set "scriptDir=%~dp0"
 set "dataDir=%scriptDir%data"
 :: 判断CPU指令集
@@ -14,10 +14,11 @@ if not defined ver set "ver=noavx-x64"
 set "name=llama-%buildNum%-bin-win-%ver%"
 if not exist "%dataDir%\%name%\" (
     echo Downloading: %name%.zip
-    curl --insecure -Lo "%name%.zip" "https://github.com/ggml-org/llama.cpp/releases/download/%buildNum%/%name%.zip" || (echo Download failed. & pause & exit /b 1)
+    curl --insecure --compressed -C - -Lo "%name%.zip" "https://github.com/ggml-org/llama.cpp/releases/download/%buildNum%/%name%.zip" || (echo Download failed. & pause & exit /b 1)
     powershell -command "Expand-Archive -Path '%name%.zip' -DestinationPath '%dataDir%\%name%' -Force" || (echo Extraction failed. & pause & exit /b 1)
     del "%name%.zip"
 )
+:: todo:启用--http2，目前windows版的curl仍然不支持
 :: 查找gguf文件
 set "gguf="
 for %%a in ("%dataDir%\*.gguf") do (

@@ -415,6 +415,8 @@ import Layout from '../layouts/Layout.astro';
                             if(allowInsertion){
                                 currentCoverText.push(list[j].id);
                                 el.coverText.value+=t;
+                                if(!punctuations.includes(el.coverText.value[el.coverText.value.length-1]))//如果不在dfs中处理，那么取消隐写时仍然会额外执行补全。
+                                    el.coverText.value+=(await completion(currentPrompt,1,true));
                             }
                             else el.coverText.value+=t.slice(0,k+1);
                         }
@@ -464,13 +466,7 @@ import Layout from '../layouts/Layout.astro';
             currentPrompt=await tokenize(prompt);currentCoverText=[];el.coverText.value='';currentShuffle=0;status=false;el.progress.style.setProperty('--value', 0);el.progress.setAttribute('aria-valuenow', 0);el.progress.classList.remove('hidden');el.tooltip3.classList.remove('invisible')
             await dfs(0,'',0,0);
             el.tooltip3.classList.add('invisible');el.progress.classList.add('hidden');
-            if(!status){
-                alert('请尝试减少输入内容，或在github反馈','隐写失败！');
-                return;
-            }
-            if(allowInsertion&&!punctuations.includes(el.coverText.value[el.coverText.value.length-1])){//如果不开启allowInsertion，就没法对掩饰文本进行尾部自动补全。如果开启allowInsertion，通常很少有enableTailAutocomplete这个选项的需求。
-                el.coverText.value+=(await completion(currentPrompt,1,true));
-            }
+            if(!status) alert('请尝试调整或减少输入内容','隐写失败！');
         }
         async function extract(coverText) {
             if(!coverText){
@@ -519,7 +515,6 @@ import Layout from '../layouts/Layout.astro';
                 data=await eccDecryptToUint8Array(data,JSON.parse(key));
             }
             el.secret.value=await unishoxDecompress(data);// el.secret.value=await unishoxDecompress(data,useUnishox);
-
         }
         el.hide.onclick=async ()=>{
             await encrypt(el.prompt.value,el.secret.value);

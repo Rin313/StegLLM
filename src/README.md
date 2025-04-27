@@ -17,8 +17,13 @@ npm i @noble/curves
 cd src
 Invoke-WebRequest -Uri "https://github.com/Rin313/StegLLM/archive/refs/heads/main.zip" -OutFile "../StegLLM/源码.zip"
 ```
+部署静态资源
 ```
-llama-perplexity -m gemma-3-4b-it-Q6_K.gguf -f <file> 困惑度测试 
+git clone -b gh-pages https://github.com/username/repository.git
+```
+困惑度测试
+```
+llama-perplexity -m gemma-3-4b-it-Q6_K.gguf -f <file> 
 ```
 //前端轮子大舞台真的很爱瞎搞，不科学的设计模式导致一大堆不向前兼容的调整，比起不稳定地升级项目，最好每隔一阵子就初始化一个项目覆盖一些配置，并通过git更改来进行调整
 目前astro似乎没法在本地实现国际化，site配置用不了本地域名好像。

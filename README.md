@@ -20,11 +20,14 @@ StegLLM 是一个离线的文本隐写项目，它利用大语言模型LLM在正
 
 # 快速开始
 
+* **隐写 + 解密：** 
+
 下载[StegLLM.zip](https://github.com/Rin313/StegLLM/releases)
 
 Windows系统：运行 `windows.bat`
 
 Linux/MacOS系统：运行 `linux_mac.sh`
+* **仅解密：** 使用 https://rin313.github.io/StegLLM/
 
 界面演示
 
@@ -37,6 +40,7 @@ Linux/MacOS系统：运行 `linux_mac.sh`
 从 **Hugging Face** 或 **ModelScope** 等任何来源获取**gguf**文件，然后在项目目录的**data**文件夹中对gguf文件进行替换。
 
 # 部署到Android（Beta）
+使用**Termux**
 ```sh
 apt update && apt upgrade -y
 apt install git cmake
@@ -44,7 +48,7 @@ git clone https://github.com/ggml-org/llama.cpp
 cd llama.cpp
 cmake -B build
 cmake --build build --config Release
-curl -LO https://github.com/Rin313/StegLLM/releases/download/v1.2.1/StegLLM.zip
+curl --compressed -LO https://github.com/Rin313/StegLLM/releases/download/v1.2.1/StegLLM.zip
 unzip StegLLM.zip
 cp -r llama.cpp/build/bin StegLLM/data/
 bash StegLLM/android.sh
@@ -57,20 +61,20 @@ flowchart TD
     A[开始] --> compress[压缩<br>Unishox或Deflate-Raw];
     compress --> encrypt[ECC加密 - 可选];
     public[接收方的公钥] -->encrypt;
-    encrypt --> magicNum[添加魔数和长度字段 - 可选]
-    magicNum -->base[编码为二进制序列]
-    base -->prompt[初始化prompt]
+    encrypt --> base[编码为二进制序列]
+base -->magicNum[添加魔数和长度字段 - 可选];
+    magicNum -->prompt[初始化prompt]
     prompt-->dfs[以DFS方式构建token生成树]
     dfs --> weightsNum{加权和>=阈值?}
     weightsNum --> |是|mapping{xxhash%2=bit?}
     weightsNum --> |否|dfs;
-    mapping --> |是|mappingDone{当前token映射完成?}
+mapping --> |是|mappingDone{当前token映射完成?}
     mapping --> |否|dfs;
     mappingDone -->|是|coverText[更新掩饰文本和上下文]
     mappingDone -->|否|dfs;
     coverText --> done{嵌入完成?};
     done -->|是|tail[尾部补全 - 可选];
-    done -->|否|dfs;
+done -->|否|dfs;
 tail -->endd[结束];
 ```
 
@@ -81,7 +85,5 @@ tail -->endd[结束];
 # 免责声明
 
 本项目仅供学习和研究使用，请勿用于非法用途。对于因使用本项目造成的任何损失或损害，作者不承担任何责任。
-
-本项目采用 [MIT 许可证](LICENSE)。
 
 特别感谢：**[LLM-Steganography](https://github.com/HighDoping/LLM-Steganography/),[llama.cpp](https://github.com/ggml-org/llama.cpp),[Unishox2](https://github.com/siara-cc/Unishox2)**
