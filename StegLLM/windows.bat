@@ -18,7 +18,6 @@ if not exist "%dataDir%\%name%\" (
     powershell -command "Expand-Archive -Path '%name%.zip' -DestinationPath '%dataDir%\%name%' -Force" || (echo Extraction failed. & pause & exit /b 1)
     del "%name%.zip"
 )
-:: todo:启用--http2，目前windows版的curl仍然不支持
 :: 查找gguf文件
 set "gguf="
 for %%a in ("%dataDir%\*.gguf") do (
@@ -31,6 +30,7 @@ for /r "%dataDir%\%name%" %%f in (llama-server.exe) do (
 )
 :found
 set "port=8090"
+:: start "" 让程序在新的窗口运行，不会阻塞后续命令。
 start "" "%llamaServer%" ^
     -m "%gguf%" ^
     --path "%dataDir%\dist" ^
@@ -59,22 +59,3 @@ IF ERRORLEVEL 1 (
 start http://127.0.0.1:%port%
 :: 结束局部变量环境
 endlocal
-
-:: start "" 让程序在新的窗口运行，不会阻塞后续命令。
-:: -c 0 上下文大小使用模型默认值，但这可能对低端设备不友好
-:: --no-perf 关闭内部性能计时
-:: --prio 3 最高进程优先级，这是一个即开即用的实时需求。
-:: --poll 100 全轮询(持续主动检查是否有新任务)
-:: --timeout 600 读写超时时间(秒)
-:: --log-verbosity 0 最基础的日志级别
-:: props 允许通过接口修改全局属性
-:: --no-slots 禁用槽监控，不需要运维数据
-:: --repeat-penalty 重复惩罚，1.0为无惩罚
-:: --repeat-last-n 惩罚最后n个token
-
-
-:: --keep 能够让前n个token不会被抛弃，永远保持在上下文中
-:: --defrag-thold KV缓存碎片整理的阈值。KV缓存会随着长文本推理产生"碎片"（无效空间），可能导致缓存空间利用率降低。
-:: --no-kv-offload 禁用KV卸载，所有 KV 缓存都必须常驻在主内存或显存中，内存换性能
-:: --mlock 锁定模型数据在物理内存，内存换性能
-:: --no-mmap 一次性加载模型，加载速度更慢，内存占用似乎也会更高

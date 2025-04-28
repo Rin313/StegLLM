@@ -319,6 +319,7 @@ export async function eccDecryptToUint8Array(encryptedData, recipientPrivateJwk)
             {
                 name: "AES-GCM",
                 length: 256,
+                tagLength:128 //AES-GCM 规范建议它应该是 96、104、112、120 或 128，默认值128。似乎对输出长度没有影响？
             },
             false,
             ["decrypt"]
@@ -426,8 +427,7 @@ export function stringToUnicode(str) {
 const defaultOptions = {
     // 需要检测的特定字符数组
     includeChars: [
-        // '�',//避免把不可解码的token也过滤了
-        ' ',//不间断空格是用于精确排版的符号，正常人几乎不可能手动使用
+        ' ',//不间断空格是用于精确排版的符号，通常在复制带格式的文本时出现，几乎不可能手动使用
         '　',//全角空格，一般只用于段首排版，非常傻逼
     ],
     // 需要检测的字符区间数组，格式为 [[startChar, endChar], ...]

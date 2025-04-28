@@ -388,7 +388,7 @@ import Layout from '../layouts/Layout.astro';
                     // console.log(t);
                 }
                 else {
-                    t=list[j].token;//TODO：如果api修复回显token值，就能实现传递token序列来避免无法解码的token，只要把两个无法解码的token拼起来就能形成一条有效路径
+                    t=list[j].token;
                     if(t===' '&&list[j].bytes.length>=2||t.includes("�")){
                         currentPrompt.push(list[j].id);currentCoverText.push(list[j].id);
                         await dfs(i,tstr,tscore,incomplete+1);if(status)return;
@@ -449,8 +449,9 @@ import Layout from '../layouts/Layout.astro';
             if(key){
                 data= await eccEncryptToUint8Array(data,JSON.parse(key));
             }
-            //添加纠错码的话，要求用户手动修改不协调的地方，并检测是否仍然能还原。我觉得这个方向走偏了，想办法增强AI的隐写效果才是以后的方向。
-            // console.log(data);
+            //添加纠错码的话，要求用户手动修改不协调的地方，并自动检测是否仍然能还原。我觉得这个方向走偏了，想办法增强AI的隐写效果才是以后的方向。
+            //另一种方式是，部分截取片段直接使用，不尝试映射，这会导致隐写容量进一步降低。
+            console.log(data);
             base=toBinary(data);//base=[useUnishox,...toBinary(data)];//处理为二进制序列，在映射时粒度更细，但建议每次只映射1位，减少映射失败率。
             allowInsertion=get('insertion',true);
             if(allowInsertion){
@@ -462,7 +463,7 @@ import Layout from '../layouts/Layout.astro';
                 length[0]=data.length/256;length[1]=data.length%256;
                 base=[...magicNum,...toBinary(length),...base];
             }
-            // console.log(base);
+            // console.log(base);//1和0的比例差距一般不超过10%
             currentPrompt=await tokenize(prompt);currentCoverText=[];el.coverText.value='';currentShuffle=0;status=false;el.progress.style.setProperty('--value', 0);el.progress.setAttribute('aria-valuenow', 0);el.progress.classList.remove('hidden');el.tooltip3.classList.remove('invisible')
             await dfs(0,'',0,0);
             el.tooltip3.classList.add('invisible');el.progress.classList.add('hidden');
@@ -563,6 +564,11 @@ import Layout from '../layouts/Layout.astro';
         el.extract.onclick=async ()=>{
             await extract(el.coverText.value);
         }
+        //todo:unishox3
+        //todo:logit_bias、token过滤、采样参数调整等方式提高token质量
+        //todo:找到一种足够通用的system prompt注入方式
+        //todo:变长编码来表示长度，VLQ/LEB128通常为字节为单位，Elias Gamma/Delta/ Omega 编码可以精确到位
+        //warning:除非有非常大的改进，否则禁止调整解码策略；而且还要为旧版本的解码部署页面；
         // fetch('http://127.0.0.1:8090/props').then(res=>res.json()).then(json=>console.log(json))
     </script>
 </Layout>
