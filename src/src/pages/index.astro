@@ -311,15 +311,15 @@ import Layout from '../layouts/Layout.astro';
             }
             else if(currentShuffle===0){
                 body["n_predict"]=1;//预测的最大token数，如果最后一个标记是部分多字节字符，则可能会略微超过设置的限制。
-                body["top_k"]= 60;//选词范围，默认40
-                body["n_probs"]= 60;//按概率排序的前n个选词，如果top_k不够好像会拿0开始的token补全
+                body["top_k"]= 75;//选词范围，默认40
+                body["n_probs"]= 75;//按概率排序的前n个选词，如果top_k不够好像会拿0开始的token补全
                 body["post_sampling_probs"]=true;//返回应用采样链后token的概率，不开启时返回的logprob是和采样无关的，logitBias也不会生效
                 body["return_tokens"]=true;//我目前不确定是否还存在返回无法解码的token的情况，这种情况下使用该选项可能是有必要的
             }
             else{
                 body["n_predict"]=1;
-                body["top_k"]= 20;//一个合适的值能够平衡好映射失败次数和文本质量，但由于采样的影响，效果很有限
-                body["n_probs"]= 20;
+                body["top_k"]= 25;//一个合适的值能够平衡好映射失败次数和文本质量，但由于采样的影响，效果很有限
+                body["n_probs"]= 25;
                 body["post_sampling_probs"]=true;
                 body["return_tokens"]=true;
             }
