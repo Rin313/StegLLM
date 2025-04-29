@@ -288,30 +288,14 @@ import Layout from '../layouts/Layout.astro';
         }
         // console.log('的'.codePointAt(0));
         const punctuations=["？","?","！","!","。","）",")","…","}","]","."];//"\n"和"”"有时候并不代表结尾
-        // async function chat(str,n_predict){
-        //     let body={//在api中设置system_prompt会导致性能严重下降
-        //         stop: ["</s>"],//chat模式下默认为["</s>", "Llama:", "User:"]
-        //         "n_predict": n_predict,//生成的token数，-1-2048
-        //         "repeat_last_n": 128,//默认64
-        //         "repeat_penalty": 1.18,//重复惩罚，1.0为无惩罚，默认1.1，实测偶尔确实会出不少重复
-        //         "cache_prompt": false,//提示词复用
-        //         "slot_id": 0,//默认-1，分配到空闲插槽
-        //         "prompt": str,//支持输入多个prompt
-        //         "logit_bias": logitBias
-        //     }
-        //     const response = await fetch('http://127.0.0.1:8090/completion', {
-        //         method: 'POST',
-        //         body: JSON.stringify(body),
-        //     });
-        //     const json=(await response.json());
-        //     return json.content;
-        // }
         async function completion(prompt, progress, tailCompletion) {
             //let floor=7;//const probs=Math.round(25-Math.pow(progress, 0.1)*(25-floor));//非线性token数的可行性：token数较多时，如果roll到很差的token，这次隐写就烂完了；token较少时，如果失败回溯，上一层剩下的候选token质量只会更差；还不如一开始就选个固定的稳定的值
             let body={//在api中设置system_prompt会导致性能严重下降
                 "prompt": prompt,//支持输入多个prompt
                 "response_fields":tailCompletion?["content","stopping_word"]:["completion_probabilities","tokens"],
-                "logit_bias":[["�",false]]//避免在判断不可解码的token时产生干扰
+                "logit_bias":[["�",false]],//避免在判断不可解码的token时产生干扰
+                //stream: true
+                //stop: ["</s>"],//chat模式下默认为["</s>", "Llama:", "User:"]
             }
             if(tailCompletion){
                 body["stop"]=punctuations;//动态截断
@@ -451,7 +435,7 @@ import Layout from '../layouts/Layout.astro';
             }
             //添加纠错码的话，要求用户手动修改不协调的地方，并自动检测是否仍然能还原。我觉得这个方向走偏了，想办法增强AI的隐写效果才是以后的方向。
             //另一种方式是，部分截取片段直接使用，不尝试映射，这会导致隐写容量进一步降低。
-            console.log(data);
+            // console.log(data);
             base=toBinary(data);//base=[useUnishox,...toBinary(data)];//处理为二进制序列，在映射时粒度更细，但建议每次只映射1位，减少映射失败率。
             allowInsertion=get('insertion',true);
             if(allowInsertion){
@@ -464,10 +448,23 @@ import Layout from '../layouts/Layout.astro';
                 base=[...magicNum,...toBinary(length),...base];
             }
             // console.log(base);//1和0的比例差距一般不超过10%
+            await fetch('http://127.0.0.1:8090/props').then(res=>res.json()).then(async json=>{
+                if(json.chat_template.includes("</think>")){
+                    // prompt+="<think>";//支持思考模式
+                    // await fetch('http://127.0.0.1:8090/completion', {method: 'POST',
+                    //     body: JSON.stringify({prompt:prompt,stop:["</think>"]}),
+                    // }).then(res=>res.json()).then(json=>{
+                    //     if(json.stopping_word)
+                    //         prompt+=json.content;
+                    // });
+                    // prompt+="</think>\n\n";
+                    prompt+="<think>\n</think>\n\n"
+                }
+            });
             currentPrompt=await tokenize(prompt);currentCoverText=[];el.coverText.value='';currentShuffle=0;status=false;el.progress.style.setProperty('--value', 0);el.progress.setAttribute('aria-valuenow', 0);el.progress.classList.remove('hidden');el.tooltip3.classList.remove('invisible')
             await dfs(0,'',0,0);
             el.tooltip3.classList.add('invisible');el.progress.classList.add('hidden');
-            if(!status) alert('请尝试调整或减少输入内容','隐写失败！');
+            if(!status) alert('请尝试使用更加发散的任务提示，或调整和减少输入内容','隐写失败！');
         }
         async function extract(coverText) {
             if(!coverText){
@@ -564,11 +561,13 @@ import Layout from '../layouts/Layout.astro';
         el.extract.onclick=async ()=>{
             await extract(el.coverText.value);
         }
+        //在非本地页面模式下， 禁用隐写按钮并添加提示
+        //100% i18n+重新翻译
         //todo:unishox3
         //todo:logit_bias、token过滤、采样参数调整等方式提高token质量
         //todo:找到一种足够通用的system prompt注入方式
         //todo:变长编码来表示长度，VLQ/LEB128通常为字节为单位，Elias Gamma/Delta/ Omega 编码可以精确到位
         //warning:除非有非常大的改进，否则禁止调整解码策略；而且还要为旧版本的解码部署页面；
-        // fetch('http://127.0.0.1:8090/props').then(res=>res.json()).then(json=>console.log(json))
+        // fetch('http://127.0.0.1:8090/props').then(res=>res.json()).then(json=>console.log(json));
     </script>
 </Layout>

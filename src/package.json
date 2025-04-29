@@ -11,8 +11,8 @@
   "dependencies": {
     "@noble/curves": "^1.9.0",
     "@tailwindcss/vite": "^4.1.4",
-    "astro": "^5.7.5",
-    "daisyui": "^5.0.27",
+    "astro": "^5.7.9",
+    "daisyui": "^5.0.28",
     "xxhash-wasm": "^1.1.0"
   }
 }
