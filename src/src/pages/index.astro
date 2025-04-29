@@ -185,8 +185,8 @@ import Layout from '../layouts/Layout.astro';
         function setLanguage(){
             runIfMatch('language','simplifiedChinese',{
                 simplifiedChinese:['导入配置','导出配置','生成密钥','输入接收方的公钥（可选）','输入你的私钥（可选）','输入接收方的公钥（可选）','输入你的私钥（可选）','请输入需要加密的信息','请输入需要解密的掩饰文本',`请输入任务提示，例如："续写一段散文："\n点击右侧的按钮可以保存当前任务提示`,'确定','Github','语言','主题','隐写','提取','保存','进度条','支持前后插入'],
-                traditionalChinese:['導入配置', '導出配置', '生成密鑰', '輸入接收方的公鑰（可選）', '輸入你的私鑰（可選）', '輸入接收方的公鑰（可選）', '輸入你的私鑰（可選）', '請輸入需要加密的信息', '請輸入需要解密的掩飾文本', `請輸入任務提示，例如：「續寫一段散文：」\n您可以通過右側的按鈕來儲存當前的提示模板。`, '確定', 'Github', '語言', '主題', '隱寫', '提取', '保存', '進度條', '支持前後插入'],
-                english:['Import Configuration', 'Export Configuration', 'Generate Key', 'Enter Recipient\'s Public Key (Optional)', 'Enter Your Private Key (Optional)', 'Enter Recipient\'s Public Key (Optional)', 'Enter Your Private Key (Optional)', 'Please Enter the Information to Encrypt', 'Please enter the disguised text to be decrypted', `Please enter a task prompt, for example: "Continue writing a prose passage:"\nYou can save the current prompt template using the button on the right.`, 'Confirm', 'Github', 'Language', 'Theme', 'Steganography', 'Extract', 'Save', 'Progress Bar', 'Support Front and Back Insertion'],
+                traditionalChinese:['導入配置', '導出配置', '生成密鑰', '輸入接收方的公鑰（可選）', '輸入你的私鑰（可選）', '輸入接收方的公鑰（可選）', '輸入你的私鑰（可選）', '請輸入需要加密的信息', '請輸入需要解密的掩飾文本', '請輸入任務提示，例如：「續寫一段散文：」\n點擊右側的按鈕可以保存當前任務提示', '確定', 'Github', '語言', '主題', '隱寫', '提取', '保存', '進度條', '支持前後插入'],
+                english:['Import Configuration', 'Export Configuration', 'Generate Key', 'Enter Recipient\'s Public Key (Optional)', 'Enter Your Private Key (Optional)', 'Enter Recipient\'s Public Key (Optional)', 'Enter Your Private Key (Optional)', 'Please Enter the Information to Encrypt', 'Please Enter the Masked Text to Decrypt', 'Please Enter the Task Prompt, e.g., "Continue Writing an Essay: "\nClick the Button on the Right to Save the Current Task Prompt', 'Confirm', 'Github', 'Language', 'Theme', 'Steganography', 'Extract', 'Save', 'Progress Bar', 'Support Insertion Before and After'],
             },(strs)=>{
                 assignStrs(strs);
             });
@@ -228,7 +228,7 @@ import Layout from '../layouts/Layout.astro';
         })
         el.generateKeyPair.onclick=async ()=>{
             await generateKeyPair();
-            alert(dynamicContent(`请安全地保存你的私钥，并提前和接收方交换公钥` ,`2`,`3`),dynamicContent('成功！','',''));
+            alert(dynamicContent(`請安全地保存你的私钥，并提前和接收方交换公钥`, `請安全地保存你的私鑰，並提前與接收方交換公鑰`, `Please securely save your private key and exchange public keys with the recipient in advance`),dynamicContent('成功！', '成功！', 'Success!'));
         }
         el.export.onclick=()=>{
             exportLocalStorage();
@@ -250,18 +250,27 @@ import Layout from '../layouts/Layout.astro';
             if(el.prompt.value){
                 saveList('prompts',el.prompt.value);
                 prompts=get('prompts',['']);i=prompts.length-1;save('promptIndex',i);
-                alert('','保存成功！')
+                alert('',dynamicContent(`保存成功！`, `儲存成功！`, `Saved successfully!`))
             }
             else{
                 saveList('prompts',null,i);
                 prompts=get('prompts',['']);i=prompts.length-1;el.prompt.value=prompts[i];save('promptIndex',i);
-                alert('','删除成功！')
+                alert('',dynamicContent(`删除成功！`, `刪除成功！`, `Deleted successfully!`))
             }
         }
         function initConfig(){
             setTheme();
             setInsertion();
             prompts=get('prompts',['']);i=get('promptIndex',prompts.length-1);el.prompt.value=prompts[i];
+            if(window.location.hostname!=='127.0.0.1'){
+                el.hide.classList.add('btn-disabled');
+                el.save.classList.add('btn-disabled');
+                el.up.classList.add('btn-disabled');
+                el.down.classList.add('btn-disabled');
+                el.publicKey.disabled = true;
+                el.insertion.disabled = true;
+                el.prompt.disabled = true;
+            }
         }
         setLanguage();
         initDaisyThemeController();
@@ -440,7 +449,7 @@ import Layout from '../layouts/Layout.astro';
             allowInsertion=get('insertion',true);
             if(allowInsertion){
                 if(data.length>65535){
-                    alert('内容过多，请减少内容或关闭前后插入选项')
+                    alert(dynamicContent(`内容过多，请减少内容或关闭前后插入选项`, `內容過多，請減少內容或關閉前後插入選項`, `Too much content, please reduce the content or disable the prepend/append option`))
                     return;
                 }
                 let length=new Uint8Array(2);//如果先加magic num再加密，那么就要在每个位置都寻找长度>=(67*8)的所有子串，此时尾插无影响（因为是按顺序和最小长度找起），如果头插数量为n bit，则寻找次数为n(n+1)/2，即是说只有少量头插的情况下才能成功。//todo:当用户选中允许头尾插入时，添加选项"隐蔽的加密"：当结合加密使用时，避免增加隐写暴露的风险，但只允许头部插入少量文本。这需求我看了都感觉绷不住。
@@ -464,7 +473,7 @@ import Layout from '../layouts/Layout.astro';
             currentPrompt=await tokenize(prompt);currentCoverText=[];el.coverText.value='';currentShuffle=0;status=false;el.progress.style.setProperty('--value', 0);el.progress.setAttribute('aria-valuenow', 0);el.progress.classList.remove('hidden');el.tooltip3.classList.remove('invisible')
             await dfs(0,'',0,0);
             el.tooltip3.classList.add('invisible');el.progress.classList.add('hidden');
-            if(!status) alert('请尝试使用更加发散的任务提示，或调整和减少输入内容','隐写失败！');
+            if(!status) alert(dynamicContent(`请尝试使用更加发散的任务提示，或调整和减少输入内容`, `請嘗試使用更加發散的任務提示，或調整並減少輸入內容`, `Please try using a more divergent task prompt, or adjust and reduce the input content`),dynamicContent(`隐写失败！`, `隱寫失敗！`, `Steganography failed!`));
         }
         async function extract(coverText) {
             if(!coverText){
