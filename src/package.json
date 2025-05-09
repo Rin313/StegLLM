@@ -13,6 +13,7 @@
     "@tailwindcss/vite": "^4.1.5",
     "astro": "^5.7.11",
     "daisyui": "^5.0.35",
+    "unishox2.siara.cc": "^1.1.5",
     "xxhash-wasm": "^1.1.0"
   }
 }

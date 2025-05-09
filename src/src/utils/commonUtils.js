@@ -1,4 +1,3 @@
-//分出多个工具类，导入反而更麻烦
 export default new Proxy({}, {//据说使用缓存会导致可能的奇怪问题
     get: (_, prop) => typeof prop === 'string' && /^[\w$]+$/.test(prop)
         ? document.getElementById(prop)
@@ -166,8 +165,8 @@ async function compress(uint8Array,format='deflate-raw') {//format:`gzip`,`defla
 async function decompress(uint8Array,format='deflate-raw') {
     return await readStream(uint8ArrayToReadableStream(uint8Array).pipeThrough(new DecompressionStream(format)));
 }
-
-import {unishox2_compress, unishox2_decompress} from './unishox2.js';
+import {unishox2_compress,unishox2_decompress,magic} from 'unishox2.siara.cc';
+magic.bits=0;
 const utf8Encoder= new TextEncoder();
 const utf8Decoder=new TextDecoder();
 const USX_HCODES_NO_DICT = new Uint8Array([0x00,0x40,0x80,0x00,0xC0]);//偏爱无重复内容
