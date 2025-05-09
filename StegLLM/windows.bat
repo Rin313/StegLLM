@@ -1,15 +1,11 @@
 @echo off
 setlocal
-set "buildNum=b5223"
+set "buildNum=b5318"
 set "scriptDir=%~dp0"
 set "dataDir=%scriptDir%data"
 :: 判断CPU指令集
-set "ver="
-wmic cpu get Caption | findstr /i "ARM" >nul && set "ver=llvm-arm64"
-if not defined ver "%dataDir%\cpufetch_x86-64_windows.exe" | findstr /i "AVX512" >nul && set "ver=avx512-x64"
-if not defined ver "%dataDir%\cpufetch_x86-64_windows.exe" | findstr /i "AVX2" >nul && set "ver=avx2-x64"
-if not defined ver "%dataDir%\cpufetch_x86-64_windows.exe" | findstr /i "AVX" >nul && set "ver=avx-x64"
-if not defined ver set "ver=noavx-x64"
+set "ver=cpu-x64"
+wmic cpu get Caption | findstr /i "ARM" >nul && set "ver=cpu-arm64"
 :: 下载llama.cpp
 set "name=llama-%buildNum%-bin-win-%ver%"
 if not exist "%dataDir%\%name%\" (

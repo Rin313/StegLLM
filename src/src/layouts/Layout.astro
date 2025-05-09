@@ -1,7 +1,6 @@
 ---//此处的初始化js不会包含到页面中
 import '../styles/global.css'
-const { title = 'Astro Basics'} = Astro.props;//传参示例：<Layout title="test">
-// lang="zh" 明确设置一种语言，否则显示问题
+const {title} = Astro.props;
 // width=device-width,initial-scale=1 视口默认宽度和默认缩放级别
 // <link rel="icon" type="image/svg+xml" href="/favicon.svg" />    如果不设计自己的LOGO，随便用一张svg毫无意义，完全不设置又会弹404
 // bg-local（默认）:随元素滚动
@@ -11,9 +10,8 @@ const { title = 'Astro Basics'} = Astro.props;//传参示例：<Layout title="te
 // 我的方案是不使用任何背景图片
 // min-h-screen body的宽度为视口宽度，高度取决于内容大小，可设置body高度为视口高度
 // flex flex-col 子元素垂直方向排列
-
 ---
-<html lang="zh">
+<html>
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />

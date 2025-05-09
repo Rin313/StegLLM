@@ -1,7 +1,6 @@
 ---
 import Layout from "../layouts/Layout.astro";
 ---
-
 <Layout title="StegLLM">
   <div class="shadow p-4 flex justify-between items-center">
     <div class="flex-1 gap-2">
@@ -10,28 +9,25 @@ import Layout from "../layouts/Layout.astro";
       <button class="btn btn-soft btn-warning btn-sm" id="generateKeyPair"></button>
     </div>
     <div class="flex gap-2 items-center">
-      <a href="https://github.com/Rin313/StegLLM" target="_blank" class="p-2" id="github">
-        <svg class="w-6 h-6" viewBox="0 0 24 24"><path fill="currentColor" d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.332-1.754-1.332-1.754-1.09-.745.083-.73.083-.73 1.205.085 1.838 1.236 1.838 1.236 1.07 1.835 2.807 1.305 3.492.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12z"></path></svg>
-      </a>
       <div class="dropdown dropdown-center">
-        <div tabindex="0" role="button" class="btn btn-ghost p-2" id="language">
-          <svg class="w-6 h-6" viewBox="0 0 24 24"><path fill="currentColor" d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2m6.93 6h-2.95a15.7 15.7 0 0 0-1.38-3.56A8.03 8.03 0 0 1 18.92 8M12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96M4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56A8 8 0 0 1 5.08 16m2.95-8H5.08a8 8 0 0 1 4.33-3.56A15.7 15.7 0 0 0 8.03 8M12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96M14.34 14H9.66c-.09-.66-.16-1.32-.16-2s.07-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2m.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2z"></path></svg>
+        <div tabindex="0" role="button" class="btn btn-ghost p-2" id="lang">
+          <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m10.5 21 5.25-11.25L21 21m-9-3h7.5M3 5.621a48.474 48.474 0 0 1 6-.371m0 0c1.12 0 2.233.038 3.334.114M9 5.25V3m3.334 2.364C11.176 10.658 7.69 15.08 3 17.502m9.334-12.138c.896.061 1.785.147 2.666.257m-4.589 8.495a18.023 18.023 0 0 1-3.827-5.802"/></svg>
         </div>
         <ul tabindex="0" class="dropdown-content bg-base-200 z-1 py-1 w-20">
           <li>
-            <input type="radio" name="language-dropdown" class="btn btn-sm btn-block btn-ghost" aria-label="简体中文" value="simplifiedChinese" />
+            <input type="radio" name="lang-dropdown" class="btn btn-sm btn-block btn-ghost" aria-label="简体中文" value="zh-Hans" />
           </li>
           <li>
-            <input type="radio" name="language-dropdown" class="btn btn-sm btn-block btn-ghost" aria-label="正體中文" value="traditionalChinese" />
+            <input type="radio" name="lang-dropdown" class="btn btn-sm btn-block btn-ghost" aria-label="正體中文" value="zh-Hant" />
           </li>
           <li>
-            <input type="radio" name="language-dropdown" class="btn btn-sm btn-block btn-ghost" aria-label="English" value="english" />
+            <input type="radio" name="lang-dropdown" class="btn btn-sm btn-block btn-ghost" aria-label="English" value="en" />
           </li>
         </ul>
       </div>
       <div class="dropdown dropdown-center">
         <div tabindex="0" role="button" class="btn btn-ghost p-2" id="theme">
-          <svg class="w-6 h-6" viewBox="0 0 24 24"><path fill="currentColor" d="M12 22C6.49 22 2 17.51 2 12S6.49 2 12 2s10 4.04 10 9c0 3.31-2.69 6-6 6h-1.77c-.28 0-.5.22-.5.5c0 .12.05.23.13.33c.41.47.64 1.06.64 1.67A2.5 2.5 0 0 1 12 22m0-18c-4.41 0-8 3.59-8 8s3.59 8 8 8c.28 0 .5-.22.5-.5a.54.54 0 0 0-.14-.35c-.41-.46-.63-1.05-.63-1.65a2.5 2.5 0 0 1 2.5-2.5H16c2.21 0 4-1.79 4-4c0-3.86-3.59-7-8-7"></path><circle cx="6.5" cy="11.5" r="1.5" fill="currentColor"></circle><circle cx="9.5" cy="7.5" r="1.5" fill="currentColor"></circle><circle cx="14.5" cy="7.5" r="1.5" fill="currentColor"></circle><circle cx="17.5" cy="11.5" r="1.5" fill="currentColor"></circle></svg>
+          <svg class="size-6" fill="currentColor" viewBox="0 0 16 16"><path d="M12.433 10.07C14.133 10.585 16 11.15 16 8a8 8 0 1 0-8 8c1.996 0 1.826-1.504 1.649-3.08-.124-1.101-.252-2.237.351-2.92.465-.527 1.42-.237 2.433.07M8 5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3m4.5 3a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3M5 6.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m.5 6.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3"/></svg>
         </div>
         <ul tabindex="0" class="dropdown-content bg-base-200 z-1 py-1">
           <li>
@@ -76,11 +72,11 @@ import Layout from "../layouts/Layout.astro";
         <div class="radial-progress text-primary hidden" style="--value:0;--size:4rem" aria-valuenow="0" role="progressbar" id="progress"></div>
         <div class="tooltip invisible" id="tooltip3">
           <button class="btn btn-primary btn-circle btn-xl visible" id="hide">
-            <svg class="w-6 h-6" viewBox="0 0 24 24"><path fill="currentColor" d="M10.5 15h3l-.575-3.225q.5-.25.788-.725T14 10q0-.825-.587-1.412T12 8t-1.412.588T10 10q0 .575.288 1.05t.787.725zm1.5 7q-3.475-.875-5.738-3.988T4 11.1V5l8-3l8 3v6.1q0 3.8-2.262 6.913T12 22"></path></svg>
+            <svg class="size-6" viewBox="0 0 24 24"><path fill="currentColor" d="M10.5 15h3l-.575-3.225q.5-.25.788-.725T14 10q0-.825-.587-1.412T12 8t-1.412.588T10 10q0 .575.288 1.05t.787.725zm1.5 7q-3.475-.875-5.738-3.988T4 11.1V5l8-3l8 3v6.1q0 3.8-2.262 6.913T12 22"></path></svg>
           </button>
         </div>
         <button class="btn btn-secondary btn-circle btn-xl" id="extract">
-          <svg class="w-6 h-6" viewBox="0 0 24 24"><path fill="currentColor" d="M18 1c-2.76 0-5 2.24-5 5v2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12c1.11 0 2-.89 2-2V10a2 2 0 0 0-2-2h-1V6c0-1.66 1.34-3 3-3s3 1.34 3 3v2h2V6c0-2.76-2.24-5-5-5m-8 12a2 2 0 0 1 2 2c0 1.11-.89 2-2 2a2 2 0 1 1 0-4"></path></svg>
+          <svg class="size-6" viewBox="0 0 24 24"><path fill="currentColor" d="M18 1c-2.76 0-5 2.24-5 5v2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12c1.11 0 2-.89 2-2V10a2 2 0 0 0-2-2h-1V6c0-1.66 1.34-3 3-3s3 1.34 3 3v2h2V6c0-2.76-2.24-5-5-5m-8 12a2 2 0 0 1 2 2c0 1.11-.89 2-2 2a2 2 0 1 1 0-4"></path></svg>
         </button>
       </div>
       <div class="shadow rounded-lg p-6 flex flex-col gap-6">
@@ -99,9 +95,7 @@ import Layout from "../layouts/Layout.astro";
         <button class="btn btn-ghost" id="up">▲</button>
         <button class="btn btn-ghost" id="down">▼</button>
       </div>
-      <button class="btn btn-ghost" id="save">
-        <svg class="w-8 h-8" viewBox="0 0 24 24"><path fill="currentColor" d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V7zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3s3 1.34 3 3s-1.34 3-3 3m3-10H5V5h10z"></path></svg>
-      </button>
+      <button class="btn btn-info" id="save"></button>
     </div>
   </div>
   <script>
@@ -121,16 +115,17 @@ import Layout from "../layouts/Layout.astro";
     setAllButtonTypesToButton();
     const themeButtons = document.querySelectorAll(`input[name="theme-dropdown"]`);
     function assignStrs(strs) {
-      [el.import.textContent, el.export.textContent, el.generateKeyPair.textContent, el.publicKeyTitle.textContent, el.privateKeyTitle.textContent, el.publicKey.ariaLabel, el.privateKey.ariaLabel, el.secret.placeholder, el.coverText.placeholder, el.prompt.placeholder, el.ok.textContent, el.github.ariaLabel, el.language.ariaLabel, el.theme.ariaLabel, el.hide.ariaLabel, el.extract.ariaLabel, el.save.ariaLabel, el.progress.ariaLabel, el.insertionText.textContent] = strs;
+      [el.import.textContent, el.export.textContent, el.generateKeyPair.textContent, el.publicKeyTitle.textContent, el.privateKeyTitle.textContent, el.publicKey.ariaLabel, el.privateKey.ariaLabel, el.secret.placeholder, el.coverText.placeholder, el.prompt.placeholder, el.ok.textContent, el.lang.ariaLabel, el.theme.ariaLabel, el.hide.ariaLabel, el.extract.ariaLabel, el.save.textContent, el.progress.ariaLabel, el.insertionText.textContent] = strs;
     }
-    function setLanguage() {
+    function setLang() {
+      document.documentElement.lang=get("lang","zh-Hans");
       runIfMatch(
-        "language",
-        "simplifiedChinese",
+        "lang",
+        "zh-Hans",
         {
-          simplifiedChinese: ["导入配置", "导出配置", "生成密钥", "输入接收方的公钥（可选）", "输入你的私钥（可选）", "输入接收方的公钥（可选）", "输入你的私钥（可选）", "请输入需要加密的信息", "请输入需要解密的掩饰文本", `请输入任务提示，例如："续写一段散文："\n点击右侧的按钮可以保存当前任务提示`, "确定", "Github", "语言", "主题", "隐写", "提取", "保存", "进度条", "支持前后插入"],
-          traditionalChinese: ["導入配置", "導出配置", "生成密鑰", "輸入接收方的公鑰（可選）", "輸入你的私鑰（可選）", "輸入接收方的公鑰（可選）", "輸入你的私鑰（可選）", "請輸入需要加密的信息", "請輸入需要解密的掩飾文本", "請輸入任務提示，例如：「續寫一段散文：」\n點擊右側的按鈕可以保存當前任務提示", "確定", "Github", "語言", "主題", "隱寫", "提取", "保存", "進度條", "支持前後插入"],
-          english: ["Import Configuration", "Export Configuration", "Generate Key", "Enter Recipient's Public Key (Optional)", "Enter Your Private Key (Optional)", "Enter Recipient's Public Key (Optional)", "Enter Your Private Key (Optional)", "Please Enter the Information to Encrypt", "Please Enter the Masked Text to Decrypt", 'Please Enter the Task Prompt, e.g., "Continue Writing an Essay: "\nClick the Button on the Right to Save the Current Task Prompt', "Confirm", "Github", "Language", "Theme", "Steganography", "Extract", "Save", "Progress Bar", "Support Insertion Before and After"],
+          "zh-Hans": ["导入配置", "导出配置", "生成密钥", "输入接收方的公钥（可选）", "输入你的私钥（可选）", "输入接收方的公钥（可选）", "输入你的私钥（可选）", "请输入需要加密的信息", "请输入需要解密的掩饰文本", `请输入任务提示，例如："续写一段散文："\n点击右侧的按钮可以保存当前任务提示`, "确定", "语言", "主题", "隐写", "提取", "保存", "进度条", "支持前后插入"],
+          "zh-Hant": ["導入配置", "導出配置", "生成密鑰", "輸入接收方的公鑰（可選）", "輸入你的私鑰（可選）", "輸入接收方的公鑰（可選）", "輸入你的私鑰（可選）", "請輸入需要加密的信息", "請輸入需要解密的掩飾文本", "請輸入任務提示，例如：「續寫一段散文：」\n點擊右側的按鈕可以保存當前任務提示", "確定", "語言", "主題", "隱寫", "提取", "保存", "進度條", "支持前後插入"],
+          "en": ["Import Configuration", "Export Configuration", "Generate Key", "Enter Recipient's Public Key (Optional)", "Enter Your Private Key (Optional)", "Enter Recipient's Public Key (Optional)", "Enter Your Private Key (Optional)", "Please Enter the Information to Encrypt", "Please Enter the Masked Text to Decrypt", 'Please Enter the Task Prompt, e.g., "Continue Writing an Essay: "\nClick the Button on the Right to Save the Current Task Prompt', "Confirm", "Language", "Theme", "Steganography", "Extract", "Save", "Progress Bar", "Support Insertion Before and After"],
         },
         (strs) => {
           assignStrs(strs);
@@ -142,12 +137,12 @@ import Layout from "../layouts/Layout.astro";
     }
     function dynamicContent(...strs) {
       return runIfMatch(
-        "language",
-        "simplifiedChinese",
+        "lang",
+        "zh-Hans",
         {
-          simplifiedChinese: strs[0],
-          traditionalChinese: strs[1],
-          english: strs[2],
+          "zh-Hans": strs[0],
+          "zh-Hant": strs[1],
+          "en": strs[2],
         },
         (value) => {
           return value;
@@ -167,12 +162,12 @@ import Layout from "../layouts/Layout.astro";
     function setInsertion() {
       el.insertion.checked = get("insertion", true);
     }
-    const languageButtons = document.querySelectorAll(`input[name="language-dropdown"]`);
-    languageButtons.forEach((button) => {
+    const langButtons = document.querySelectorAll(`input[name="lang-dropdown"]`);
+    langButtons.forEach((button) => {
       button.addEventListener("change", function (event) {
         if (event.target.checked) {
-          save("language", event.target.value);
-          setLanguage();
+          save("lang", event.target.value);
+          setLang();
         }
       });
     });
@@ -234,7 +229,7 @@ import Layout from "../layouts/Layout.astro";
         el.prompt.disabled = true;
       }
     }
-    setLanguage();
+    setLang();
     initDaisyThemeController();
     initConfig();
     function getWeight(code) {
@@ -246,11 +241,10 @@ import Layout from "../layouts/Layout.astro";
       if (
         code === 32 ||
         code === 44 ||
-        code === 46 || //普通空格、英文逗号、英文句号
-        (code >= 65 && code <= 90) || // 大写字母 A-Z
-        (code >= 97 && code <= 122)
+        code === 46 || //普通空格、英文逗号、英文句号、大写字母、小写字母
+        (code >= 65 && code <= 90) ||
+        (code >= 97 && code <= 122) 
       )
-        // 小写字母 a-z
         return 1;
       if (code === 65292 || code === 12290 || code === 8221 || code === 30340)
         //中文逗号，中文句号，中文右双引号、的、中文右单引号(||code===8217)
@@ -267,9 +261,7 @@ import Layout from "../layouts/Layout.astro";
     // console.log('的'.codePointAt(0));
     const punctuations = ["？", "?", "！", "!", "。", "）", ")", "…", "}", "]", "."]; //"\n"和"”"有时候并不代表结尾
     async function completion(prompt, progress, tailCompletion) {
-      //let floor=7;//const probs=Math.round(25-Math.pow(progress, 0.1)*(25-floor));//非线性token数的可行性：token数较多时，如果roll到很差的token，这次隐写就烂完了；token较少时，如果失败回溯，上一层剩下的候选token质量只会更差；还不如一开始就选个固定的稳定的值
       let body = {
-        //在api中设置system_prompt会导致性能严重下降
         prompt: prompt, //支持输入多个prompt
         response_fields: tailCompletion ? ["content", "stopping_word"] : ["completion_probabilities", "tokens"],
         logit_bias: [["�", false]], //避免在判断不可解码的token时产生干扰
@@ -280,7 +272,7 @@ import Layout from "../layouts/Layout.astro";
         body["stop"] = punctuations; //动态截断
       } else if (currentShuffle === 0) {
         body["n_predict"] = 1; //预测的最大token数，如果最后一个标记是部分多字节字符，则可能会略微超过设置的限制。
-        body["top_k"] = 75; //选词范围，默认40
+        body["top_k"] = 75; //选词范围，默认40//非线性token数的可行性：token数较多时，如果roll到很差的token，这次隐写就烂完了；token较少时，如果失败回溯，上一层剩下的候选token质量只会更差；还不如一开始就选个固定的稳定的值
         body["n_probs"] = 75; //按概率排序的前n个选词，如果top_k不够好像会拿0开始的token补全
         body["post_sampling_probs"] = true; //返回应用采样链后token的概率，不开启时返回的logprob是和采样无关的，logitBias也不会生效
         body["return_tokens"] = true; //我目前不确定是否还存在返回无法解码的token的情况，这种情况下使用该选项可能是有必要的
@@ -395,8 +387,7 @@ import Layout from "../layouts/Layout.astro";
               if (allowInsertion) {
                 currentCoverText.push(list[j].id);
                 el.coverText.value += t;
-                if (!punctuations.includes(el.coverText.value[el.coverText.value.length - 1]))
-                  //如果不在dfs中处理，那么取消隐写时仍然会额外执行补全。
+                if (!punctuations.includes(el.coverText.value[el.coverText.value.length - 1]))                  //如果不在dfs中处理，那么取消隐写时仍然会额外执行补全。
                   el.coverText.value += await completion(currentPrompt, 1, true);
               } else el.coverText.value += t.slice(0, k + 1);
             }
@@ -425,8 +416,6 @@ import Layout from "../layouts/Layout.astro";
       if (key) {
         data = await eccEncryptToUint8Array(data, JSON.parse(key));
       }
-      //添加纠错码的话，要求用户手动修改不协调的地方，并自动检测是否仍然能还原。我觉得这个方向走偏了，想办法增强AI的隐写效果才是以后的方向。
-      //另一种方式是，部分截取片段直接使用，不尝试映射，这会导致隐写容量进一步降低。
       // console.log(data);
       base = toBinary(data); //base=[useUnishox,...toBinary(data)];//处理为二进制序列，在映射时粒度更细，但建议每次只映射1位，减少映射失败率。
       allowInsertion = get("insertion", true);
@@ -440,7 +429,7 @@ import Layout from "../layouts/Layout.astro";
         length[1] = data.length % 256;
         base = [...magicNum, ...toBinary(length), ...base];
       }
-      // console.log(base);//1和0的比例差距一般不超过10%
+      console.log(base);//1和0的比例差距一般不超过10%
       await fetch("http://127.0.0.1:8090/props")
         .then((res) => res.json())
         .then(async (json) => {
@@ -478,7 +467,6 @@ import Layout from "../layouts/Layout.astro";
       let data;
       let tcoverText = coverText;
       for (; tcoverText; tcoverText = tcoverText.slice(1)) {
-        // console.log(coverText)
         let base = [],
           tstr = "",
           tscore = 0;
@@ -528,58 +516,19 @@ import Layout from "../layouts/Layout.astro";
     }
     el.hide.onclick = async () => {
       await encrypt(el.prompt.value, el.secret.value);
-      // let s=0;//耗时测试
-      // for(let i=0;i<10;i++){
-      //     const start = performance.now();
-      //     await encrypt(el.prompt.value,el.secret.value);
-      //     const end = performance.now();
-      //     s+=end-start;
-      // }
-      // console.log(s/10);
-      // let s=0;//隐写容量测试
-      // for(let i=0;i<10;i++){
-      //     await encrypt(el.prompt.value,el.secret.value);
-      //     s+=currentCoverText.length;
-      // }
-      // console.log(`${base.length} ${s/10} ${base.length/(s/10)}`);
-      // let cover=[];//掩饰文本测试
-      // for(let i=0;i<150;i++){
-      //     await encrypt(el.prompt.value,el.secret.value);
-      //     cover.push(currentCoverText);
-      // }
-      // exportFile(JSON.stringify(cover),"cover1.json");
-      // let cover=[];
-      // for(let i=0;i<20;i++){
-      //     await encrypt(el.prompt.value,el.secret.value);
-      //     cover.push(currentCoverText);
-      // }
-      // exportFile(JSON.stringify(cover),"cover2.json");
-      // let normal=[];//正常文本测试
-      // for(let i=0;i<150;i++){
-      //     normal.push(await chat(el.prompt.value,8));
-      // }
-      // exportFile(JSON.stringify(normal),"normal1.json");
-      // normal=[];
-      // for(let i=0;i<20;i++){
-      //     normal.push(await chat(el.prompt.value,80));
-      // }
-      // exportFile(JSON.stringify(normal),"normal2.json");
-      // normal=[];
-      // for(let i=0;i<10;i++){
-      //     normal.push(await chat(el.prompt.value,600));
-      // }
-      // exportFile(JSON.stringify(normal),"normal3.json");
     };
     el.extract.onclick = async () => {
       await extract(el.coverText.value);
     };
-    //在非本地页面模式下， 禁用隐写按钮并添加提示
-    //100% i18n+重新翻译
-    //todo:unishox3
-    //todo:logit_bias、token过滤、采样参数调整等方式提高token质量
+    //todo:在模板层关闭思考模式
     //todo:找到一种足够通用的system prompt注入方式
+    //todo:unishox3、高频词、以最大长度牺牲8倍为代价节约3.5bit？
+    //todo:logit_bias、token过滤、采样参数调整等方式提高token质量
     //todo:变长编码来表示长度，VLQ/LEB128通常为字节为单位，Elias Gamma/Delta/ Omega 编码可以精确到位
+    //todo:目前的尾部补全的机制过于简陋，也不一定适合所有语言，总有一天会出现问题。
     //warning:除非有非常大的改进，否则禁止调整解码策略；而且还要为旧版本的解码部署页面；
+    //一种牺牲隐写容量提高鲁棒性和隐写效果的方法：部分截取片段直接使用，不尝试映射
+    //是否应该支持更新？不过由于是esm，操作文件还是很麻烦的
     // fetch('http://127.0.0.1:8090/props').then(res=>res.json()).then(json=>console.log(json));
   </script>
 </Layout>
