@@ -171,7 +171,7 @@ const utf8Encoder= new TextEncoder();
 const utf8Decoder=new TextDecoder();
 const USX_HCODES_NO_DICT = new Uint8Array([0x00,0x40,0x80,0x00,0xC0]);//偏爱无重复内容
 const USX_HCODE_LENS_NO_DICT = new Uint8Array([2,2,2,0,2]);
-const USX_FREQ_SEQ_TXT= [" the "," and ","tion"," with","ing","ment","https://"];//中文很难找规律，待定:"我们","一个"
+const USX_FREQ_SEQ_TXT= ["https://"," the "," and ","tion"," with","ing","ment","github.com"];//中文很难找规律，待定:"我们","一个"
 const USX_TEMPLATES = ["tfff-of-tfTtf:rf:rf.fffZ", "tfff-of-tf", "(fff) fff-ffff", "tf:rf:rf", 0];
 export async function unishoxCompress(str){//混合使用效果更差
     let t = new Uint8Array(str.length*4);

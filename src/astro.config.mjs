@@ -5,6 +5,7 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   build: {
     inlineStylesheets: `always`,//内联css
+    format: 'directory'
   },
   devToolbar: {
     enabled: false
@@ -16,6 +17,3 @@ export default defineConfig({
   base: '/StegLLM',
   // outDir: '../StegLLM/data/dist',
 });
-//   This information helps us improve Astro.
-//   Run "astro telemetry disable" to opt-out.
-//   https://astro.build/telemetry
