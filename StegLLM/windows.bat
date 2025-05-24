@@ -1,6 +1,6 @@
 @echo off
 setlocal
-set "buildNum=b5318"
+set "buildNum=b5474"
 set "scriptDir=%~dp0"
 set "dataDir=%scriptDir%data"
 :: 判断CPU指令集
@@ -47,11 +47,11 @@ start "" "%llamaServer%" ^
     --seed -1
 echo Waiting for the server to start...
 :waitloop
-curl --silent http://127.0.0.1:%port% >nul 2>&1
+curl --silent http://127.0.0.1:%port%/StegLLM/ >nul 2>&1
 IF ERRORLEVEL 1 (
     timeout /t 1 >nul
     goto waitloop
 )
-start http://127.0.0.1:%port%
+start http://127.0.0.1:%port%/StegLLM/
 :: 结束局部变量环境
 endlocal

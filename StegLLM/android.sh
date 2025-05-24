@@ -35,13 +35,13 @@ port=8090
     --no-slots \
     --seed -1 &
 echo "Waiting for the server to start..."
-while ! curl --silent "http://127.0.0.1:${port}" >/dev/null 2>&1; do
+while ! curl --silent "http://127.0.0.1:${port}/StegLLM/" >/dev/null 2>&1; do
     sleep 1
 done
 if command -v xdg-open >/dev/null 2>&1; then
-    xdg-open "http://127.0.0.1:${port}"
+    xdg-open "http://127.0.0.1:${port}/StegLLM/"
 elif command -v open >/dev/null 2>&1; then
-    open "http://127.0.0.1:${port}"
+    open "http://127.0.0.1:${port}/StegLLM/"
 else
-    echo "Server is running at http://127.0.0.1:${port}. Please open it manually in your browser."
+    echo "Server is running at http://127.0.0.1:${port}/StegLLM/. Please open it manually in your browser."
 fi
