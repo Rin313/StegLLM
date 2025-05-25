@@ -15,5 +15,5 @@ export default defineConfig({
   },
   site: 'https://Rin313.github.io',
   base: '/StegLLM',
-  outDir: '../StegLLM/data/dist/StegLLM',
+  //outDir: '../StegLLM/data/dist/StegLLM',
 });
