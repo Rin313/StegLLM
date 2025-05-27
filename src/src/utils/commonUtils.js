@@ -1,25 +1,39 @@
-export default new Proxy({}, {//据说使用缓存会导致可能的奇怪问题
-    get: (_, prop) => typeof prop === 'string' && /^[\w$]+$/.test(prop)
-        ? document.getElementById(prop)
-        : undefined
-});
-export function setAllButtonTypesToButton() {
-    const buttons = document.querySelectorAll('button:not(form button)');
-    buttons.forEach(button => {button.setAttribute('type', 'button');});//button的tupe包括submit、reset和button，显示指定以避免控制台提示。
-    const formButtons = document.querySelectorAll('form button');
-    formButtons.forEach(button => {button.setAttribute('type', 'submit');});
+export const $ = id => document.getElementById(id);
+function setButtonType() {
+    document.querySelectorAll('button').forEach(button => {
+        button.setAttribute('type', button.closest('form') ? 'submit' : 'button');//button的tupe包括submit、reset和button
+    });
+}
+function setThemeControllerListener(){
+    document.querySelectorAll(`input[name="theme-dropdown"]`).forEach(button=>{
+        button.addEventListener('change', function(event) {
+            if (event.target.checked) set('theme', event.target.value);
+        });
+    })
+}
+export function init(){
+    setButtonType();
+    setThemeControllerListener();
+    initConfig();
+}
+export function initConfig(f=()=>{}){//当配置修改时需要复用
+    const theme = get("theme", "default");
+    document.querySelectorAll(`input[name="theme-dropdown"]`).forEach(button=>{
+        if (button.value === theme) button.checked = true;
+    })
+    f();
 }
 export function get(key, defaultValue) {
     const obj=localStorage.getItem(key);
     return obj?JSON.parse(obj):defaultValue;
 }
-export function save(key,obj) {
-    if (obj===''||Array.isArray(obj)&&obj.length===0)
+export function set(key,obj) {
+    if (obj===''||Array.isArray(obj)&&obj.length===0)//不会传入空值（假设逻辑正确），仅存在传入空字符串或空数组
         localStorage.removeItem(key);
     else
         localStorage.setItem(key, JSON.stringify(obj));
 }
-export function saveList(key, obj,index=-1){
+export function add(key,obj,index=-1){
     let list=get(key,[]);
     if(index===-1)
         list.push(obj);
@@ -30,7 +44,7 @@ export function saveList(key, obj,index=-1){
             list.splice(index,1);
         }
     }
-    save(key,list)
+    set(key,list)
 }
 function clear(){
     localStorage.clear();
@@ -39,15 +53,15 @@ export function runIfMatch(key,defaultValue,opts,f=()=>{}){
     const obj=get(key,defaultValue);
     for (const [opt, value] of Object.entries(opts))
         if(obj===opt) return f(value);
-    save(key,defaultValue);//如果存在新版本key弃用的值，就重新初始化
+    set(key,defaultValue);//如果存在新版本key弃用的值，就重新初始化
 }
-function createElement(tag,props={},styles={},parent=null){//
+function createElement(tag,props={},styles={},parent=null){
     const el = Object.assign(document.createElement(tag), props);
     Object.assign(el.style,styles);
     if(parent)parent.appendChild(el);
     return el;
 }
-export function exportFile(content,filename){
+function exportFile(content,filename){
     const blob = new Blob([content], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     createElement('a',{
@@ -115,20 +129,9 @@ export async function importLocalStorage() {
     const obj=JSON.parse(await importTextFile());//如果未提交则后面不会执行
     clear();
     for (const [key, value] of Object.entries(obj))
-        save(key,value);
-}
-export function initDaisyThemeController(){
-    const themeButtons = document.querySelectorAll(`input[name="theme-dropdown"]`);
-    themeButtons.forEach(button=>{
-        button.addEventListener('change', function(event) {
-            if (event.target.checked) {
-                save('theme', event.target.value);
-            }
-        });
-    })
+        set(key,value);
 }
 export function shuffle(array, start = 0, end = array.length) {
-    // console.log(end)
     for (let i = end - 1; i > start; i--) {
         const j = Math.floor(Math.random() * (i - start + 1)) + start;
         [array[i], array[j]] = [array[j], array[i]];
@@ -173,39 +176,156 @@ const USX_HCODES_NO_DICT = new Uint8Array([0x00,0x40,0x80,0x00,0xC0]);//偏爱�
 const USX_HCODE_LENS_NO_DICT = new Uint8Array([2,2,2,0,2]);
 const USX_FREQ_SEQ_TXT= ["https://"," the "," and ","tion"," with","ing","ment","github.com"];//中文很难找规律，待定:"我们","一个"
 const USX_TEMPLATES = ["tfff-of-tfTtf:rf:rf.fffZ", "tfff-of-tf", "(fff) fff-ffff", "tf:rf:rf", 0];
-export async function unishoxCompress(str){//混合使用效果更差
+export async function unishoxCompress(str){
     let t = new Uint8Array(str.length*4);
     const len =unishox2_compress(str,str.length, t,USX_HCODES_NO_DICT, USX_HCODE_LENS_NO_DICT, USX_FREQ_SEQ_TXT,USX_TEMPLATES);
     const result1=t.subarray(0,len);
     const result2=await compress(utf8Encoder.encode(str));
     return result1.length<result2.length?[result1,1]:[result2,0];//unishox2末尾补齐1，deflate按规范则应该是补齐0，但做截断处理平均减少3.5bit，但长度单位由字节变为bit，可表示量变为8192字节。而且这种方式也不适用加密。
 }
-export async function unishoxDecompress(uint8Array){
+export async function unishoxDecompress(base){
     //return useUnishox?unishox2_decompress(uint8Array,uint8Array.length,null,USX_HCODES_NO_DICT, USX_HCODE_LENS_NO_DICT, USX_FREQ_SEQ_TXT,USX_TEMPLATES):utf8Decoder.decode(await decompress(uint8Array));
     let secret;
     try{
-        secret=utf8Decoder.decode(await decompress(uint8Array));
+        secret=utf8Decoder.decode(await decompress(Array.isArray(base)?toBytes([...base, ...Array((8 - base.length % 8) % 8).fill(0)]):base));
     }
     catch{
-        secret=unishox2_decompress(uint8Array,uint8Array.length,null,USX_HCODES_NO_DICT, USX_HCODE_LENS_NO_DICT, USX_FREQ_SEQ_TXT,USX_TEMPLATES);
+        if(Array.isArray(base)){
+            base=toBytes([...base, ...Array((8 - base.length % 8) % 8).fill(1)]);
+        }
+        secret=unishox2_decompress(base,base.length,null,USX_HCODES_NO_DICT, USX_HCODE_LENS_NO_DICT, USX_FREQ_SEQ_TXT,USX_TEMPLATES);
     }
     return secret;
 }
-import {p256} from '@noble/curves/p256';
+/**
+ * Compresses a P-256 uncompressed public key using native JavaScript.
+ * Assumes the input uncompressedKey is a valid 65-byte Uint8Array
+ * starting with 0x04, followed by 32-byte X and 32-byte Y coordinates.
+ *
+ * @param {Uint8Array} uncompressedKey - The uncompressed public key (65 bytes).
+ * @returns {Uint8Array} The compressed public key (33 bytes).
+ */
 function compressPublicKey(uncompressedKey) {
-    if (!(uncompressedKey instanceof Uint8Array) || uncompressedKey.length !== 65 || uncompressedKey[0] !== 0x04) {
-        throw new Error("Invalid uncompressed public key format");
+    // Assuming uncompressedKey is valid as per the problem statement:
+    // - Length is 65 bytes.
+    // - uncompressedKey[0] is 0x04.
+
+    // Extract X coordinate (bytes 1-32, 0-indexed)
+    const x = uncompressedKey.slice(1, 33); // 32 bytes
+
+    // Extract Y coordinate (bytes 33-64, 0-indexed)
+    const y = uncompressedKey.slice(33, 65); // 32 bytes
+
+    // Determine the parity of Y.
+    // The Y coordinate is a 32-byte big-endian integer.
+    // Its parity is determined by the least significant bit of its last byte.
+    // y[31] is the last byte of the Y coordinate.
+    const yIsEven = (y[31] & 0x01) === 0;
+
+    // Set the prefix byte for the compressed key
+    const prefix = yIsEven ? 0x02 : 0x03;
+
+    // Create the compressed key (1 byte prefix + 32 bytes X)
+    const compressedKey = new Uint8Array(33);
+    compressedKey[0] = prefix;
+    compressedKey.set(x, 1); // Copy X coordinate starting at index 1 of compressedKey
+
+    return compressedKey;
+}
+// P-256 curve parameters
+const p = BigInt('0xffffffff00000001000000000000000000000000ffffffffffffffffffffffff');
+const a = BigInt(-3);
+const b = BigInt('0x5AC635D8AA3A93E7B3EBBD55769886BC651D06B0CC53B0F63BCE3C3E27D2604B');
+
+/**
+ * Modular exponentiation: (base^exp) % mod
+ */
+function modPow(base, exp, mod) {
+    let result = 1n;
+    base = base % mod;
+    while (exp > 0n) {
+        if (exp % 2n === 1n) {
+            result = (result * base) % mod;
+        }
+        base = (base * base) % mod;
+        exp = exp / 2n;
+    }
+    return result;
+}
+
+/**
+ * Modular inverse using Fermat's Little Theorem
+ */
+function modInv(a, mod) {
+    return modPow(a, mod - 2n, mod);
+}
+
+/**
+ * Modular square root for p ≡ 3 mod 4
+ */
+function modSqrt(a, p) {
+    return modPow(a, (p + 1n) / 4n, p);
+}
+
+/**
+ * Convert Uint8Array to BigInt (big-endian)
+ */
+function bytesToBigInt(bytes) {
+    let hex = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+    return BigInt('0x' + hex);
+}
+
+/**
+ * Convert BigInt to 32-byte Uint8Array (big-endian)
+ */
+function bigIntToBytes(bn) {
+    const hex = bn.toString(16).padStart(64, '0');
+    const bytes = [];
+    for (let i = 0; i < 64; i += 2) {
+        bytes.push(parseInt(hex.slice(i, i + 2), 16));
+    }
+    return new Uint8Array(bytes);
+}
+
+/**
+ * Decompress a P-256 compressed public key.
+ * @param {Uint8Array} compressedKey - A 33-byte compressed EC public key.
+ * @returns {Uint8Array} - The 65-byte uncompressed EC public key.
+ */
+function decompressPublicKey(compressedKey) {
+    if (!(compressedKey instanceof Uint8Array) || compressedKey.length !== 33) {
+        throw new Error("Invalid compressed public key format.");
     }
 
-    const pubPoint = p256.ProjectivePoint.fromHex(uncompressedKey);
-    return pubPoint.toRawBytes(true); // 33 字节
-}
-function decompressPublicKey(compressedKey) {
-    if (!(compressedKey instanceof Uint8Array) || compressedKey.length !== 33 || (compressedKey[0] !== 0x02 && compressedKey[0] !== 0x03)) {
-        throw new Error("Invalid compressed public key format");
+    const prefix = compressedKey[0];
+    if (prefix !== 0x02 && prefix !== 0x03) {
+        throw new Error("Invalid compressed key prefix. Expected 0x02 or 0x03.");
     }
-    const pubPoint = p256.ProjectivePoint.fromHex(compressedKey);
-    return pubPoint.toRawBytes(false); // 65 字节
+
+    const x = bytesToBigInt(compressedKey.slice(1)); // 32 bytes
+
+    // y^2 = x^3 + ax + b mod p
+    const y2 = (x ** 3n + a * x + b) % p;
+
+    // Compute sqrt(y2) mod p
+    let y = modSqrt(y2, p);
+
+    // Choose the root matching prefix parity
+    const isEven = y % 2n === 0n;
+    const shouldBeEven = prefix === 0x02;
+    if (isEven !== shouldBeEven) {
+        y = p - y;
+    }
+
+    const xBytes = bigIntToBytes(x);
+    const yBytes = bigIntToBytes(y);
+
+    const uncompressed = new Uint8Array(65);
+    uncompressed[0] = 0x04;
+    uncompressed.set(xBytes, 1);
+    uncompressed.set(yBytes, 33);
+
+    return uncompressed;
 }
 export async function eccEncryptToUint8Array(messageUint8Array, recipientPublicJwk) {//ECC（如 ECDH）用来安全地派生一个共享对称密钥，AES-GCM 用这个密钥来高效、安全地加密数据。这是现代加密通信的标准做法，称为「混合加密（Hybrid Encryption）」。
     //导入接收方公钥
@@ -415,9 +535,7 @@ export function findSublistIndex(mainList, subList) {
 export function stringToUnicode(str) {
     return Array.from(str)
         .map(char => {
-            // 获取字符的代码点
             const codePoint = char.codePointAt(0);
-            // 转为16进制并补齐
             const hex = codePoint.toString(16).toUpperCase().padStart(4, '0');
             return '\\u' + hex;
         })
@@ -439,7 +557,7 @@ const defaultOptions = {
 };
 export function check(str, options = {}) {
     const config = { ...defaultOptions, ...options };
-    if(!str)return false;//我不知道为什么会存在空字符串的token
+    if(!str)return false;//不知道为什么会存在空字符串的token
     if(containsInvisibleChar(str)) return false;
     // 检测是否包含特定字符
     const charsValid = config.includeChars.some(char => str.includes(char));

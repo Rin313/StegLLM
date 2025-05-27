@@ -1,41 +1,27 @@
 ---//此处的初始化js不会包含到页面中
 import '../styles/global.css'
-const {title} = Astro.props;
-// width=device-width,initial-scale=1 视口宽度和默认缩放级别，这是响应式设计的基础。
+const {title,row} = Astro.props;
 // bg-local（默认）:随元素滚动
 // bg-fixed:相对视口固定
 // bg-scroll:相对元素固定
 // tailwind不支持动态类名，此时要用回style内联样式style={{backgroundImage: background?`url(${background.src})`:null,}}
-// min-h-screen body的宽度为视口宽度，高度取决于内容大小，可设置body高度为视口高度
-// flex flex-col 子元素垂直方向排列
 ---
 <html>
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64,">
     <title>{title}</title>
 </head>
-<body class="min-h-screen flex flex-col">
-<dialog id="confirm" class="modal">
+<body class=`min-h-screen flex ${row?"flex-row":"flex-col"}`>{/*min-h-screen最小高度为视口高度*/}
+<dialog id="modal" class="modal">
     <div class="modal-box">
-        <h3 class="text-lg font-bold" id="confirmTitle"></h3>
-        <div class="whitespace-pre-wrap py-4" id="confirmMsg"></div>
+        <h3 class="text-lg font-bold" id="modalTitle"></h3>
+        <div class="py-4 text-error" id="modalMsg"></div>
         <div class="modal-action">
-            <button class="btn w-20" id="confirmText"></button>
+            <button class="btn w-20" id="confirm"></button>
             <form method="dialog">
-                <!-- if there is a button in form, it will close the modal -->
-                <button class="btn w-20" id="cancel"></button>
-            </form>
-        </div>
-    </div>
-</dialog>
-<dialog id="alert" class="modal">
-    <div class="modal-box">
-        <h3 class="text-lg font-bold" id="alertTitle"></h3>
-        <div class="whitespace-pre-wrap py-4 text-error" id="alertMsg"></div>
-        <div class="modal-action">
-            <form method="dialog">
-                <button class="btn w-20" id="ok"></button>
+                <button class="btn w-20" id="cancel"></button>{/*if there is a button in form, it will close the modal*/}
             </form>
         </div>
     </div>

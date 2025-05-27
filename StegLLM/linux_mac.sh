@@ -1,6 +1,6 @@
 #!/bin/bash
 set -x
-buildNum="b5474"
+buildNum="b5503"
 scriptDir="$(dirname "$(realpath "$0")")"
 dataDir="${scriptDir}/data"
 # 确定系统和指令集
@@ -60,8 +60,9 @@ port=8090
     --port "$port" \
     -c 4096 \
     --temp 0.8 \
+    --top-p 0.95 \
     --repeat-penalty 1.18 \
-    --repeat-last-n 128 \
+    --repeat-last-n 64 \
     --no-perf \
     --prio 3 \
     --prio-batch 3 \
@@ -87,6 +88,7 @@ fi
 
 #
 # -c 0 上下文大小使用模型默认值，但这可能对低端设备不友好
+# --top-p 0.9 值越低，被过滤的token数量越多
 # --no-perf 关闭内部性能计时
 # --prio 3 最高进程优先级，这是一个即开即用的实时需求。
 # --poll 100 全轮询(持续主动检查是否有新任务)

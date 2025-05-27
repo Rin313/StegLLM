@@ -2,18 +2,18 @@
 import Layout from "../layouts/Layout.astro";
 ---
 <Layout title="StegLLM">
-  <div class="shadow p-4 flex justify-between items-center">
-    <div class="flex-1 gap-2">
+  <div class="flex justify-between items-center shadow p-4">{/*justify-between水平方向上分布两端，items-center竖直方向居中*/}
+    <div>
       <button class="btn btn-soft btn-accent btn-sm" id="import"></button>
       <button class="btn btn-soft btn-accent btn-sm" id="export"></button>
       <button class="btn btn-soft btn-warning btn-sm" id="generateKeyPair"></button>
     </div>
-    <div class="flex gap-2 items-center">
+    <div>
       <div class="dropdown dropdown-center">
-        <div tabindex="0" role="button" class="btn btn-ghost p-2" id="lang">
+        <div tabindex="0" role="button" class="btn btn-ghost px-2" id="lang">
           <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m10.5 21 5.25-11.25L21 21m-9-3h7.5M3 5.621a48.474 48.474 0 0 1 6-.371m0 0c1.12 0 2.233.038 3.334.114M9 5.25V3m3.334 2.364C11.176 10.658 7.69 15.08 3 17.502m9.334-12.138c.896.061 1.785.147 2.666.257m-4.589 8.495a18.023 18.023 0 0 1-3.827-5.802"/></svg>
         </div>
-        <ul tabindex="0" class="dropdown-content bg-base-200 z-1 py-1 w-20">
+        <ul class="dropdown-content bg-base-200 z-1 w-20">
           <li>
             <input type="radio" name="lang-dropdown" class="btn btn-sm btn-block btn-ghost" aria-label="简体中文" value="zh-Hans" />
           </li>
@@ -26,15 +26,15 @@ import Layout from "../layouts/Layout.astro";
         </ul>
       </div>
       <div class="dropdown dropdown-center">
-        <div tabindex="0" role="button" class="btn btn-ghost p-2" id="theme">
+        <div tabindex="0" role="button" class="btn btn-ghost px-2" id="theme">
           <svg class="size-6" fill="currentColor" viewBox="0 0 16 16"><path d="M12.433 10.07C14.133 10.585 16 11.15 16 8a8 8 0 1 0-8 8c1.996 0 1.826-1.504 1.649-3.08-.124-1.101-.252-2.237.351-2.92.465-.527 1.42-.237 2.433.07M8 5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3m4.5 3a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3M5 6.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m.5 6.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3"/></svg>
         </div>
-        <ul tabindex="0" class="dropdown-content bg-base-200 z-1 py-1">
+        <ul class="dropdown-content bg-base-200 z-1">
           <li>
-            <input type="radio" name="theme-dropdown" class="theme-controller btn btn-sm btn-block btn-ghost" aria-label="🌝" value="default" />
+            <input type="radio" name="theme-dropdown" class="theme-controller btn btn-sm btn-block btn-ghost" aria-label="🌚" value="default" />
           </li>
           <li>
-            <input type="radio" name="theme-dropdown" class="theme-controller btn btn-sm btn-block btn-ghost" aria-label="🌚" value="dark" />
+            <input type="radio" name="theme-dropdown" class="theme-controller btn btn-sm btn-block btn-ghost" aria-label="🌝" value="light" />
           </li>
           <li>
             <input type="radio" name="theme-dropdown" class="theme-controller btn btn-sm btn-block btn-ghost" aria-label="🌸" value="valentine" />
@@ -49,17 +49,17 @@ import Layout from "../layouts/Layout.astro";
       </div>
     </div>
   </div>
-  <div class="flex-grow py-6 container mx-auto max-w-6xl">
-    <div class="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-6">
-      <div class="shadow rounded-lg p-6 flex flex-col gap-6">
-        <textarea class="textarea textarea-info w-full h-120 bg-base-200 rounded-lg resize-none" id="secret"></textarea>
+  <div class="flex flex-col p-6 mx-4 lg:mx-12 2xl:mx-40">
+    <div class="flex flex-col md:flex-row gap-6 lg:gap-12">
+      <div class="rounded-lg py-6 flex flex-col gap-6 flex-1">
+        <textarea class="textarea textarea-info w-full h-136 bg-base-200 rounded-lg resize-none" id="secret"></textarea>
         <fieldset class="fieldset">
           <div class="tooltip" id="tooltip">
             <legend class="fieldset-legend" id="publicKeyTitle"></legend>
           </div>
-          <input type="file" class="file-input file-input-success" id="publicKey" />
-        </fieldset>
-        <div class="tooltip" id="tooltip2">
+          <div class="flex flex-row gap-6 items-center">
+              <input type="file" class="file-input file-input-success" id="publicKey" />
+              <div class="tooltip" id="tooltip2">
           <fieldset class="fieldset">
             <label class="fieldset-label">
               <input type="checkbox" class="toggle toggle-info" id="insertion" />
@@ -67,6 +67,8 @@ import Layout from "../layouts/Layout.astro";
             </label>
           </fieldset>
         </div>
+          </div>
+        </fieldset>
       </div>
       <div class="flex flex-col items-center justify-center gap-8">
         <div class="tooltip invisible" id="tooltip3">
@@ -78,8 +80,8 @@ import Layout from "../layouts/Layout.astro";
           <svg class="size-6" viewBox="0 0 24 24"><path fill="currentColor" d="M18 1c-2.76 0-5 2.24-5 5v2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12c1.11 0 2-.89 2-2V10a2 2 0 0 0-2-2h-1V6c0-1.66 1.34-3 3-3s3 1.34 3 3v2h2V6c0-2.76-2.24-5-5-5m-8 12a2 2 0 0 1 2 2c0 1.11-.89 2-2 2a2 2 0 1 1 0-4"></path></svg>
         </button>
       </div>
-      <div class="shadow rounded-lg p-6 flex flex-col gap-6">
-        <textarea class="textarea textarea-info w-full h-120 bg-base-200 rounded-lg resize-none" id="coverText"></textarea>
+      <div class="rounded-lg py-6 flex flex-col gap-6 flex-1">
+        <textarea class="textarea textarea-info w-full h-136 bg-base-200 rounded-lg resize-none" id="coverText"></textarea>
         <fieldset class="fieldset">
           <legend class="fieldset-legend" id="privateKeyTitle"></legend>
           <input type="file" class="file-input file-input-warning" id="privateKey" />
@@ -88,34 +90,30 @@ import Layout from "../layouts/Layout.astro";
     </div>
     <progress class="progress progress-primary hidden" value="0" max="100" id="progress"></progress>
   </div>
-  <div class="pl-6 mb-10 container mx-auto max-w-6xl">
-    <div class="flex flex-row gap-4 items-center">
-      <textarea class="textarea textarea-info w-full h-24 bg-base-200 rounded-lg resize-none" id="prompt"></textarea>
+  <div class="flex flex-row gap-4 items-center mb-10 mx-4 lg:mx-12 2xl:mx-40 px-6">
+      <textarea class="textarea textarea-info w-full h-26 bg-base-200 rounded-lg resize-none" id="prompt"></textarea>
       <div class="flex flex-col">
         <button class="btn btn-ghost" id="up">▲</button>
         <button class="btn btn-ghost" id="down">▼</button>
       </div>
       <button class="btn btn-info" id="save"></button>
-    </div>
   </div>
   <script>
-    import el, { setAllButtonTypesToButton, get, save, saveList, runIfMatch, generateKeyPair, exportLocalStorage, importLocalStorage, initDaisyThemeController, unishoxCompress, readTextFile, eccEncryptToUint8Array, eccDecryptToUint8Array, shuffle, toBinary, toBytes, findSublistIndex, unishoxDecompress, tokenize, detokenize, stringToUnicode, exportFile, check } from "../utils/commonUtils";
-    import xxhash from "xxhash-wasm"; //hash-wasm不提供返回int类型的接口
-    const { h32 } = await xxhash();
-    function confirm(msg = null, title = null) {
-      if (title) el.confirmTitle.textContent = title;
-      el.confirmMsg.textContent = msg;
-      el.confirm.showModal();
+    import { $,init, get, set, add, runIfMatch, generateKeyPair, exportLocalStorage, importLocalStorage, unishoxCompress, readTextFile, eccEncryptToUint8Array, eccDecryptToUint8Array, shuffle, toBinary, toBytes, findSublistIndex, unishoxDecompress, tokenize, detokenize, check,stringToUnicode } from "../utils/commonUtils";
+    function modal(msg = null, title = null , cancel=null,confirm=null) {
+      if(title) $('modalTitle').textContent = title;
+      $('modalMsg').textContent = msg;
+      $('cancel').textContent = cancel?cancel:dynamicContent("确定","確定","OK");
+      $('confirm').classList.add("invisible");
+      if(confirm){
+        $('confirm').classList.remove("invisible");
+        $('confirm').textContent=confirm;
+      }
+      $('modal').showModal();
     }
-    function alert(msg = null, title = null) {
-      el.alertTitle.textContent = title;
-      el.alertMsg.textContent = msg;
-      el.alert.showModal();
-    }
-    setAllButtonTypesToButton();
-    const themeButtons = document.querySelectorAll(`input[name="theme-dropdown"]`);
+    init();
     function assignStrs(strs) {
-      [el.import.textContent, el.export.textContent, el.generateKeyPair.textContent, el.publicKeyTitle.textContent, el.privateKeyTitle.textContent, el.publicKey.ariaLabel, el.privateKey.ariaLabel, el.secret.placeholder, el.coverText.placeholder, el.prompt.placeholder, el.ok.textContent, el.lang.ariaLabel, el.theme.ariaLabel, el.hide.ariaLabel, el.extract.ariaLabel, el.save.textContent, el.insertionText.textContent] = strs;
+      [$('import').textContent, $('export').textContent, $('generateKeyPair').textContent, $('publicKeyTitle').textContent, $('privateKeyTitle').textContent, $('publicKey').ariaLabel, $('privateKey').ariaLabel, $('secret').placeholder, $('coverText').placeholder, $('prompt').placeholder,$('lang').ariaLabel, $('theme').ariaLabel, $('hide').ariaLabel, $('extract').ariaLabel, $('save').textContent, $('insertionText').textContent] = strs;
     }
     function setLang() {
       document.documentElement.lang=get("lang","zh-Hans");
@@ -123,17 +121,17 @@ import Layout from "../layouts/Layout.astro";
         "lang",
         "zh-Hans",
         {
-          "zh-Hans": ["导入配置", "导出配置", "生成密钥", "输入接收方的公钥（可选）", "输入你的私钥（可选）", "输入接收方的公钥（可选）", "输入你的私钥（可选）", "请输入需要加密的信息", "请输入需要解密的掩饰文本", `请输入任务提示，例如："续写一段散文："\n点击右侧的按钮可以保存当前任务提示`, "确定", "语言", "主题", "隐写", "提取", "保存", "支持前后插入"],
-          "zh-Hant": ["導入配置", "導出配置", "生成密鑰", "輸入接收方的公鑰（可選）", "輸入你的私鑰（可選）", "輸入接收方的公鑰（可選）", "輸入你的私鑰（可選）", "請輸入需要加密的信息", "請輸入需要解密的掩飾文本", "請輸入任務提示，例如：「續寫一段散文：」\n點擊右側的按鈕可以保存當前任務提示", "確定", "語言", "主題", "隱寫", "提取", "保存", "支持前後插入"],
-          "en": ["Import Configuration", "Export Configuration", "Generate Key", "Enter Recipient's Public Key (Optional)", "Enter Your Private Key (Optional)", "Enter Recipient's Public Key (Optional)", "Enter Your Private Key (Optional)", "Please Enter the Information to Encrypt", "Please Enter the Masked Text to Decrypt", 'Please Enter the Task Prompt, e.g., "Continue Writing an Essay: "\nClick the Button on the Right to Save the Current Task Prompt', "Confirm", "Language", "Theme", "Steganography", "Extract", "Save", "Support Insertion Before and After"],
+          "zh-Hans": ["导入配置", "导出配置", "生成密钥", "输入接收方的公钥（可选）", "输入你的私钥（可选）", "输入接收方的公钥（可选）", "输入你的私钥（可选）", "请输入需要加密的信息", "请输入需要解密的掩饰文本", `请输入任务提示，例如："续写一段散文："\n点击右侧的按钮可以保存当前任务提示`,"语言", "主题", "隐写", "提取", "保存", "支持前后插入"],
+          "zh-Hant": ["導入配置", "導出配置", "生成密鑰", "輸入接收方的公鑰（可選）", "輸入你的私鑰（可選）", "輸入接收方的公鑰（可選）", "輸入你的私鑰（可選）", "請輸入需要加密的信息", "請輸入需要解密的掩飾文本", "請輸入任務提示，例如：「續寫一段散文：」\n點擊右側的按鈕可以保存當前任務提示","語言", "主題", "隱寫", "提取", "保存", "支持前後插入"],
+          "en": ["Import Configuration", "Export Configuration", "Generate Key", "Enter Recipient's Public Key (Optional)", "Enter Your Private Key (Optional)", "Enter Recipient's Public Key (Optional)", "Enter Your Private Key (Optional)", "Please Enter the Information to Encrypt", "Please Enter the Masked Text to Decrypt", 'Please Enter the Task Prompt, e.g., "Continue Writing an Essay: "\nClick the Button on the Right to Save the Current Task Prompt',"Language", "Theme", "Steganography", "Extract", "Save", "Support Insertion Before and After"],
         },
         (strs) => {
           assignStrs(strs);
         }
       );
-      el.tooltip.setAttribute("data-tip", dynamicContent("即使隐写暴露，也能确保原始信息不会被破解", "即使隱寫暴露，也能確保原始信息不會被破解", "Even if the Steganography is Exposed, It Ensures the Original Information Cannot Be Cracked"));
-      el.tooltip2.setAttribute("data-tip", dynamicContent("生成的掩饰文本嵌入到任意文本后仍能准确解密，略微增加隐写暴露的风险", "生成的掩飾文本嵌入到任意文本後仍能準確解密，略微增加隱寫暴露的風險", "The generated cover text can still be accurately decrypted after being embedded into any text, slightly increasing the risk of steganographic exposure"));
-      el.tooltip3.setAttribute("data-tip", dynamicContent("再次点击以停止隐写", "再次點擊以停止隱寫", "Click again to stop steganography"));
+      $('tooltip').setAttribute("data-tip", dynamicContent("即使隐写暴露，也能确保原始信息不会被破解", "即使隱寫暴露，也能確保原始信息不會被破解", "Even if the Steganography is Exposed, It Ensures the Original Information Cannot Be Cracked"));
+      $('tooltip2').setAttribute("data-tip", dynamicContent("生成的掩饰文本嵌入到任意文本后仍能准确解密，略微增加隐写暴露的风险", "生成的掩飾文本嵌入到任意文本後仍能準確解密，略微增加隱寫暴露的風險", "The generated cover text can still be accurately decrypted after being embedded into any text, slightly increasing the risk of steganographic exposure"));
+      $('tooltip3').setAttribute("data-tip", dynamicContent("再次点击以停止隐写", "再次點擊以停止隱寫", "Click again to stop steganography"));
     }
     function dynamicContent(...strs) {
       return runIfMatch(
@@ -149,89 +147,83 @@ import Layout from "../layouts/Layout.astro";
         }
       );
     }
-    function setTheme() {
-      const theme = get("theme", "default");
-      for (const button of themeButtons) {
-        if (button.value === theme) {
-          button.checked = true;
-          return;
-        }
-      }
-      save("theme", "default");
-    }
     function setInsertion() {
-      el.insertion.checked = get("insertion", true);
+      $('insertion').checked = get("insertion", true);
     }
     const langButtons = document.querySelectorAll(`input[name="lang-dropdown"]`);
     langButtons.forEach((button) => {
       button.addEventListener("change", function (event) {
         if (event.target.checked) {
-          save("lang", event.target.value);
+          set("lang", event.target.value);
           setLang();
         }
       });
     });
-    el.insertion.addEventListener("change", function (event) {
-      save("insertion", event.target.checked);
+    $('insertion').addEventListener("change", function (event) {
+      set("insertion", event.target.checked);
     });
-    el.generateKeyPair.onclick = async () => {
+    $('generateKeyPair').onclick = async () => {
       await generateKeyPair();
-      alert(dynamicContent(`請安全地保存你的私钥，并提前和接收方交换公钥`, `請安全地保存你的私鑰，並提前與接收方交換公鑰`, `Please securely save your private key and exchange public keys with the recipient in advance`), dynamicContent("成功！", "成功！", "Success!"));
+      modal(dynamicContent(`请安全地保存你的私钥，并提前和接收方交换公钥`, `請安全地保存你的私鑰，並提前與接收方交換公鑰`, `Please securely save your private key and exchange public keys with the recipient in advance`), dynamicContent("成功！", "成功！", "Success!"));
     };
-    el.export.onclick = () => {
+    $('export').onclick = () => {
       exportLocalStorage();
     };
-    el.import.onclick = async () => {
+    $('import').onclick = async () => {
       await importLocalStorage();
       initConfig();
     };
     let prompts;
     let i;
-    el.up.onclick = () => {
+    $('up').onclick = () => {
       i = (i + 1) % prompts.length;
-      save("promptIndex", i);
-      el.prompt.value = prompts[i];
+      set("promptIndex", i);
+      $('prompt').value = prompts[i];
     };
-    el.down.onclick = () => {
+    $('down').onclick = () => {
       i = (i - 1 + prompts.length) % prompts.length;
-      save("promptIndex", i);
-      el.prompt.value = prompts[i];
+      set("promptIndex", i);
+      $('prompt').value = prompts[i];
     };
-    el.save.onclick = () => {
-      if (el.prompt.value) {
-        saveList("prompts", el.prompt.value);
+    $('save').onclick = () => {
+      if ($('prompt').value) {
+        add("prompts", $('prompt').value);
         prompts = get("prompts", [""]);
         i = prompts.length - 1;
-        save("promptIndex", i);
-        alert("", dynamicContent(`保存成功！`, `儲存成功！`, `Saved successfully!`));
+        set("promptIndex", i);
+        modal("", dynamicContent(`保存成功！`, `儲存成功！`, `Saved successfully!`));
       } else {
-        saveList("prompts", null, i);
+        add("prompts", null, i);
         prompts = get("prompts", [""]);
         i = prompts.length - 1;
-        el.prompt.value = prompts[i];
-        save("promptIndex", i);
-        alert("", dynamicContent(`删除成功！`, `刪除成功！`, `Deleted successfully!`));
+        $('prompt').value = prompts[i];
+        set("promptIndex", i);
+        modal("", dynamicContent(`删除成功！`, `刪除成功！`, `Deleted successfully!`));
       }
     };
     function initConfig() {
-      setTheme();
       setInsertion();
       prompts = get("prompts", [""]);
       i = get("promptIndex", prompts.length - 1);
-      el.prompt.value = prompts[i];
+      $('prompt').value = prompts[i];
       if (window.location.hostname !== "127.0.0.1") {
-        el.hide.classList.add("btn-disabled");
-        el.save.classList.add("btn-disabled");
-        el.up.classList.add("btn-disabled");
-        el.down.classList.add("btn-disabled");
-        el.publicKey.disabled = true;
-        el.insertion.disabled = true;
-        el.prompt.disabled = true;
+        $('hide').classList.add("btn-disabled");
+        $('save').classList.add("btn-disabled");
+        $('up').classList.add("btn-disabled");
+        $('down').classList.add("btn-disabled");
+        $('publicKey').disabled = true;
+        $('insertion').disabled = true;
+        $('prompt').disabled = true;
       }
     }
     setLang();
-    initDaisyThemeController();
     initConfig();
+async function sha512Mod2(str) {
+  const hashBuffer = await crypto.subtle.digest('SHA-512', new TextEncoder().encode(str)); //sha256/384/512
+  const hashArray = new Uint8Array(hashBuffer);
+  return hashArray[hashArray.length - 1] & 1;
+}
+
     function getWeight(code) {
       //score值越小，字符被保留的概率越高。
       //零宽字符：看似在隐写场景中要尽可能保留，但从统计特征上看，这些字符属于非常少见的字符，不应该主动提高分布的频率。
@@ -251,21 +243,23 @@ import Layout from "../layouts/Layout.astro";
         return 2;
       return 3;
     }
-    function testWeight(str) {
-      let s = 0;
-      for (const char of str) {
-        s += getWeight(char.codePointAt(0));
-      }
-      return s;
-    }
+    // function testWeight(str) {
+    //   let s = 0;
+    //   for (const char of str) {
+    //     s += getWeight(char.codePointAt(0));
+    //   }
+    //   return s;
+    // }
     // console.log('的'.codePointAt(0));
     const punctuations = ["？", "?", "！", "!", "。", "）", ")", "…", "}", "]", "."]; //"\n"和"”"有时候并不代表结尾
+    const logitBias=[[(await tokenize("�"))[0], false],//避免在判断不可解码的token时产生干扰
+    //[(await tokenize("<|im_end|>"))[0],false]
+  ];
     async function completion(prompt, progress, tailCompletion) {
       let body = {
         prompt: prompt, //支持输入多个prompt
         response_fields: tailCompletion ? ["content", "stopping_word"] : ["completion_probabilities", "tokens"],
-        logit_bias: [["�", false]], //避免在判断不可解码的token时产生干扰
-        //stream: true
+        logit_bias: logitBias, 
         //stop: ["</s>"],//chat模式下默认为["</s>", "Llama:", "User:"]
       };
       if (tailCompletion) {
@@ -315,7 +309,7 @@ import Layout from "../layouts/Layout.astro";
     async function dfs(i, tstr, tscore, incomplete) {
       if (status) return;
       const percents = i / base.length;
-      el.progress.value=percents * 100;
+      $('progress').value=percents * 100;
       const list = await completion(currentPrompt, percents, false); //整个dfs除了completion，几乎不耗时间，因此哪怕提前尝试第二次请求也是没有意义的
       // console.log(list)
       // let s=0;
@@ -364,19 +358,19 @@ import Layout from "../layouts/Layout.astro";
           if (k >= t.length) {
             currentPrompt.push(list[j].id);
             currentCoverText.push(list[j].id);
-            el.coverText.value += t;
+            $('coverText').value += t;
             await dfs(i + sections, ttstr, ttscore, 0);
             if (status) return; //在这里return避免逐层回溯，导致文本框内容变化
             currentPrompt.pop();
             currentCoverText.pop();
-            el.coverText.value = el.coverText.value.slice(0, -t.length);
+            $('coverText').value = $('coverText').value.slice(0, -t.length);
             break; //减少dfs传递的内存占用
           }
           ttstr += t[k];
           ttscore += getWeight(t.codePointAt(k));
           if (t.codePointAt(k) > 0xffff) ttstr += [++k];
           if (ttscore >= 3) {
-            if (h32(ttstr) % 2 !== base[i + sections]) break;
+            if ((await sha512Mod2(ttstr)) !== base[i + sections]) break;
             sections++;
             ttstr = "";
             ttscore = 0; //使用-=3会提高token的平均映射次数，长短token的不平衡会更加明显
@@ -384,48 +378,45 @@ import Layout from "../layouts/Layout.astro";
               status = true;
               if (allowInsertion) {
                 currentCoverText.push(list[j].id);
-                el.coverText.value += t;
-                if (!punctuations.includes(el.coverText.value[el.coverText.value.length - 1]))                  //如果不在dfs中处理，那么取消隐写时仍然会额外执行补全。
-                  el.coverText.value += await completion(currentPrompt, 1, true);
-              } else el.coverText.value += t.slice(0, k + 1);
+                $('coverText').value += t;
+                if (!punctuations.includes($('coverText').value[$('coverText').value.length - 1]))                  //如果不在dfs中处理，那么取消隐写时仍然会额外执行补全。
+                  $('coverText').value += await completion(currentPrompt, 1, true);
+              } else $('coverText').value += t.slice(0, k + 1);
             }
           }
         }
       }
       // console.log('测试映射失败次数')
     }
-    const magicNum = [0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0];
+    const magicNum1 = [1,0,1,1,0,0,1,0,0,1,1,0,0,1,1,0,1,0,1,1];
+    const magicNum2 = [0,0,1,0,1,1,0,1,0,0,1,0,1,1,0,1,1,1,0,0];
     async function encrypt(prompt, plainText) {
-      if (!el.progress.classList.contains("hidden")) {
+      if (!$('progress').classList.contains("hidden")) {
         status = true;
         return;
       }
       if (!plainText) {
-        el.secret.focus();
+        $('secret').focus();
         return;
       }
       if (!prompt) {
-        el.prompt.focus();
+        $('prompt').focus();
         return;
       }
       const compressed = await unishoxCompress(plainText);
       let [data, useUnishox] = compressed;
-      let key = await readTextFile(el.publicKey);
+      let key = await readTextFile($('publicKey'));
       if (key) {
         data = await eccEncryptToUint8Array(data, JSON.parse(key));
       }
       // console.log(data);
       base = toBinary(data); //base=[useUnishox,...toBinary(data)];//处理为二进制序列，在映射时粒度更细，但建议每次只映射1位，减少映射失败率。
       allowInsertion = get("insertion", true);
+      //console.log(base)
+      const end=base.lastIndexOf(useUnishox||key?0:1)+1;
+      base=base.slice(0,base.length-end<=7?end:base.length-7);
       if (allowInsertion) {
-        if (data.length > 65535) {
-          alert(dynamicContent(`内容过多，请减少内容或关闭前后插入选项`, `內容過多，請減少內容或關閉前後插入選項`, `Too much content, please reduce the content or disable the prepend/append option`));
-          return;
-        }
-        let length = new Uint8Array(2); //如果先加magic num再加密，那么就要在每个位置都寻找长度>=(67*8)的所有子串，此时尾插无影响（因为是按顺序和最小长度找起），如果头插数量为n bit，则寻找次数为n(n+1)/2，即是说只有少量头插的情况下才能成功。//todo:当用户选中允许头尾插入时，添加选项"隐蔽的加密"：当结合加密使用时，避免增加隐写暴露的风险，但只允许头部插入少量文本。这需求我看了都感觉绷不住。
-        length[0] = data.length / 256;
-        length[1] = data.length % 256;
-        base = [...magicNum, ...toBinary(length), ...base];
+        base = [...magicNum1,...base,...magicNum2];//如果先加magic num再加密，那么就要在每个位置都寻找长度>=(67*8)的所有子串，此时尾插无影响（因为是按顺序和最小长度找起），如果头插数量为n bit，则寻找次数为n(n+1)/2，即是说只有少量头插的情况下才能成功。//todo:当用户选中允许头尾插入时，添加选项"隐蔽的加密"：当结合加密使用时，避免增加隐写暴露的风险，但只允许头部插入少量文本。这需求我看了都感觉绷不住。
       }
       console.log(base);//1和0的比例差距一般不超过10%
       await fetch("http://127.0.0.1:8090/props")
@@ -440,90 +431,82 @@ import Layout from "../layouts/Layout.astro";
             //         prompt+=json.content;
             // });
             // prompt+="</think>\n\n";
-            prompt += "<think>\n</think>\n\n";
+            prompt += "<think>\n</think>\n\n";//实测命令行关闭思考模式会导致效果降低
           }
         });
       currentPrompt = await tokenize(prompt);
       currentCoverText = [];
-      el.coverText.value = "";
+      $('coverText').value = "";
       currentShuffle = 0;
       status = false;
-      el.progress.value="0";
-      el.progress.classList.remove("hidden");
-      el.tooltip3.classList.remove("invisible");
+      $('progress').value="0";
+      $('progress').classList.remove("hidden");
+      $('tooltip3').classList.remove("invisible");
       await dfs(0, "", 0, 0);
-      el.tooltip3.classList.add("invisible");
-      el.progress.classList.add("hidden");
-      if (!status) alert(dynamicContent(`请尝试使用更加发散的任务提示，或调整和减少输入内容`, `請嘗試使用更加發散的任務提示，或調整並減少輸入內容`, `Please try using a more divergent task prompt, or adjust and reduce the input content`), dynamicContent(`隐写失败！`, `隱寫失敗！`, `Steganography failed!`));
+      $('tooltip3').classList.add("invisible");
+      $('progress').classList.add("hidden");
+      if (!status) modal(dynamicContent(`请尝试使用更加发散的任务提示，或调整和减少输入内容`, `請嘗試使用更加發散的任務提示，或調整並減少輸入內容`, `Please try using a more divergent task prompt, or adjust and reduce the input content`), dynamicContent(`隐写失败！`, `隱寫失敗！`, `Steganography failed!`));
     }
     async function extract(coverText) {
       if (!coverText) {
-        el.coverText.focus();
+        $('coverText').focus();
         return;
       }
-      let data;
       let tcoverText = coverText;
+      let findMagicNum=false;
+      let base=[];
       for (; tcoverText; tcoverText = tcoverText.slice(1)) {
-        let base = [],
-          tstr = "",
-          tscore = 0;
+        let tstr = "",tscore = 0;base=[];
         for (const char of tcoverText) {
           tstr += char;
           tscore += getWeight(char.codePointAt(0));
           if (tscore >= 3) {
-            base.push(h32(tstr) % 2);
+            base.push((await sha512Mod2(tstr)));
             tstr = "";
             tscore = 0;
           }
         }
-        let index = findSublistIndex(base, magicNum);
-        if (index == -1) continue;
+        let index1 = findSublistIndex(base, magicNum1);
+        if (index1 == -1) continue;
         // console.log(base)
-        index += 24;
-        let length = 0;
-        for (let i = 0; i < 16; i++) {
-          length += base[index + i] * (1 << (15 - i));
-        }
-        index += 16;
-        base = base.slice(index, index + length * 8);
-        data = toBytes(base);
+        let index2 = findSublistIndex(base, magicNum2);
+        if (index2 == -1) continue;
+        if(index2<=index1+20)continue;
+        base = base.slice(index1+20, index2);
+        findMagicNum=true;
+        // console.log(base);
         break;
       }
-      if (!data) {
-        let base = [],
-          tstr = "",
-          tscore = 0;
+      if (!findMagicNum) {
+        let tstr = "",tscore = 0;base=[];
         for (const char of coverText) {
           tstr += char;
           tscore += getWeight(char.codePointAt(0));
           if (tscore >= 3) {
-            base.push(h32(tstr) % 2);
+            base.push((await sha512Mod2(tstr)));
             tstr = "";
             tscore = 0;
           }
         }
-        data = toBytes(base);
       }
       // console.log(base)// let useUnishox=base[0];base=base.slice(1);
-      let key = await readTextFile(el.privateKey);
+      let key = await readTextFile($('privateKey'));
       if (key) {
-        data = await eccDecryptToUint8Array(data, JSON.parse(key));
+        base = await eccDecryptToUint8Array(toBytes([...base, ...Array((8 - base.length % 8) % 8).fill(1)]), JSON.parse(key));
       }
-      el.secret.value = await unishoxDecompress(data); // el.secret.value=await unishoxDecompress(data,useUnishox);
+      $('secret').value = await unishoxDecompress(base); // $('secret').value=await unishoxDecompress(data,useUnishox);
     }
-    el.hide.onclick = async () => {
-      await encrypt(el.prompt.value, el.secret.value);
+    $('hide').onclick = async () => {
+      await encrypt($('prompt').value, $('secret').value);
     };
-    el.extract.onclick = async () => {
-      await extract(el.coverText.value);
+    $('extract').onclick = async () => {
+      await extract($('coverText').value);
     };
-    //todo:在模板层关闭思考模式
     //todo:找到一种足够通用的system prompt注入方式
-    //todo:unishox3、高频词、以最大长度牺牲8倍为代价节约3.5bit？
+    //todo:对于安卓，只针对server构建，而不是完全构建
+    //todo:unishox3、高频词
     //todo:logit_bias、token过滤、采样参数调整等方式提高token质量
-    //todo:变长编码来表示长度，VLQ/LEB128通常为字节为单位，Elias Gamma/Delta/ Omega 编码可以精确到位
     //todo:目前的尾部补全的机制过于简陋，也不一定适合所有语言，总有一天会出现问题。
-    //warning:除非有非常大的改进，否则禁止调整解码策略；而且还要为旧版本的解码部署页面；
     //一种牺牲隐写容量提高鲁棒性和隐写效果的方法：部分截取片段直接使用，不尝试映射
     //是否应该支持更新？不过由于是esm，实现起来还是很麻烦的
     // fetch('http://127.0.0.1:8090/props').then(res=>res.json()).then(json=>console.log(json));

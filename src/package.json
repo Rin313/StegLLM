@@ -9,11 +9,9 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@noble/curves": "^1.9.1",
-    "@tailwindcss/vite": "^4.1.6",
-    "astro": "^5.7.13",
-    "daisyui": "^5.0.35",
-    "unishox2.siara.cc": "^1.1.5",
-    "xxhash-wasm": "^1.1.0"
+    "astro": "^5.8.0",
+    "@tailwindcss/vite": "^4.1.7",
+    "daisyui": "^5.0.38",
+    "unishox2.siara.cc": "^1.1.5"
   }
 }

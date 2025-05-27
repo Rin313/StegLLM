@@ -1,6 +1,6 @@
 @echo off
 setlocal
-set "buildNum=b5474"
+set "buildNum=b5503"
 set "scriptDir=%~dp0"
 set "dataDir=%scriptDir%data"
 :: 判断CPU指令集
@@ -34,8 +34,9 @@ start "" "%llamaServer%" ^
     --port "%port%" ^
     -c 4096 ^
     --temp 0.8 ^
+    --top-p 0.95 ^
     --repeat-penalty 1.18 ^
-    --repeat-last-n 128 ^
+    --repeat-last-n 64 ^
     --no-perf ^
     --prio 3 ^
     --prio-batch 3 ^
