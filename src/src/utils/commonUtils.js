@@ -1,4 +1,4 @@
-export const $ = id => document.getElementById(id);
+export const $ = id => document.getElementById(id);//单工具类，方便导入
 function setButtonType() {
     document.querySelectorAll('button').forEach(button => {
         button.setAttribute('type', button.closest('form') ? 'submit' : 'button');//button的tupe包括submit、reset和button

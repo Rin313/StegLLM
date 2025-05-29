@@ -10,8 +10,8 @@
   },
   "dependencies": {
     "astro": "^5.8.0",
-    "@tailwindcss/vite": "^4.1.7",
-    "daisyui": "^5.0.38",
+    "@tailwindcss/vite": "^4.1.8",
+    "daisyui": "^5.0.40",
     "unishox2.siara.cc": "^1.1.5"
   }
 }

@@ -58,11 +58,11 @@ import Layout from "../layouts/Layout.astro";
             <legend class="fieldset-legend" id="publicKeyTitle"></legend>
           </div>
           <div class="flex flex-row gap-6 items-center">
-              <input type="file" class="file-input file-input-success" id="publicKey" />
+              <input type="file" class="file-input file-input-success" id="publicKey" disabled={!!Astro.site} />
               <div class="tooltip" id="tooltip2">
           <fieldset class="fieldset">
             <label class="fieldset-label">
-              <input type="checkbox" class="toggle toggle-info" id="insertion" />
+              <input type="checkbox" class="toggle toggle-info" id="insertion" disabled={!!Astro.site}/>
               <span id="insertionText"></span>
             </label>
           </fieldset>
@@ -72,7 +72,7 @@ import Layout from "../layouts/Layout.astro";
       </div>
       <div class="flex flex-col items-center justify-center gap-8">
         <div class="tooltip invisible" id="tooltip3">
-          <button class="btn btn-primary btn-circle btn-xl visible" id="hide">
+          <button class=`btn btn-primary btn-circle btn-xl visible ${Astro.site&&"btn-disabled"}` id="hide">
             <svg class="size-6" viewBox="0 0 24 24"><path fill="currentColor" d="M10.5 15h3l-.575-3.225q.5-.25.788-.725T14 10q0-.825-.587-1.412T12 8t-1.412.588T10 10q0 .575.288 1.05t.787.725zm1.5 7q-3.475-.875-5.738-3.988T4 11.1V5l8-3l8 3v6.1q0 3.8-2.262 6.913T12 22"></path></svg>
           </button>
         </div>
@@ -91,12 +91,12 @@ import Layout from "../layouts/Layout.astro";
     <progress class="progress progress-primary hidden" value="0" max="100" id="progress"></progress>
   </div>
   <div class="flex flex-row gap-4 items-center mb-10 mx-4 lg:mx-12 2xl:mx-40 px-6">
-      <textarea class="textarea textarea-info w-full h-26 bg-base-200 rounded-lg resize-none" id="prompt"></textarea>
+      <textarea class="textarea textarea-info w-full h-26 bg-base-200 rounded-lg resize-none" id="prompt" disabled={!!Astro.site}></textarea>
       <div class="flex flex-col">
-        <button class="btn btn-ghost" id="up">▲</button>
-        <button class="btn btn-ghost" id="down">▼</button>
+        <button class=`btn btn-ghost ${Astro.site&&"btn-disabled"}` id="up">▲</button>
+        <button class=`btn btn-ghost ${Astro.site&&"btn-disabled"}` id="down">▼</button>
       </div>
-      <button class="btn btn-info" id="save"></button>
+      <button class=`btn btn-info ${Astro.site&&"btn-disabled"}` id="save"></button>
   </div>
   <script>
     import { $,init, get, set, add, runIfMatch, generateKeyPair, exportLocalStorage, importLocalStorage, unishoxCompress, readTextFile, eccEncryptToUint8Array, eccDecryptToUint8Array, shuffle, toBinary, toBytes, findSublistIndex, unishoxDecompress, tokenize, detokenize, check,stringToUnicode } from "../utils/commonUtils";
@@ -206,15 +206,6 @@ import Layout from "../layouts/Layout.astro";
       prompts = get("prompts", [""]);
       i = get("promptIndex", prompts.length - 1);
       $('prompt').value = prompts[i];
-      if (window.location.hostname !== "127.0.0.1") {
-        $('hide').classList.add("btn-disabled");
-        $('save').classList.add("btn-disabled");
-        $('up').classList.add("btn-disabled");
-        $('down').classList.add("btn-disabled");
-        $('publicKey').disabled = true;
-        $('insertion').disabled = true;
-        $('prompt').disabled = true;
-      }
     }
     setLang();
     initConfig();
@@ -223,7 +214,6 @@ async function sha512Mod2(str) {
   const hashArray = new Uint8Array(hashBuffer);
   return hashArray[hashArray.length - 1] & 1;
 }
-
     function getWeight(code) {
       //score值越小，字符被保留的概率越高。
       //零宽字符：看似在隐写场景中要尽可能保留，但从统计特征上看，这些字符属于非常少见的字符，不应该主动提高分布的频率。
@@ -252,9 +242,12 @@ async function sha512Mod2(str) {
     // }
     // console.log('的'.codePointAt(0));
     const punctuations = ["？", "?", "！", "!", "。", "）", ")", "…", "}", "]", "."]; //"\n"和"”"有时候并不代表结尾
-    const logitBias=[[(await tokenize("�"))[0], false],//避免在判断不可解码的token时产生干扰
-    //[(await tokenize("<|im_end|>"))[0],false]
-  ];
+    let logitBias=[];
+    if (window.location.hostname === "127.0.0.1") {
+        logitBias=[[(await tokenize("�"))[0], false],//避免在判断不可解码的token时产生干扰
+          //[(await tokenize("<|im_end|>"))[0],false]
+        ];
+    }
     async function completion(prompt, progress, tailCompletion) {
       let body = {
         prompt: prompt, //支持输入多个prompt
