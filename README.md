@@ -48,11 +48,12 @@ Linux/MacOS 系统：运行 `linux_mac.sh`
 ```sh
 apt update && apt upgrade -y
 apt install git cmake
-git clone https://github.com/ggml-org/llama.cpp
+git clone --depth 1 https://github.com/ggml-org/llama.cpp
 cd llama.cpp
 cmake -B build
-cmake --build build --config Release
-curl --compressed -LO https://github.com/Rin313/StegLLM/releases/download/v1.2.2/StegLLM.zip
+cmake --build build --config Release -t -server
+cd ..
+curl --insecure --compressed -C - -LO https://github.com/Rin313/StegLLM/releases/download/v1.3.0/StegLLM.zip
 unzip StegLLM.zip
 cp -r llama.cpp/build/bin StegLLM/data/
 bash StegLLM/android.sh
