@@ -1,6 +1,6 @@
 #!/bin/bash
 set -x
-buildNum="b5503"
+buildNum="b5604"
 scriptDir="$(dirname "$(realpath "$0")")"
 dataDir="${scriptDir}/data"
 # 确定系统和指令集
@@ -17,6 +17,10 @@ if [[ "$(uname -m)" == "arm64" || "$(uname -m)" == "aarch64" ]]; then
     arch="arm64"
 elif [[ "$(uname -m)" == "x86_64" ]]; then
     arch="x64"
+fi
+if [[ "$os" == "ubuntu" && "$arch" == "arm64" ]]; then
+    echo "unSupported System."
+    exit 1
 fi
 # 下载 llama.cpp
 name="llama-${buildNum}-bin-${os}-${arch}"
@@ -59,10 +63,9 @@ port=8090
     --host 127.0.0.1 \
     --port "$port" \
     -c 4096 \
-    --temp 0.8 \
-    --top-p 0.95 \
+    --reasoning-budget 0 \
+    --sampling-seq edskypxt \
     --repeat-penalty 1.18 \
-    --repeat-last-n 64 \
     --no-perf \
     --prio 3 \
     --prio-batch 3 \
@@ -95,7 +98,7 @@ fi
 # --timeout 600 读写超时时间(秒)
 # --log-verbosity 0 最基础的日志级别
 # props 允许通过接口修改全局属性
-# --no-slots 禁用槽监控，不需要运维数据
+# --no-slots 禁用槽监控
 # --repeat-penalty 重复惩罚，1.0为无惩罚
 # --repeat-last-n 惩罚最后n个token
 

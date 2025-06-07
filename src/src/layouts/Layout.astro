@@ -1,31 +1,16 @@
----//此处的初始化js不会包含到页面中
+---//此处的初始化js不会包含到页面中//
 import '../styles/global.css'
 const {title,row} = Astro.props;
-// bg-local（默认）:随元素滚动
-// bg-fixed:相对视口固定
-// bg-scroll:相对元素固定
-// tailwind不支持动态类名，此时要用回style内联样式style={{backgroundImage: background?`url(${background.src})`:null,}}
 ---
+<!DOCTYPE html>{/*写不写都会自动添加*/}
 <html>
 <head>
-    <meta charset="UTF-8"/>{/*UTF-8是HTML5的唯一有效编码，但不声明<meta charset="UTF-8" />就乱码……*/}
+    <meta charset="UTF-8"/>{/*UTF-8是HTML5的唯一有效编码，但不声明UTF-8就乱码……*/}
     <meta name="viewport" content="width=device-width,initial-scale=1.0"/>{/*设置视口宽度和默认缩放级别，这是响应式设计的基础 */}
     <link rel="icon" href="data:,">{/*不添加的话首次访问时浏览器会自动访问/favicon.ico弹出404 */}
     <title>{title}</title>
 </head>
-<body class=`min-h-screen flex ${row?"flex-row":"flex-col"}`>{/*min-h-screen最小高度为视口高度*/}
-<dialog id="modal" class="modal">
-    <div class="modal-box">
-        <h3 class="text-lg font-bold" id="modalTitle"></h3>
-        <div class="py-4 text-error" id="modalMsg"></div>
-        <div class="modal-action">
-            <button class="btn w-20" id="confirm"></button>
-            <form method="dialog">
-                <button class="btn w-20" id="cancel"></button>{/*if there is a button in form, it will close the modal*/}
-            </form>
-        </div>
-    </div>
-</dialog>
+<body class=`min-h-screen flex ${row?"flex-row":"flex-col"}`>{/*最小高度为视口高度*/}
 <slot/>
 </body>
 </html>

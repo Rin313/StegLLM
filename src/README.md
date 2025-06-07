@@ -2,31 +2,17 @@
 volta list 查看当前各个工具的版本
 volta install node@latest;volta install node@14.21.3; 用于切换版本
 volta uninstall node
-```
-```sh
 npm create astro@latest
-npm create astro@latest astro-ui -- --template basics --add tailwind --install --git
-npm i hash-wasm
-npm i @tailwindcss/vite@latest
-npm i daisyui@latest
-npm i astro@latest
-npm i @noble/curves
 ```
 打包源码
 ```
 cd src
 Invoke-WebRequest -Uri "https://github.com/Rin313/StegLLM/archive/refs/heads/main.zip" -OutFile "../StegLLM/源码.zip"
 ```
-部署静态资源
-```
-git clone -b gh-pages https://github.com/username/repository.git
-```
 困惑度测试
 ```
 llama-perplexity -m gemma-3-4b-it-Q6_K.gguf -f <file> 
 ```
-//前端轮子大舞台真的很爱瞎搞，不科学的设计模式导致一大堆不向前兼容的调整，比起不稳定地升级项目，最好每隔一阵子就初始化一个项目覆盖一些配置，并通过git更改来进行调整
-目前astro似乎没法在本地实现国际化，site配置用不了本地域名好像。
 
 [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/withastro/astro/tree/latest/examples/basics)
 [![Open with CodeSandbox](https://assets.codesandbox.io/github/button-edit-lime.svg)](https://codesandbox.io/p/sandbox/github/withastro/astro/tree/latest/examples/basics)

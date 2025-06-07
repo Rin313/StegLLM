@@ -1,5 +1,6 @@
 @import "tailwindcss" source("..");
+@source not "../assets";
 @plugin "daisyui" {
-    themes: dark --default,light,valentine,retro,coffee;/*--default必须设置，设置--prefersdark会增加打包大小*/
+    themes:light --default,dark --prefersdark;/*--default必须设置，设置--prefersdark会增加打包大小*/
     logs: false;
 }

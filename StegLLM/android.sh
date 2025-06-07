@@ -23,10 +23,9 @@ port=8090
     --host 127.0.0.1 \
     --port "$port" \
     -c 4096 \
-    --temp 0.8 \
-    --top-p 0.95 \
+    --reasoning-budget 0 \
+    --sampling-seq edskypxt \
     --repeat-penalty 1.18 \
-    --repeat-last-n 64 \
     --no-perf \
     --prio 3 \
     --prio-batch 3 \
