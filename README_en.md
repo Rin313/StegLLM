@@ -2,26 +2,19 @@
 
 # StegLLM
 
-StegLLM is an offline text steganography project that leverages large language models to hide secret information within normal text. It requires no installation or configuration and is cross-platform compatible.
+An offline AI tool that cleverly disguises your secret messages as a piece of ordinary text.
+> Unlike encryption, the essence of steganography is **to hide the very existence of a message**.
 
-## What is Text Steganography?
+## Some Fun Use Cases
 
-Imagine being able to secretly hide a sentence within an article without anyone easily noticing.
-
-This is text steganography: embedding the information you want to hide into seemingly ordinary text.
-
-Unlike encryption, the core of steganography is **to make people unaware that the information even exists**.
-
-## What are the "Wonderful Uses" of Text Steganography?
-
-- **Passing Little Secrets**:  
-  Want to send a "secret only we understand" to a friend? Hide it in a piece of seemingly ordinary text, making it completely undetectable to others.
-- **Adding an "Anti-Counterfeiting Code" to Your Work**:  
-  In a novel you poured your heart into, secretly embed some "Easter eggs" that only you know about, proving it’s your original creation.
-- **Hide-and-Seek Game**:  
-  In public settings, you might want to make certain information "invisible" by hiding it within ordinary content. It’s like playing hide-and-seek—let’s see who can find me!
-- **Code Pranks**:  
-  Want your program to perform special operations "without anyone knowing"? Hide secret instructions in an ordinary log file or code comment, giving your program covert tasks!
+- **Share a Little Secret:**  
+  Want to send a friend a private message that "only we understand"? Hide it in seemingly normal text, making it completely invisible to others.
+- **Add a Watermark:**  
+  Embed an invisible signature or date in your novels or articles to prove your original authorship.
+- **A Game of Hide-and-Seek:**  
+  Hide your true opinions in a movie or food review on a public forum or social media.
+- **Code Pranks:**  
+  Hide secret instructions in log files or code comments to assign secret tasks to your program
 
 ## Quick Start
 
@@ -71,7 +64,7 @@ flowchart TD
     magicNum --> prompt[Initialize Prompt]
     prompt --> dfs[Build Token Generation Tree with DFS]
     dfs --> weightsNum{Weighted Sum >= Threshold?}
-    weightsNum --> |Yes| mapping{xxhash % 2 = bit?}
+    weightsNum --> |Yes| mapping{parity = bit?}
     weightsNum --> |No| dfs
     mapping --> |Yes| mappingDone{Is Current Token Mapping Complete?}
     mapping --> |No| dfs
@@ -83,10 +76,8 @@ flowchart TD
     tail --> endd[End]
 ```
 
-## Contributing
-
-We welcome Issues and Pull Requests!
-
 ## Disclaimer
 
-This project is intended for learning and research purposes only. Please do not use it for illegal activities. The author assumes no responsibility for any loss or damage caused by the use of this project. Special thanks to: **[LLM-Steganography](https://github.com/HighDoping/LLM-Steganography/), [llama.cpp](https://github.com/ggml-org/llama.cpp), [Unishox2](https://github.com/siara-cc/Unishox2)**.
+This project is intended for learning and research purposes only. Please do not use it for illegal activities. The author assumes no responsibility for any loss or damage caused by the use of this project.
+
+Special thanks to: **[LLM-Steganography](https://github.com/HighDoping/LLM-Steganography/), [llama.cpp](https://github.com/ggml-org/llama.cpp), [Unishox2](https://github.com/siara-cc/Unishox2)**.

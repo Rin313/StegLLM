@@ -22,20 +22,16 @@ import Unlock from "../components/Unlock.astro"
         <fieldset class="fieldset">
           <legend class="fieldset-legend" id="publicKeyTitle"></legend>
           <div class="flex flex-row gap-6 items-center">
-              <input type="file" class="file-input file-input-success" id="publicKey"/>
-              <div class="tooltip" id="tooltip1">
-                <label class="label">
-                  <input type="checkbox" class="toggle toggle-info" id="insertion"/>
-                  <span id="insertionText"></span>
-                </label>
-              </div>
+            <input type="file" class="file-input file-input-success" id="publicKey"/>
+            <label class="label tooltip" id="tooltip1">
+                <input type="checkbox" class="toggle toggle-info" id="insertion"/>
+                <span id="insertionText"></span>
+            </label>
           </div>
         </fieldset>
       </div>
       <div class="flex flex-col items-center justify-center gap-8">
-        <div class="tooltip invisible" id="tooltip2">
-          <button class=`btn btn-primary btn-circle btn-xl visible` id="hide"><Lock/></button>
-        </div>
+        <button class=`btn btn-primary btn-circle btn-xl` id="hide"><Lock/></button>
         <button class="btn btn-secondary btn-circle btn-xl" id="extract"><Unlock/></button>
       </div>
       <div class="rounded-lg py-6 flex flex-col gap-6 flex-1">
@@ -73,7 +69,7 @@ import Unlock from "../components/Unlock.astro"
     $('extract').ariaLabel,
     $('insertionText').textContent,
     $('tooltip1').dataset.tip,
-    $('tooltip2').dataset.tip,
+    $('hide').dataset.tip,
     generateKeyPairMsg,
     failMsg]=setLang({
         "zh-CN":["导入配置","导出配置","生成密钥","输入接收方的公钥（可选）","输入你的私钥（可选）","输入接收方的公钥（可选）","输入你的私钥（可选）","输入需加密信息","输入需解密掩饰文本","输入任务提示，例如：\"不间断地续写一段散文：\"","隐写","提取","支持前后插入","掩饰文本嵌入任意内容后仍可准确解密，略微增加暴露风险","点击停止隐写","请安全保存你的私钥，并与接收方提前交换公钥","请尝试更发散的任务提示，或减少输入"],
@@ -275,9 +271,9 @@ import Unlock from "../components/Unlock.astro"
       status = false;
       $('progress').value="0";
       $('progress').classList.remove("invisible");
-      $('tooltip2').classList.remove("invisible");
+      $('hide').classList.add("tooltip");
       await dfs(0, "", 0, 0);
-      $('tooltip2').classList.add("invisible");
+      $('hide').classList.remove("tooltip");
       $('progress').classList.add("invisible");
       if (!status) Swal.fire({icon:"error",text:failMsg,theme:"auto"})
     }
