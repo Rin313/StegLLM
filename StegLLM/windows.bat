@@ -1,6 +1,6 @@
 @echo off
 setlocal
-set "buildNum=b5604"
+set "buildNum=b6059"
 set "scriptDir=%~dp0"
 set "dataDir=%scriptDir%data"
 :: 判断CPU指令集
@@ -34,16 +34,18 @@ start "" "%llamaServer%" ^
     --port "%port%" ^
     -c 4096 ^
     --reasoning-budget 0 ^
+    --reasoning-format none ^
     --sampling-seq edskypxt ^
     --repeat-penalty 1.18 ^
     --no-perf ^
+    --flash-attn ^
+    --slot-prompt-similarity 0.0 ^
     --prio 3 ^
     --prio-batch 3 ^
     --poll 100 ^
     --log-verbosity 0 ^
     --props ^
     --timeout 60 ^
-    --no-slots ^
     --seed -1
 echo Waiting for the server to start...
 :waitloop

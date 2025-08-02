@@ -1,29 +1,28 @@
 ---
 import Layout from "../layouts/Layout.astro"
-import Lock from "../components/Lock.astro"
-import Unlock from "../components/Unlock.astro"
+import {LockKeyhole,UnlockKeyhole} from "@lucide/astro"
+//SentencePiece等分词器能无损且可逆地处理任何未知的符号，如果在js中实现并用于压缩的话……
 //draft：将尾部补全修改为输出到底，目前的尾部补全的机制不适合所有语言。
 //draft：通过添加随机序列来移除shuffle，但是目前生成稍长的文本已经很困难了。
 //draft：一种牺牲隐写容量提高鲁棒性和隐写效果的方法：部分截取片段直接使用，不尝试映射
 //todo：textarea调整为支持富文本之类的能控制文本样式的组件。
 //todo:寻找通用的system prompt注入方式
 //todo:unishox3和词汇补充
+//draft：简繁互用
 ---
 <Layout title="StegLLM">
-  <div class="flex gap-2 items-center shadow p-4">
-      <button class="btn btn-soft btn-accent" id="import"></button>
-      <button class="btn btn-soft btn-accent" id="export"></button>
+  <div class="shadow p-4">
       <button class="btn btn-soft btn-warning" id="generateKeyPair"></button>
   </div>
   <div class="flex flex-col p-4 mx-6 lg:mx-14 2xl:mx-42">
     <div class="flex flex-col md:flex-row gap-6 lg:gap-12">
-      <div class="rounded-lg py-6 flex flex-col gap-6 flex-1">
-        <textarea class="textarea textarea-info w-full h-136 bg-base-200 rounded-lg resize-none" id="secret"></textarea>
+      <div class="py-6 flex flex-col gap-6 flex-1">
+        <textarea class="textarea textarea-info w-full h-136 bg-base-200 rounded-lg" id="secret"></textarea>
         <fieldset class="fieldset">
           <legend class="fieldset-legend" id="publicKeyTitle"></legend>
           <div class="flex flex-row gap-6 items-center">
             <input type="file" class="file-input file-input-success" id="publicKey"/>
-            <label class="label tooltip" id="tooltip1">
+            <label class="label tooltip" id="stopTip">
                 <input type="checkbox" class="toggle toggle-info" id="insertion"/>
                 <span id="insertionText"></span>
             </label>
@@ -31,11 +30,11 @@ import Unlock from "../components/Unlock.astro"
         </fieldset>
       </div>
       <div class="flex flex-col items-center justify-center gap-8">
-        <button class=`btn btn-primary btn-circle btn-xl` id="hide"><Lock/></button>
-        <button class="btn btn-secondary btn-circle btn-xl" id="extract"><Unlock/></button>
+        <button class=`btn btn-primary btn-circle btn-xl` id="hide"><LockKeyhole/></button>
+        <button class="btn btn-secondary btn-circle btn-xl" id="extract"><UnlockKeyhole/></button>
       </div>
-      <div class="rounded-lg py-6 flex flex-col gap-6 flex-1">
-        <textarea class="textarea textarea-info w-full h-136 bg-base-200 rounded-lg resize-none" id="coverText"></textarea>
+      <div class="py-6 flex flex-col gap-6 flex-1">
+        <textarea class="textarea textarea-info w-full h-136 bg-base-200 rounded-lg" id="coverText"></textarea>
         <fieldset class="fieldset">
           <legend class="fieldset-legend" id="privateKeyTitle"></legend>
           <input type="file" class="file-input file-input-warning" id="privateKey" />
@@ -45,19 +44,17 @@ import Unlock from "../components/Unlock.astro"
     <progress class="progress progress-primary invisible" value="0" max="100" id="progress"></progress>
   </div>
   <div class="flex flex-row gap-4 items-center mb-10 mx-6 lg:mx-14 2xl:mx-42 px-4">
-      <textarea class="textarea textarea-info w-full h-26 bg-base-200 rounded-lg resize-none" id="prompt"></textarea>
+      <textarea class="textarea textarea-info w-full h-26 bg-base-200 rounded-lg" id="prompt"></textarea>
       <div class="flex flex-col">
         <button class=`btn btn-ghost` id="up">▲</button>
         <button class=`btn btn-ghost` id="down">▼</button>
       </div>
   </div>
   <script>
-    import { $,setLang,get,post,getLocal,setLocal,moveStrToEnd,generateKeyPair, exportLocalStorage, importLocalStorage, unishoxCompress, readTextFile, eccEncryptToUint8Array, eccDecryptToUint8Array, shuffle, toBinary, toBytes, findSublist, unishoxDecompress} from "../assets/commonUtils";
+    import { $,setLang,listenToggle,get,post,getLocal,setLocal,moveStrToEnd,generateKeyPair, unishoxCompress, readTextFile, eccEncryptToUint8Array, eccDecryptToUint8Array, shuffle, toBinary, toBytes, findSublist, unishoxDecompress} from "../assets/commonUtils";
     import Swal from 'sweetalert2';
     let generateKeyPairMsg,failMsg;
-    [$('import').textContent,
-    $('export').textContent,
-    $('generateKeyPair').textContent,
+    [$('generateKeyPair').textContent,
     $('publicKeyTitle').textContent,
     $('privateKeyTitle').textContent,
     $('publicKey').ariaLabel,
@@ -68,48 +65,32 @@ import Unlock from "../components/Unlock.astro"
     $('hide').ariaLabel,
     $('extract').ariaLabel,
     $('insertionText').textContent,
-    $('tooltip1').dataset.tip,
+    $('stopTip').dataset.tip,
     $('hide').dataset.tip,
     generateKeyPairMsg,
     failMsg]=setLang({
-        "zh-CN":["导入配置","导出配置","生成密钥","输入接收方的公钥（可选）","输入你的私钥（可选）","输入接收方的公钥（可选）","输入你的私钥（可选）","输入需加密信息","输入需解密掩饰文本","输入任务提示，例如：\"不间断地续写一段散文：\"","隐写","提取","支持前后插入","掩饰文本嵌入任意内容后仍可准确解密，略微增加暴露风险","点击停止隐写","请安全保存你的私钥，并与接收方提前交换公钥","请尝试更发散的任务提示，或减少输入"],
-        "zh-TW":["導入配置","導出配置","生成金鑰","輸入接收方的公鑰（可選）","輸入你的私鑰（可選）","輸入接收方的公鑰（可選）","輸入你的私鑰（可選）","輸入需加密資訊","輸入需解密掩飾文本","輸入任務提示，例如：\"不間斷地續寫一段散文：\"","隱寫","提取","支援前後插入","掩飾文本嵌入任意內容後仍可準確解密，略微增加暴露風險","點擊停止隱寫","請安全保存你的私鑰，並與接收方提前交換公鑰","請嘗試更發散的任務提示，或減少輸入"],
-        "en":["Import Config","Export Config","Generate Key","Enter recipient's public key (optional)","Enter your private key (optional)","Enter recipient's public key (optional)","Enter your private key (optional)","Enter message to encrypt","Enter cover text to decrypt","Enter a prompt, e.g., \"Continue writing this prose:\"","Embed","Extract","Supports insertion at start/end","The message can be extracted even if the cover text is modified, slightly increasing detection risk.","Click to stop embedding","Securely save your private key and exchange public keys with the recipient in advance.","Please try a more creative prompt or reduce input."],
-        "ja":["設定のインポート","設定のエクスポート","キーを生成","受信者の公開鍵を入力 (任意)","あなたの秘密鍵を入力 (任意)","受信者の公開鍵を入力 (任意)","あなたの秘密鍵を入力 (任意)","暗号化する情報を入力","復号するカバーテキストを入力","プロンプトを入力してください。例:「この散文の続きを書いてください:」","埋め込み","抽出","先頭/末尾への挿入をサポート","カバーテキスト変更後も抽出可能ですが、検出リスクがわずかに増加します。","埋め込みを停止","秘密鍵は安全に保管し、受信者と事前に公開鍵を交換してください。","より創造的なプロンプトを試すか、入力内容を減らしてください。"]})
+        "zh-CN":["生成密钥","输入接收方的公钥（可选）","输入你的私钥（可选）","输入接收方的公钥（可选）","输入你的私钥（可选）","输入需加密信息","输入需解密掩饰文本","输入任务提示，例如：\"保持不输出额外的说明，不间断地续写一段散文：\"","隐写","提取","支持前后插入","掩饰文本嵌入任意内容后仍可准确解密，略微增加暴露风险","点击停止隐写","请安全保存你的私钥，并与接收方提前交换公钥","请尝试更发散的任务提示，或减少输入"],
+        "zh-TW":["生成金鑰","輸入接收方的公鑰（可選）","輸入你的私鑰（可選）","輸入接收方的公鑰（可選）","輸入你的私鑰（可選）","輸入需加密資訊","輸入需解密掩飾文本","輸入任務提示，例如：\"不間斷地續寫一段散文：\"","隱寫","提取","支援前後插入","掩飾文本嵌入任意內容後仍可準確解密，略微增加暴露風險","點擊停止隱寫","請安全保存你的私鑰，並與接收方提前交換公鑰","請嘗試更發散的任務提示，或減少輸入"],
+        "en":["Generate Key","Enter recipient's public key (optional)","Enter your private key (optional)","Enter recipient's public key (optional)","Enter your private key (optional)","Enter message to encrypt","Enter cover text to decrypt","Enter a prompt, e.g., \"Continue writing this prose:\"","Embed","Extract","Supports insertion at start/end","The message can be extracted even if the cover text is modified, slightly increasing detection risk.","Click to stop embedding","Securely save your private key and exchange public keys with the recipient in advance.","Please try a more creative prompt or reduce input."],
+        "ja":["キーを生成","受信者の公開鍵を入力 (任意)","あなたの秘密鍵を入力 (任意)","受信者の公開鍵を入力 (任意)","あなたの秘密鍵を入力 (任意)","暗号化する情報を入力","復号するカバーテキストを入力","プロンプトを入力してください。例:「この散文の続きを書いてください:」","埋め込み","抽出","先頭/末尾への挿入をサポート","カバーテキスト変更後も抽出可能ですが、検出リスクがわずかに増加します。","埋め込みを停止","秘密鍵は安全に保管し、受信者と事前に公開鍵を交換してください。","より創造的なプロンプトを試すか、入力内容を減らしてください。"]})
     let prompts,i;
-    function initConfig(){//配置修改时需要复用，为避免一堆参数所以不移到工具类。
-      $('insertion').checked = getLocal("insertion", true);
+    function initConfig(){//配置修改时需要复用
+      listenToggle($('insertion'),"insertion");
       prompts = getLocal("prompts", []);
       i=prompts.length-1;
       if(i>=0) $('prompt').value = prompts[i];
     }
     initConfig();
     $('up').onclick = () => {
-      if(i>0){
-        i--;
-        $('prompt').value = prompts[i];
-      }
+      if(i>0) $('prompt').value = prompts[--i];
     };
     $('down').onclick = () => {
-      if(i<prompts.length-1){
-        i++;
-        $('prompt').value = prompts[i];
-      }
+      if(i<prompts.length-1) $('prompt').value = prompts[++i];
     };
     $('generateKeyPair').onclick = async () => {
       await generateKeyPair();
       Swal.fire({icon: "success",text:generateKeyPairMsg,theme:"auto"})
     };
-    $('export').onclick = () => {
-      exportLocalStorage();
-    };
-    $('import').onclick = async () => {
-      await importLocalStorage();
-      initConfig();
-    };
-    $('insertion').addEventListener("change", function (event) {
-      setLocal("insertion", event.target.checked);
-    });
     async function getParity(str) {//直接%2无法利用哈希值的全部位，会破坏哈希函数的均匀性，必须使用奇偶校验或者可扩展输出函数 (XOF)
         const hashBuffer = await crypto.subtle.digest('SHA-512', new TextEncoder().encode(str)); //sha256/384/512，选择sha512提高解码成本
         const hashArray = new Uint8Array(hashBuffer);
@@ -131,17 +112,15 @@ import Unlock from "../components/Unlock.astro"
     async function tokenize(str) {
         return (await post('http://127.0.0.1:8090/tokenize',{content:str})).tokens;
     }
-    async function detokenize(tokens) {
+    async function detokenize(tokens) {//不返回bytes
         return (await post('http://127.0.0.1:8090/detokenize',{tokens: tokens})).content;
-    }
-    const punctuations = ["？", "?", "！", "!", "。", "）", ")", "…", "}", "]", "."]; //"\n"和"”"有时候并不代表结尾
-    let logitBias=[];
-    if (window.location.hostname === "127.0.0.1") {
-        logitBias=[[(await tokenize("�"))[0], false],//避免在判断不可解码的token时产生干扰
-        ];
     }
     const props=await get("http://127.0.0.1:8090/props");
     const eosToken=props.eos_token,think=props.chat_template.includes("</think>");
+    const logitBias=[];
+    if (window.location.hostname === "127.0.0.1") logitBias.push(...[[(await tokenize("�"))[0], false],])//避免在判断不可解码的token时产生干扰
+    if(think)logitBias.push(...[[(await tokenize("<think>"))[0], false],[(await tokenize("</think>"))[0], false]]);
+    const punctuations = ["？", "?", "！", "!", "。", "）", ")", "…", "}", "]", "."]; //"\n"和"”"有时候并不代表结尾
     async function completion(prompt, tailCompletion) {
       let body = {
         prompt: prompt, //支持输入多个prompt
@@ -152,8 +131,8 @@ import Unlock from "../components/Unlock.astro"
         body["stop"] = punctuations; //chat模式stop可设为["</s>", "Llama:", "User:"]
       } else {
         body["n_predict"] = 1;//预测的最大token数，如果最后一个标记是部分多字节字符，则可能会略微超过设置的限制。
-        body["top_k"] = 100; //选词范围，默认40，自然语言规律下可用token终究有限
-        body["n_probs"] = 100;//按概率排序的前n个选词，如果top_k不够好像会拿0开始的token补全
+        body["top_k"] = 120; //选词范围，默认40，自然语言规律下可用token终究有限
+        body["n_probs"] = 120;//按概率排序的前n个选词，如果top_k不够好像会拿0开始的token补全
         body["post_sampling_probs"] = true;//返回应用采样链后token的概率，不开启时返回的logprob是和采样无关的，logitBias也不会生效
         body["return_tokens"] = true;//概率非常小的情况下，不会返回采样列表completion_probabilities
       }
@@ -164,17 +143,17 @@ import Unlock from "../components/Unlock.astro"
       }
       const t = json.completion_probabilities;
       if (!t) return [{id: json.tokens[0],token: ""},];
-      let result = t[0].top_probs; //主要影响输出token数的采样：top_p（将下一个标记选择限制为累积概率高于阈值 P 的标记子集。）;min_p（相对于最可能标记的概率，考虑标记的最小概率。）;
+      let result = t[0].top_probs; //主要影响输出token数的采样：top_p;min_p（相对于最可能标记的概率，考虑标记的最小概率。）;
       if (currentShuffle < Math.floor(result.length/4)) {
         currentShuffle++;
         return shuffle(result, 0, Math.floor(result.length/4));
       }
       return result;
     }
-    let base, currentPrompt, currentShuffle, status, allowInsertion;
+    let base, currentPrompt,currentShuffle, status, allowInsertion;
     async function dfs(i, tstr, tscore, incomplete) {
       $('progress').value=i / base.length * 100;
-      const list = await completion(currentPrompt,false); //整个dfs除了completion，几乎不耗时间，因此哪怕提前尝试第二次请求也是没有意义的
+      const list = await completion(currentPrompt,false); //除了completion，其他操作几乎不耗时间//不想引入错别字，实现复杂、手动维护还不通用。
       for (let j = 0; j < list.length; j++) {
         if (status) return;
         let t;
@@ -191,7 +170,7 @@ import Unlock from "../components/Unlock.astro"
           // console.log(t);
         } else {
           t = list[j].token;
-          if (t === "") {
+          if (t === ""||t.includes("�")&&t[0]!=="�") {
             const extra=await detokenize([list[j].id])//特殊符号不detokenize的话显示为""
             if(extra.includes(eosToken)||extra.includes("<|endoftext|>"))continue;//禁止中断时会输出大量无意义token，"<|im_end|>"或"<|endoftext|>"输出时应手动处理使其自动回溯，
             currentPrompt.push(list[j].id);

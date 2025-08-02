@@ -3,11 +3,6 @@ volta list 查看当前各个工具的版本
 volta install node@latest;volta install node@14.21.3; 用于切换版本
 volta uninstall node
 ```
-打包源码
-```
-cd src
-Invoke-WebRequest -Uri "https://github.com/Rin313/StegLLM/archive/refs/heads/main.zip" -OutFile "../StegLLM/源码.zip"
-```
 困惑度测试
 ```
 llama-perplexity -m gemma-3-4b-it-Q6_K.gguf -f <file> 

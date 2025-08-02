@@ -24,16 +24,18 @@ port=8090
     --port "$port" \
     -c 4096 \
     --reasoning-budget 0 \
+    --reasoning-format none \
     --sampling-seq edskypxt \
     --repeat-penalty 1.18 \
     --no-perf \
+    --flash-attn \
+    --slot-prompt-similarity 0.0 \
     --prio 3 \
     --prio-batch 3 \
     --poll 100 \
     --log-verbosity 0 \
     --props \
     --timeout 60 \
-    --no-slots \
     --seed -1 &
 echo "Waiting for the server to start..."
 while ! curl --silent "http://127.0.0.1:${port}/StegLLM/" >/dev/null 2>&1; do

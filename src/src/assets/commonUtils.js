@@ -2,8 +2,9 @@ document.querySelectorAll('button').forEach(button => {//模块被import时自�
     if(!button.closest('form'))
         button.setAttribute('type','button');//button的tupe包括submit、reset和button
 });
+document.querySelectorAll('textarea').forEach(textarea => textarea.classList.add('resize-none'));
 export const $ = id => document.getElementById(id);
-export function setLang(textMap) {//{"zh-CN":[]}这种紧凑的格式维护起来不太灵活，但有利于指示AI翻译//参考RFC 5646
+export function setLang(textMap) {//{"zh-CN":[],"en":[]}这种紧凑的格式维护起来不太灵活，但有利于指示AI翻译//参考RFC 5646
     const supported=Object.keys(textMap);
     let lang = supported[0];
     for (const nL of navigator.languages) {
@@ -16,56 +17,54 @@ export function setLang(textMap) {//{"zh-CN":[]}这种紧凑的格式维护起�
     document.documentElement.lang=lang;//缺少的话不会弹出翻译提示
     return textMap[lang];
 }
+export function listenToggle(obj,key,defaultValue=true){
+    obj.checked = getLocal(key,defaultValue);
+    obj.addEventListener("change", () => setLocal(key, obj.checked));
+}
+const GLOBAL_DEFAULT_HEADERS = {};
 async function cFetch(url, options = {}) {
-    const globalDefaultHeaders = {};
-    const mergedOptions = {
+    const finalOptions = {
         ...options,
-        headers: {
-            ...globalDefaultHeaders,
-            ...options?.headers,
-        },
+        headers: new Headers({...GLOBAL_DEFAULT_HEADERS, ...options.headers}),
     };
-    if (mergedOptions.body &&Object.prototype.toString.call(mergedOptions.body) === '[object Object]') {
-        if (!mergedOptions.headers['Content-Type']){
-            mergedOptions.headers['Content-Type'] = 'application/json';
-            mergedOptions.body = JSON.stringify(mergedOptions.body);
-        }
+    if (!finalOptions.headers.has('Content-Type') && finalOptions.body && Object.prototype.toString.call(finalOptions.body) === '[object Object]'){
+        finalOptions.headers.set('Content-Type', 'application/json');
+        finalOptions.body = JSON.stringify(finalOptions.body);
     }
-    const response = await fetch(url, mergedOptions);
+    const response = await fetch(url, finalOptions);
     if (!response.ok) {
-        let errorData;
-        try {
-            errorData = await response.json();
-        } catch (e) {
-            errorData = await response.text();
-        }
         const error = new Error(
             `HTTP Error: ${response.status} ${response.statusText}`
         );
         error.status = response.status;
-        error.data = errorData;
+        const responseText = await response.text();
+        try {
+            error.data = JSON.parse(responseText);
+        } catch (e) {
+            error.data = responseText;
+        }
         throw error;
     }
-    if (response.status === 204)
-        return null;
-    const contentType = response.headers.get('content-type');
-    if (contentType && contentType.includes('application/json'))
+    if (response.status === 204) return null;
+    const contentType = response.headers.get('content-type')||'';
+    if (contentType.includes('application/json'))
         return response.json();
-    if (contentType && contentType.includes('text/'))
+    if (contentType.includes('text/'))
         return response.text();
     return response.blob();
 }
-export const get= (url, options={}) => cFetch(url, {...options});
+export const get = (url, params, options = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const finalUrl = queryString ? `${url}?${queryString}` : url;
+    return cFetch(finalUrl, options);
+};
 export const post = (url, body, options = {}) => cFetch(url, { ...options, method: 'POST', body });
 export function getLocal(key, defaultValue) {
     const obj=localStorage.getItem(key);
     return obj?JSON.parse(obj):defaultValue;
 }
-export function setLocal(key,obj) {//不要添加其他操作函数，在外部处理完成后用set覆盖最为灵活
-    if (obj == null|| obj.length === 0)//obj == null会匹配null和undefined//value === '' || (Array.isArray(value) && value.length === 0待考究
-        localStorage.removeItem(key);
-    else
-        localStorage.setItem(key, JSON.stringify(obj));
+export function setLocal(key,obj) {//不要添加其他操作函数，在外部处理后用set覆盖最为灵活。不应该忽略null或空序列，在特殊情况下是必要的
+    localStorage.setItem(key, JSON.stringify(obj));
 }
 export function moveStrToEnd(list,str,max) {
     const index = list.indexOf(str);
@@ -82,21 +81,6 @@ function exportFile(content,filename){
     a.click();
     URL.revokeObjectURL(url);
 }
-function importTextFile() {
-    return new Promise((resolve) => {
-        const input = document.createElement('input');//File System Access API目前是实验性API
-        input.type = 'file';
-        input.onchange = (e) => {
-            const file = e.target.files[0];
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                resolve(e.target.result);
-            };
-            reader.readAsText(file);
-        };
-        input.click();
-    });
-}
 export async function generateKeyPair() {// 生成 ECC 密钥对
     const keyPair=await window.crypto.subtle.generateKey(
         {
@@ -112,15 +96,6 @@ export async function generateKeyPair() {// 生成 ECC 密钥对
     exportFile(JSON.stringify(publickey),"public_"+kid)//导出为文件而不是字符串，避免剪切板风险//公钥可以从私钥计算得到，但没有必要额外开发找回公钥的功能
     exportFile(JSON.stringify(privateKey),"private_"+kid)
 }
-export function exportLocalStorage() {
-    const obj = {};
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        const value = localStorage.getItem(key);
-        obj[key] = JSON.parse(value);
-    }
-    exportFile(JSON.stringify(obj),"config.json");
-}
 export function readTextFile(fileInput) {
     return new Promise((resolve) => {
         const files = fileInput.files;
@@ -134,12 +109,6 @@ export function readTextFile(fileInput) {
         }
         else resolve(null);
     });
-}
-export async function importLocalStorage() {
-    const obj=JSON.parse(await importTextFile());//如果未提交则后面不会执行
-    localStorage.clear();
-    for (const [key, value] of Object.entries(obj))
-        set(key,value);
 }
 export function shuffle(array, start = 0, end = array.length) {
     for (let i = end - 1; i > start; i--) {
@@ -187,7 +156,7 @@ export async function unishoxDecompress(base){//return useUnishox?unishox2_decom
     }
     return secret;
 }
-import {p256} from '@noble/curves/p256';
+import { p256 } from '@noble/curves/nist.js';
 function compressPublicKey(uncompressedKey) {
     return p256.Point.fromBytes(uncompressedKey).toBytes(true);// 33 字节
 }
