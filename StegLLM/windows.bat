@@ -1,6 +1,6 @@
 @echo off
 setlocal
-set "buildNum=b6059"
+set "buildNum=b6210"
 set "scriptDir=%~dp0"
 set "dataDir=%scriptDir%data"
 :: 判断CPU指令集

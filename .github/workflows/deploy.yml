@@ -1,9 +1,8 @@
 name: Deploy to GitHub Pages
 on:
-  # Using a different branch name? Replace `main` with your branch’s name
+  workflow_dispatch:
   push:
     branches: [main]
-  workflow_dispatch:
 permissions:
   contents: read
   pages: write
@@ -13,8 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install, build, and upload your site output
-        uses: withastro/action@v4
+      - uses: withastro/action@v4
         with:
           path: ./src # The root location of your Astro project inside the repository. (optional)
           node-version: 24 # The specific version of Node that should be used to build your site. Defaults to 22. (optional)

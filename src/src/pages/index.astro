@@ -1,7 +1,6 @@
 ---
 import Layout from "../layouts/Layout.astro"
-import {LockKeyhole,UnlockKeyhole} from "@lucide/astro"
-//SentencePiece等分词器能无损且可逆地处理任何未知的符号，如果在js中实现并用于压缩的话……
+import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
 //draft：将尾部补全修改为输出到底，目前的尾部补全的机制不适合所有语言。
 //draft：通过添加随机序列来移除shuffle，但是目前生成稍长的文本已经很困难了。
 //draft：一种牺牲隐写容量提高鲁棒性和隐写效果的方法：部分截取片段直接使用，不尝试映射
@@ -31,7 +30,7 @@ import {LockKeyhole,UnlockKeyhole} from "@lucide/astro"
       </div>
       <div class="flex flex-col items-center justify-center gap-8">
         <button class=`btn btn-primary btn-circle btn-xl` id="hide"><LockKeyhole/></button>
-        <button class="btn btn-secondary btn-circle btn-xl" id="extract"><UnlockKeyhole/></button>
+        <button class="btn btn-secondary btn-circle btn-xl" id="extract"><LockKeyholeOpen/></button>
       </div>
       <div class="py-6 flex flex-col gap-6 flex-1">
         <textarea class="textarea textarea-info w-full h-136 bg-base-200 rounded-lg" id="coverText"></textarea>
@@ -96,7 +95,7 @@ import {LockKeyhole,UnlockKeyhole} from "@lucide/astro"
         const hashArray = new Uint8Array(hashBuffer);
         let finalByte = hashArray.reduce((acc, byte) => acc ^ byte, 0);
         let popcount = 0;
-        while (finalByte > 0) {
+        for (;finalByte > 0;) {
             finalByte &= (finalByte - 1);
             popcount++;
         }

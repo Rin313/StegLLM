@@ -1,6 +1,6 @@
 #!/bin/bash
 set -x
-buildNum="b6059"
+buildNum="b6210"
 scriptDir="$(dirname "$(realpath "$0")")"
 dataDir="${scriptDir}/data"
 # 确定系统和指令集
