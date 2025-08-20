@@ -1,5 +1,6 @@
 # build output
-dist/
+dist
+StegLLM/data
 
 # generated types
 .astro/
