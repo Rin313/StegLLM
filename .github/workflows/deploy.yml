@@ -11,7 +11,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: withastro/action@v4
         with:
           # path # The root location of your Astro project inside the repository. (optional)

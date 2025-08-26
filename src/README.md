@@ -17,7 +17,7 @@
 ## Node.js
 ```
 volta list 查看当前各个工具的版本
-volta install node@latest;volta install node@14.21.3; 用于切换版本
+volta install node@latest;volta install node@20.19.4; 用于切换版本
 volta uninstall node
 ```
 ## 🚀 Project Structure
