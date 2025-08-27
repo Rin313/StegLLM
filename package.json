@@ -9,12 +9,12 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@lucide/astro": "^0.541.0",
+    "@lucide/astro": "^0.542.0",
     "@noble/curves": "^2.0.0",
     "@tailwindcss/vite": "^4.1.12",
-    "astro": "^5.13.3",
+    "astro": "^5.13.4",
     "daisyui": "^5.0.51",
-    "sweetalert2": "^11.22.4",
+    "sweetalert2": "^11.22.5",
     "unishox2.siara.cc": "^1.1.5"
   }
 }

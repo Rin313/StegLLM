@@ -21,44 +21,21 @@ export function listenToggle(obj,key,defaultValue=true){
     obj.checked = getLocal(key,defaultValue);
     obj.addEventListener("change", () => setLocal(key, obj.checked));
 }
-const GLOBAL_DEFAULT_HEADERS = {};
-async function cFetch(url, options = {}) {
-    const finalOptions = {
-        ...options,
-        headers: new Headers({...GLOBAL_DEFAULT_HEADERS, ...options.headers}),
-    };
-    if (!finalOptions.headers.has('Content-Type') && finalOptions.body && Object.prototype.toString.call(finalOptions.body) === '[object Object]'){
-        finalOptions.headers.set('Content-Type', 'application/json');
-        finalOptions.body = JSON.stringify(finalOptions.body);
+async function _jsonFetch(url,{ headers = {}, body, ...rest } = {}) {
+    if (body && body.constructor === Object) {
+        headers['Content-Type'] ??= 'application/json';
+        body = JSON.stringify(body);
     }
-    const response = await fetch(url, finalOptions);
-    if (!response.ok) {
-        const error = new Error(
-            `HTTP Error: ${response.status} ${response.statusText}`
-        );
-        error.status = response.status;
-        const responseText = await response.text();
-        try {
-            error.data = JSON.parse(responseText);
-        } catch (e) {
-            error.data = responseText;
-        }
-        throw error;
-    }
-    if (response.status === 204) return null;
-    const contentType = response.headers.get('content-type')||'';
-    if (contentType.includes('application/json'))
-        return response.json();
-    if (contentType.includes('text/'))
-        return response.text();
-    return response.blob();
+    const response = await fetch(url, { ...rest, headers, body });
+    if (!response.ok) throw Object.assign(new Error(`HTTP ${response.status}`), { status: response.status, data: await response.json().catch(() => undefined)});
+    return response.json();//不支持纯文本、blob、204空响应
 }
 export const get = (url, params, options = {}) => {
     const queryString = new URLSearchParams(params).toString();
     const finalUrl = queryString ? `${url}?${queryString}` : url;
-    return cFetch(finalUrl, options);
+    return _jsonFetch(finalUrl, options);
 };
-export const post = (url, body, options = {}) => cFetch(url, { ...options, method: 'POST', body });
+export const post = (url, body, options = {}) => _jsonFetch(url, { ...options, method: 'POST', body });
 export function getLocal(key, defaultValue) {
     const obj=localStorage.getItem(key);
     return obj?JSON.parse(obj):defaultValue;
