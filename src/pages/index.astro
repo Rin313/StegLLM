@@ -6,7 +6,6 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
 //draft：一种牺牲隐写容量提高鲁棒性和隐写效果的方法：部分截取片段直接使用，不尝试映射
 //todo：textarea调整为支持富文本之类的能控制文本样式的组件。
 //todo:寻找通用的system prompt注入方式
-//todo:unishox3和词汇补充
 //draft：简繁互用
 ---
 <Layout title="StegLLM">
@@ -231,7 +230,7 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
       moveStrToEnd(prompts,prompt,100);
       setLocal('prompts',prompts);
       i=prompts.length-1;
-      let [data, useUnishox] = await unishoxCompress(plainText);//输出序列的0/1比例是接近的，改变0/1比例和哈希的偏向非常困难
+      let [data, useUnishox] = await unishoxCompress(plainText);
       const key = await readTextFile($('publicKey'));
       if (key) data = await eccEncryptToUint8Array(data, JSON.parse(key));
       // console.log(data);
