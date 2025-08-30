@@ -112,10 +112,13 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
     async function detokenize(tokens) {//不返回bytes
         return (await post('http://127.0.0.1:8090/detokenize',{tokens: tokens})).content;
     }
-    const props=await get("http://127.0.0.1:8090/props");
-    const eosToken=props.eos_token,think=props.chat_template.includes("</think>");
     const logitBias=[];
-    if (window.location.hostname === "127.0.0.1") logitBias.push(...[[(await tokenize("�"))[0], false],])//避免在判断不可解码的token时产生干扰
+    let eosToken,think=false;
+    if (window.location.hostname === "127.0.0.1") {
+        const props=await get("http://127.0.0.1:8090/props");
+        eosToken=props.eos_token,think=props.chat_template.includes("</think>");
+        logitBias.push(...[[(await tokenize("�"))[0], false],])//避免在判断不可解码的token时产生干扰
+    }
     if(think)logitBias.push(...[[(await tokenize("<think>"))[0], false],[(await tokenize("</think>"))[0], false]]);
     const punctuations = ["？", "?", "！", "!", "。", "）", ")", "…", "}", "]", "."]; //"\n"和"”"有时候并不代表结尾
     async function completion(prompt, tailCompletion) {

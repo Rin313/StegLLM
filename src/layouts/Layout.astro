@@ -2,8 +2,7 @@
 import '../styles/global.css'
 const {title,row} = Astro.props;
 ---
-<!DOCTYPE html>{/*写不写都会自动添加*/}
-<html>
+<html>{/*Astro会自动添加`<!DOCTYPE html>`*/}
 <head>
     <meta charset="UTF-8"/>{/*UTF-8是HTML5的唯一有效编码，但不声明UTF-8就乱码……*/}
     <meta name="viewport" content="width=device-width,initial-scale=1.0"/>{/*设置视口宽度和默认缩放级别，这是响应式设计的基础 */}
