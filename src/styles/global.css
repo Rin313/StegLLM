@@ -3,3 +3,4 @@
     themes:light --default,dark --prefersdark;/*--default必须设置，设置--prefersdark会增加打包大小*/
     logs: false;
 }
+textarea { resize: none; }

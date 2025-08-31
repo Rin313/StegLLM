@@ -1,8 +1,7 @@
-document.querySelectorAll('button').forEach(button => {//模块被import时自动执行//单工具类，方便导入
+document.querySelectorAll('button').forEach(button => {//模块被import时自动执行
     if(!button.closest('form'))
         button.setAttribute('type','button');//button的tupe包括submit、reset和button
 });
-document.querySelectorAll('textarea').forEach(textarea => textarea.classList.add('resize-none'));
 export const $ = id => document.getElementById(id);
 export function setLang(textMap) {//{"zh-CN":[],"en":[]}这种紧凑的格式维护起来不太灵活，但有利于指示AI翻译//参考RFC 5646
     const supported=Object.keys(textMap);
@@ -88,15 +87,11 @@ export function shuffle(array, start = 0, end = array.length) {
     return array;
 }
 async function compress(uint8Array, format = 'deflate-raw') {//format:`gzip`,`deflate`,`deflate-raw`
-    const compressedStream = new Response(uint8Array).body.pipeThrough(
-        new CompressionStream(format)
-    );
+    const compressedStream = new Response(uint8Array).body.pipeThrough(new CompressionStream(format));
     return new Uint8Array(await new Response(compressedStream).arrayBuffer());
 }
 async function decompress(uint8Array, format = 'deflate-raw') {
-    const decompressedStream = new Response(uint8Array).body.pipeThrough(
-        new DecompressionStream(format)
-    );
+    const decompressedStream = new Response(uint8Array).body.pipeThrough(new DecompressionStream(format));
     return new Uint8Array(await new Response(decompressedStream).arrayBuffer());
 }
 import {unishox2_compress,unishox2_decompress,magic,USX_TEMPLATES} from 'unishox2.siara.cc';
@@ -123,12 +118,6 @@ export async function unishoxDecompress(base){//return useUnishox?unishox2_decom
         secret=unishox2_decompress(base,base.length,null,USX_HCODES_NO_DICT, USX_HCODE_LENS_NO_DICT, USX_FREQ_SEQ_TXT,USX_TEMPLATES);
     }
     return secret;
-}
-function compressPublicKey(uncompressedKey) {
-    return p256Compress(uncompressedKey);// 33 字节
-}
-function decompressPublicKey(compressedKey) {
-    return p256Decompress(compressedKey)// 65 字节
 }
 const p = 0xffffffff00000001000000000000000000000000ffffffffffffffffffffffffn;
 const b = 0x5ac635d8aa3a93e7b3ebbd55769886bc651d06b0cc53b0f63bce3c3e27d2604bn;
@@ -160,14 +149,14 @@ export async function eccEncryptToUint8Array(messageUint8Array, pubJwk) {
     const sharedSecretKey = await crypto.subtle.deriveKey({name: "ECDH",public: pubKey,},ephemeralKeyPair.privateKey,{name: "AES-GCM",length: 256,},false,["encrypt"]);//派生共享密钥
     const iv = crypto.getRandomValues(new Uint8Array(12));//生成随机 IV
     const ciphertext = new Uint8Array(await crypto.subtle.encrypt({name: "AES-GCM",iv: iv,},sharedSecretKey,messageUint8Array));
-    const ephemeralPublicKey = compressPublicKey(new Uint8Array(await crypto.subtle.exportKey("raw", ephemeralKeyPair.publicKey)));//导出临时公钥
+    const ephemeralPublicKey = p256Compress(new Uint8Array(await crypto.subtle.exportKey("raw", ephemeralKeyPair.publicKey)));//导出临时公钥
     return new Uint8Array([...ephemeralPublicKey,...iv,...ciphertext]);
 }
 export async function eccDecryptToUint8Array(encryptedData, privJwk) {
-        const privKey = await crypto.subtle.importKey("jwk",privJwk,{name: "ECDH",namedCurve: "P-256",},false,["deriveKey"]);//导入接收方私钥
-        const ephemeralPublicKey = await crypto.subtle.importKey("raw",decompressPublicKey(encryptedData.slice(0, 33)),{name: "ECDH",namedCurve: "P-256",},false,[]);//提取临时公钥
-        const sharedSecretKey = await crypto.subtle.deriveKey({name: "ECDH",public: ephemeralPublicKey,},privKey,{name: "AES-GCM",length: 256,},false,["decrypt"]);
-        return new Uint8Array(await crypto.subtle.decrypt({name: "AES-GCM",iv: encryptedData.slice(33, 33 + 12),},sharedSecretKey,encryptedData.slice(33 + 12)));
+    const privKey = await crypto.subtle.importKey("jwk",privJwk,{name: "ECDH",namedCurve: "P-256",},false,["deriveKey"]);//导入接收方私钥
+    const ephemeralPublicKey = await crypto.subtle.importKey("raw",p256Decompress(encryptedData.slice(0, 33)),{name: "ECDH",namedCurve: "P-256",},false,[]);//提取临时公钥
+    const sharedSecretKey = await crypto.subtle.deriveKey({name: "ECDH",public: ephemeralPublicKey,},privKey,{name: "AES-GCM",length: 256,},false,["decrypt"]);
+    return new Uint8Array(await crypto.subtle.decrypt({name: "AES-GCM",iv: encryptedData.slice(33, 33 + 12),},sharedSecretKey,encryptedData.slice(33 + 12)));
 }
 export const toBinary = (bytes) => 
     Array.from(bytes).flatMap(byte => 
