@@ -11,7 +11,7 @@
   "dependencies": {
     "@lucide/astro": "^0.542.0",
     "@tailwindcss/vite": "^4.1.12",
-    "astro": "^5.13.4",
+    "astro": "^5.13.5",
     "daisyui": "^5.0.54",
     "sweetalert2": "^11.22.5",
     "unishox2.siara.cc": "^1.1.5"
