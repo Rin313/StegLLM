@@ -69,13 +69,13 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
         "zh-CN":["生成密钥","输入接收方的公钥（可选）","输入你的私钥（可选）","输入接收方的公钥（可选）","输入你的私钥（可选）","输入需加密信息","输入需解密掩饰文本","输入任务提示，例如：\"保持不输出额外的说明，不间断地续写一段散文：\"","隐写","提取","支持前后插入","掩饰文本嵌入任意内容后仍可准确解密，略微增加暴露风险","点击停止隐写","请安全保存你的私钥，并与接收方提前交换公钥","请尝试更发散的任务提示，或减少输入"],
         "en":["Generate keys","Enter the recipient's public key (optional)","Enter your private key (optional)","Enter the recipient's public key (optional)","Enter your private key (optional)","Enter the message to encrypt","Enter the cover text to decrypt","Enter a task prompt, e.g.: \"Do not output any additional explanations; continue a piece of prose without interruption:\"","Embed","Extract","Supports prefix/suffix insertion","The cover text can still be accurately decrypted after arbitrary content is embedded, with a slight increase in exposure risk","Click to stop embedding","Please keep your private key secure and exchange public keys with the recipient in advance","Please try a more open-ended prompt, or reduce the input"]})
     let prompts,i;
-    function initConfig(){//配置修改时需要复用
+    function config(){//配置修改时需要复用
       listenToggle($('insertion'),"insertion");
       prompts = getLocal("prompts", []);
       i=prompts.length-1;
       if(i>=0) $('prompt').value = prompts[i];
     }
-    initConfig();
+    config();
     $('up').onclick = () => {
       if(i>0) $('prompt').value = prompts[--i];
     };
@@ -129,7 +129,7 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
         body["stop"] = punctuations; //chat模式stop可设为["</s>", "Llama:", "User:"]
       } else {
         body["n_predict"] = 1;//预测的最大token数，如果最后一个标记是部分多字节字符，则可能会略微超过设置的限制。
-        body["top_k"] = 120; //选词范围，默认40，自然语言规律下可用token终究有限
+        body["top_k"] = 120;
         body["n_probs"] = 120;//按概率排序的前n个选词，如果top_k不够好像会拿0开始的token补全
         body["post_sampling_probs"] = true;//返回应用采样链后token的概率，不开启时返回的logprob是和采样无关的，logitBias也不会生效
         body["return_tokens"] = true;//概率非常小的情况下，不会返回采样列表completion_probabilities
