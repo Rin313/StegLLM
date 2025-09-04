@@ -171,3 +171,8 @@ export function findSublist(mainList, subList) {
     }
     return -1;
 }
+export function alert(msg = '', title = '') {
+    $('title').textContent = title;
+    $('msg').textContent = msg;
+    $('alert').showModal();
+}

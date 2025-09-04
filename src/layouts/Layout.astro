@@ -1,9 +1,11 @@
 ---
 import '../styles/global.css'
-const {title} = Astro.props;//Astro会自动添加`<!DOCTYPE html>`，浏览器会自动添加html、head、body标签
+import Alert from '../components/Alert.astro';
+const {title,alert} = Astro.props;//Astro会自动添加`<!DOCTYPE html>`，浏览器会自动添加html、head、body标签
 ---
-<meta charset="UTF-8">{/*UTF-8是HTML5的唯一有效编码，但不声明UTF-8就乱码……*/}
-<meta name="viewport" content="width=device-width,initial-scale=1.0">{/*设置视口宽度和默认缩放级别，这是响应式设计的基础 */}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">{/*响应式设计的基础 */}
 <link rel="icon" href="data:,">{/*不添加的话首次访问时浏览器会自动访问/favicon.ico弹出404 */}
 <title>{title}</title>
+{alert && <Alert/>}
 <slot/>

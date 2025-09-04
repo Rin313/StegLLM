@@ -7,7 +7,7 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
 //todo：textarea调整为支持富文本之类的能控制文本样式的组件。
 //todo:寻找通用的system prompt注入方式
 ---
-<Layout title="StegLLM">
+<Layout title="StegLLM" alert>
   <div class="shadow p-4">
       <button class="btn btn-soft btn-warning" id="generateKeyPair"></button>
   </div>
@@ -48,8 +48,7 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
       </div>
   </div>
   <script>
-    import { $,setLang,listenToggle,get,post,getLocal,setLocal,moveStrToEnd,generateKeyPair, unishoxCompress, readTextFile, eccEncryptToUint8Array, eccDecryptToUint8Array, shuffle, toBinary, toBytes, findSublist, unishoxDecompress} from "../assets/commonUtils";
-    import Swal from 'sweetalert2';
+    import { $,setLang,listenToggle,get,post,getLocal,setLocal,moveStrToEnd,generateKeyPair, unishoxCompress, readTextFile, eccEncryptToUint8Array, eccDecryptToUint8Array, shuffle, toBinary, toBytes, findSublist, unishoxDecompress,alert} from "../assets/commonUtils";
     let generateKeyPairMsg,failMsg;
     [$('generateKeyPair').textContent,
     $('publicKeyTitle').textContent,
@@ -84,7 +83,7 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
     };
     $('generateKeyPair').onclick = async () => {
       await generateKeyPair();
-      Swal.fire({icon: "success",text:generateKeyPairMsg,theme:"auto"})
+      alert(generateKeyPairMsg);
     };
     async function getParity(str) {//直接%2无法利用哈希值的全部位，会破坏哈希函数的均匀性，必须使用奇偶校验或者可扩展输出函数 (XOF)
         const hashBuffer = await crypto.subtle.digest('SHA-512', new TextEncoder().encode(str));
@@ -251,7 +250,7 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
       await dfs(0, "", 0, 0);
       $('hide').classList.remove("tooltip");
       $('progress').classList.add("invisible");
-      if (!status) Swal.fire({icon:"error",text:failMsg,theme:"auto"})
+      if (!status) alert(failMsg);
     }
     async function extract(coverText) {
       if (!coverText) {
