@@ -3,18 +3,15 @@ setlocal
 set "buildNum=b6258"
 set "scriptDir=%~dp0"
 set "dataDir=%scriptDir%data"
-:: 判断CPU指令集
 set "ver=cpu-x64"
 wmic cpu get Caption | findstr /i "ARM" >nul && set "ver=cpu-arm64"
-:: 下载llama.cpp
 set "name=llama-%buildNum%-bin-win-%ver%"
 if not exist "%dataDir%\%name%\" (
     echo Downloading: %name%.zip
-    curl --insecure --compressed -C - -Lo "%name%.zip" "https://github.com/ggml-org/llama.cpp/releases/download/%buildNum%/%name%.zip" || (echo Download failed. & pause & exit /b 1)
-    powershell -command "Expand-Archive -Path '%name%.zip' -DestinationPath '%dataDir%\%name%' -Force" || (echo Extraction failed. & pause & exit /b 1)
+    curl --compressed -C - -Lo "%name%.zip" "https://github.com/ggml-org/llama.cpp/releases/download/%buildNum%/%name%.zip" || (echo Download failed. & pause & exit /b 1)
+    powershell -ExecutionPolicy Bypass -Command "Expand-Archive -Path '%name%.zip' -DestinationPath '%dataDir%\%name%' -Force" || (echo Extraction failed. & pause & exit /b 1)
     del "%name%.zip"
 )
-:: 查找gguf文件
 set "gguf="
 for %%a in ("%dataDir%\*.gguf") do (
     if not defined gguf set "gguf=%%a"
@@ -26,7 +23,6 @@ for /r "%dataDir%\%name%" %%f in (llama-server.exe) do (
 )
 :found
 set "port=8090"
-:: start "" 让程序在新的窗口运行，不会阻塞后续命令。
 start "" "%llamaServer%" ^
     -m "%gguf%" ^
     --path "%dataDir%\dist" ^
@@ -49,11 +45,10 @@ start "" "%llamaServer%" ^
     --seed -1
 echo Waiting for the server to start...
 :waitloop
-curl --silent http://127.0.0.1:%port%/StegLLM/ >nul 2>&1
-IF ERRORLEVEL 1 (
-    timeout /t 1 >nul
-    goto waitloop
-)
+timeout /t 1 >nul
+set "status="
+for /f %%s in ('curl --silent -o nul -w "%%{http_code}" http://127.0.0.1:%port%/StegLLM/') do set "status=%%s"
+if "%status%"=="000" goto waitloop
+if "%status%"=="503" goto waitloop
 start http://127.0.0.1:%port%/StegLLM/
-:: 结束局部变量环境
 endlocal
