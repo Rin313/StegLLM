@@ -1,11 +1,6 @@
 ---
 import Layout from "../layouts/Layout.astro"
 import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
-//draft：将尾部补全修改为输出到底，目前的尾部补全的机制不适合所有语言。
-//draft：通过添加随机序列来移除shuffle，但是目前生成稍长的文本已经很困难了。
-//draft：一种牺牲隐写容量提高鲁棒性和隐写效果的方法：部分截取片段直接使用，不尝试映射
-//todo：textarea调整为支持富文本之类的能控制文本样式的组件。
-//todo:寻找通用的system prompt注入方式
 ---
 <Layout title="StegLLM" alert>
   <div class="shadow p-4">
@@ -48,7 +43,7 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
       </div>
   </div>
   <script>
-    import { $,setLang,listenToggle,get,post,getLocal,setLocal,moveStrToEnd,generateKeyPair, unishoxCompress, readTextFile, eccEncryptToUint8Array, eccDecryptToUint8Array, shuffle, toBinary, toBytes, findSublist, unishoxDecompress,alert} from "../assets/commonUtils";
+    import { $,setLang,listenToggle,get,post,getLocal,setLocal,moveStrToEnd,generateKeyPair, unishoxCompress, readTextFile, eccEncryptToUint8Array, eccDecryptToUint8Array, shuffle, toBinary, toBytes, findSublist, unishoxDecompress,alert,magicNum1,magicNum2} from "../assets/commonUtils";
     let generateKeyPairMsg,failMsg;
     [$('generateKeyPair').textContent,
     $('publicKeyTitle').textContent,
@@ -148,7 +143,7 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
     let base, currentPrompt,currentShuffle, status, allowInsertion;
     async function dfs(i, tstr, tscore, incomplete) {
       $('progress').value=i / base.length * 100;
-      const list = await completion(currentPrompt,false); //除了completion，其他操作几乎不耗时间//不想引入错别字，实现复杂、手动维护还不通用。
+      const list = await completion(currentPrompt,false); //不想引入故意的错别字，实现复杂、手动维护还不通用。
       for (let j = 0; j < list.length; j++) {
         if (status) return;
         let t;
@@ -210,7 +205,6 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
       }
       // console.log('测试映射失败次数')
     }
-    const magicNum1 = [1,0,1,1,0,0,1,0,0,1,1,0,0,1,1,0,1,0,1,1],magicNum2 = [0,0,1,0,1,1,0,1,0,0,1,0,1,1,0,1,1,1,0,0];
     async function encrypt(prompt, plainText) {
       if (!$('progress').classList.contains("invisible")) {
         status = true;
@@ -283,5 +277,10 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
     $('extract').onclick = async () => {
       await extract($('coverText').value);
     };
+//draft：将尾部补全修改为输出到底，目前的尾部补全的机制不适合所有语言。
+//draft：通过添加随机序列来移除shuffle，但是目前生成稍长的文本已经很困难了。
+//draft：一种牺牲隐写容量提高鲁棒性和隐写效果的方法：部分截取片段直接使用，不尝试映射
+//todo：textarea调整为支持富文本之类的能控制文本样式的组件。
+//todo:寻找通用的system prompt注入方式
   </script>
 </Layout>

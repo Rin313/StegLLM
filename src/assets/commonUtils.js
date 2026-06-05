@@ -13,13 +13,13 @@ export function listenToggle(obj,key,defaultValue=true){
     obj.addEventListener("change", () => setLocal(key, obj.checked));
 }
 async function _jsonFetch(url,{ headers = {}, body, ...rest } = {}) {
-    if (body && body.constructor === Object) {
+    if (body != null && typeof body !== 'string' &&!(body instanceof FormData) &&!(body instanceof Blob)) {
         headers['Content-Type'] ??= 'application/json';
         body = JSON.stringify(body);
     }
     const response = await fetch(url, { ...rest, headers, body });
     if (!response.ok) throw Object.assign(new Error(`HTTP ${response.status}`), { status: response.status, data: await response.json().catch(() => undefined)});
-    return response.json();//不支持纯文本、blob、204空响应
+    return response.json();//不支持纯文本、blob、204空等响应
 }
 export const get = (url, params, options = {}) => {
     const queryString = new URLSearchParams(params).toString();
@@ -176,3 +176,4 @@ export function alert(msg = '', title = '') {
     $('msg').textContent = msg;
     $('alert').showModal();
 }
+export const magicNum1 = [1,0,1,1,0,0,1,0,0,1,1,0,0,1,1,0,1,0,1,1],magicNum2 = [0,0,1,0,1,1,0,1,0,0,1,0,1,1,0,1,1,1,0,0];

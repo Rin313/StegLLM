@@ -1,11 +1,36 @@
 ---
-import '../styles/global.css'
-import Alert from '../components/Alert.astro';
-const {title,alert} = Astro.props;//Astro会自动添加`<!DOCTYPE html>`，浏览器会自动添加html、head、body标签
+const {title,alert} = Astro.props;
 ---
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width">{/*响应式设计的基础 */}
-<link rel="icon" href="data:,">{/*不添加的话首次访问时浏览器会自动访问/favicon.ico弹出404 */}
-<title>{title}</title>
-{alert && <Alert/>}
-<slot/>
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+    <link rel="icon" href="data:,">
+    <title>{title}</title>
+    <style is:global>
+      @import "tailwindcss" source("..");
+      @plugin "daisyui" {
+          themes:light --default,dark --prefersdark;
+          logs: false;
+      }
+      textarea { resize: none; }
+    </style>
+  </head>
+  <body>
+    <slot/>
+    {alert &&
+      <dialog id="alert" class="modal">
+        <div class="modal-box">
+          <h3 class="text-lg font-bold" id="title"></h3>
+          <p class="py-4" id="msg"></p>
+          <div class="modal-action">
+            <form method="dialog">
+              <button class="btn">OK</button><!-- if there is a button in form, it will close the modal -->
+            </form>
+          </div>
+        </div>
+      </dialog>
+    }
+  </body>
+</html>
