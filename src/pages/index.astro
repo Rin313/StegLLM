@@ -22,8 +22,8 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
         </fieldset>
       </div>
       <div class="flex flex-col items-center justify-center gap-8">
-        <button class="btn btn-primary btn-circle btn-xl" id="hide"><LockKeyhole id="hide_icon"/></button>
-        <button class="btn btn-secondary btn-circle btn-xl" id="extract"><LockKeyholeOpen id="extract_icon"/></button>
+        <button class="btn btn-primary btn-circle btn-xl" id="hide"><LockKeyhole/></button>
+        <button class="btn btn-secondary btn-circle btn-xl" id="extract"><LockKeyholeOpen/></button>
       </div>
       <div class="py-6 flex flex-col gap-6 flex-1">
         <textarea class="textarea textarea-info w-full h-136 bg-base-200" id="coverText"></textarea>
@@ -43,23 +43,21 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
       </div>
   </div>
   <script>
-    import { $,setLang,listenToggle,get,post,getLocal,setLocal,moveStrToEnd,generateKeyPair, unishoxCompress, readTextFile, eccEncryptToUint8Array, eccDecryptToUint8Array, shuffle, toBinary, toBytes, findSublist, unishoxDecompress,alert,magicNum1,magicNum2} from "../assets/commonUtils";
-    let generateKeyPairMsg,failMsg;
-    [$('generateKeyPair').textContent,
-    $('publicKeyTitle').textContent,
-    $('privateKeyTitle').textContent,
-    $('secret').placeholder,
-    $('coverText').placeholder,
-    $('prompt').placeholder,
-    $('hide_icon').ariaLabel,
-    $('extract_icon').ariaLabel,
-    $('insertionText').textContent,
-    $('stopTip').dataset.tip,
-    $('hide').dataset.tip,
-    generateKeyPairMsg,
-    failMsg]=setLang({
-        "zh-CN":["生成密钥","输入接收方的公钥（可选）","输入你的私钥（可选）","输入需加密信息","输入需解密掩饰文本","输入任务提示，例如：\"保持不输出额外的说明，不间断地续写一段散文：\"","隐写","提取","支持前后插入","掩饰文本嵌入任意内容后仍可准确解密，略微增加暴露风险","点击停止隐写","请安全保存你的私钥，并与接收方提前交换公钥","请尝试更发散的任务提示，或减少输入"],
-        "en":["Generate keys","Enter the recipient's public key (optional)","Enter your private key (optional)","Enter the message to encrypt","Enter the cover text to decrypt","Enter a task prompt, e.g.: \"Do not output any additional explanations; continue a piece of prose without interruption:\"","Embed","Extract","Supports prefix/suffix insertion","The cover text can still be accurately decrypted after arbitrary content is embedded, with a slight increase in exposure risk","Click to stop embedding","Please keep your private key secure and exchange public keys with the recipient in advance","Please try a more open-ended prompt, or reduce the input"]})
+    import { $,listenToggle,get,post,getLocal,setLocal,moveStrToEnd,generateKeyPair, unishoxCompress, readTextFile, eccEncryptToUint8Array, eccDecryptToUint8Array, shuffle, toBinary, toBytes, findSublist, unishoxDecompress,alert,magicNum1,magicNum2} from "../assets/commonUtils";
+    import { t } from "../assets/i18n";
+    const generateKeyPairMsg = t("generateKeyPairMsg");
+    const failMsg = t("failMsg");
+    $('generateKeyPair').textContent = t('generateKey');
+    $('publicKeyTitle').textContent = t('publicKeyTitle');
+    $('privateKeyTitle').textContent = t('privateKeyTitle');
+    $('secret').placeholder = t('secretPlaceholder');
+    $('coverText').placeholder = t('coverTextPlaceholder');
+    $('prompt').placeholder = t('promptPlaceholder');
+    $('hide').ariaLabel = t('hide');
+    $('extract').ariaLabel = t('extract');
+    $('insertionText').textContent = t('insertionText');
+    $('stopTip').dataset.tip = t('stopTip');
+    $('hide').dataset.tip = t('hideTip');
     let prompts,i;
     function config(){//配置修改时需要复用
       listenToggle($('insertion'),"insertion");

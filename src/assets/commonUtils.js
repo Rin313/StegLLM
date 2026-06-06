@@ -1,13 +1,4 @@
 export const $ = id => document.getElementById(id);
-export function setLang(textMap) {//{"zh-CN":[],"en":[]}这种紧凑的格式维护起来不太灵活，但有利于指示AI翻译//参考RFC 5646
-    const supported = Object.keys(textMap);
-    const lang = navigator.languages
-        .map(nL => supported.find(sL => sL.toLowerCase() === nL.toLowerCase()))
-        .find(Boolean)
-        || supported[0];
-    document.documentElement.lang = lang;//缺少的话不会弹出翻译提示
-    return textMap[lang];
-}
 export function listenToggle(obj,key,defaultValue=true){
     obj.checked = getLocal(key,defaultValue);
     obj.addEventListener("change", () => setLocal(key, obj.checked));
