@@ -14,6 +14,6 @@ export default defineConfig({
     plugins: [tailwindcss()],
   },
   site: 'https://Rin313.github.io',
-  base: '/StegLLM',
-  outDir: './StegLLM/data/dist/StegLLM'
+  base: process.env.GITHUB_ACTIONS ? '/StegLLM/' : '',
+  outDir: process.env.GITHUB_ACTIONS ? 'dist' : './StegLLM/data/dist'
 });

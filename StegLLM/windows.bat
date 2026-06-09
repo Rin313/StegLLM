@@ -47,8 +47,8 @@ echo Waiting for the server to start...
 :waitloop
 timeout /t 1 >nul
 set "status="
-for /f %%s in ('curl --silent -o nul -w "%%{http_code}" http://127.0.0.1:%port%/StegLLM/') do set "status=%%s"
+for /f %%s in ('curl --silent -o nul -w "%%{http_code}" http://127.0.0.1:%port%/') do set "status=%%s"
 if "%status%"=="000" goto waitloop
 if "%status%"=="503" goto waitloop
-start http://127.0.0.1:%port%/StegLLM/
+start http://127.0.0.1:%port%/
 endlocal

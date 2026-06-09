@@ -74,14 +74,14 @@ port=8090
     --seed -1 &
 echo "Waiting for the server to start..."
 while :; do
-    code=$(curl --silent -o /dev/null -w "%{http_code}" "http://127.0.0.1:${port}/StegLLM/" 2>/dev/null)
+    code=$(curl --silent -o /dev/null -w "%{http_code}" "http://127.0.0.1:${port}/" 2>/dev/null)
     [ "$code" != "503" ] && [ "$code" != "000" ] && break
     sleep 1
 done
 if command -v xdg-open >/dev/null 2>&1; then
-    xdg-open "http://127.0.0.1:${port}/StegLLM/"
+    xdg-open "http://127.0.0.1:${port}/"
 elif command -v open >/dev/null 2>&1; then
-    open "http://127.0.0.1:${port}/StegLLM/"
+    open "http://127.0.0.1:${port}/"
 else
-    echo "Server is running at http://127.0.0.1:${port}/StegLLM/. Please open it manually in your browser."
+    echo "Server is running at http://127.0.0.1:${port}/. Please open it manually in your browser."
 fi
