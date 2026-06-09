@@ -1,6 +1,6 @@
 @echo off
 setlocal
-set "buildNum=b6258"
+set "buildNum=b9562"
 set "scriptDir=%~dp0"
 set "dataDir=%scriptDir%data"
 set "ver=cpu-x64"
@@ -31,10 +31,10 @@ start "" "%llamaServer%" ^
     -c 4096 ^
     --reasoning-budget 0 ^
     --reasoning-format none ^
-    --sampling-seq edskypxt ^
+    --sampling-seq edskypmt ^
     --repeat-penalty 1.18 ^
     --no-perf ^
-    --flash-attn ^
+    --flash-attn auto ^
     --slot-prompt-similarity 0.0 ^
     --prio 3 ^
     --prio-batch 3 ^

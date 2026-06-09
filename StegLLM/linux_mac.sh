@@ -1,6 +1,6 @@
 #!/bin/bash
 set -x
-buildNum="b6258"
+buildNum="b9562"
 scriptDir="$(dirname "$(realpath "$0")")"
 dataDir="${scriptDir}/data"
 os=""
@@ -60,10 +60,10 @@ port=8090
     -c 4096 \
     --reasoning-budget 0 \
     --reasoning-format none \
-    --sampling-seq edskypxt \
+    --sampling-seq edskypmt \
     --repeat-penalty 1.18 \
     --no-perf \
-    --flash-attn \
+    --flash-attn auto \
     --slot-prompt-similarity 0.0 \
     --prio 3 \
     --prio-batch 3 \

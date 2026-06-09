@@ -1,8 +1,4 @@
 export const $ = id => document.getElementById(id);
-export function listenToggle(obj,key,defaultValue=true){
-    obj.checked = getLocal(key,defaultValue);
-    obj.addEventListener("change", () => setLocal(key, obj.checked));
-}
 async function _jsonFetch(url,{ headers = {}, body, ...rest } = {}) {
     if (body != null && typeof body !== 'string' &&!(body instanceof FormData) &&!(body instanceof Blob)) {
         headers['Content-Type'] ??= 'application/json';
@@ -47,20 +43,6 @@ export async function generateKeyPair() {// 生成 ECC 密钥对
     const kid=crypto.randomUUID();//标记密钥对便于区分
     exportFile(JSON.stringify(publickey),"public_"+kid)//导出为文件而不是字符串，避免剪切板风险//公钥可以从私钥计算得到，但没有必要额外开发找回公钥的功能
     exportFile(JSON.stringify(privateKey),"private_"+kid)
-}
-export function readTextFile(fileInput) {
-    return new Promise((resolve) => {
-        const files = fileInput.files;
-        if (files&&files.length>0) {
-            const file = files[0];
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                resolve(e.target.result);
-            };
-            reader.readAsText(file);
-        }
-        else resolve(null);
-    });
 }
 export function shuffle(array, start = 0, end = array.length) {
     for (let i = end - 1; i > start; i--) {
@@ -148,7 +130,8 @@ export const toBinary = (bytes) =>
 export function toBytes(base){
     let bytes = new Uint8Array(Math.floor(base.length/8));let k=0;
     for(let i=0;i<base.length;i+=8){
-        bytes[k++]=base[i]*128+base[i+1]*64+base[i+2]*32+base[i+3]*16+base[i+4]*8+base[i+5]*4+base[i+6]*2+base[i+7];
+        bytes[k++]=(base[i]<<7)|(base[i+1]<<6)|(base[i+2]<<5)|(base[i+3]<<4)
+                 |(base[i+4]<<3)|(base[i+5]<<2)|(base[i+6]<<1)|base[i+7];
     }
     return bytes;
 }
