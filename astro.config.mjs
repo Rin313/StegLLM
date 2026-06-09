@@ -1,5 +1,6 @@
 import { defineConfig } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
+import { viteSingleFile } from 'vite-plugin-singlefile'
 
 export default defineConfig({
   build: {
@@ -11,7 +12,7 @@ export default defineConfig({
     enabled: false
   },
   vite: {
-    plugins: [tailwindcss()],
+    plugins: [tailwindcss(), viteSingleFile()],
   },
   site: 'https://Rin313.github.io',
   base: process.env.GITHUB_ACTIONS ? '/StegLLM/' : '',

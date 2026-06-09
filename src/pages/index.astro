@@ -13,7 +13,7 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
         <fieldset class="fieldset">
           <legend class="fieldset-legend" id="publicKeyTitle"></legend>
           <div class="flex flex-row gap-6 items-center">
-            <input type="file" class="file-input file-input-success" id="publicKey"/>
+            <input type="file" class="file-input file-input-success" id="publicKey" aria-labelledby="publicKeyTitle"/>
             <label class="label tooltip" id="stopTip">
                 <input type="checkbox" class="toggle toggle-info" id="insertion"/>
                 <span id="insertionText"></span>
@@ -29,7 +29,7 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
         <textarea class="textarea textarea-info w-full h-136 bg-base-200" id="coverText"></textarea>
         <fieldset class="fieldset">
           <legend class="fieldset-legend" id="privateKeyTitle"></legend>
-          <input type="file" class="file-input file-input-warning" id="privateKey" />
+          <input type="file" class="file-input file-input-warning" id="privateKey" aria-labelledby="privateKeyTitle"/>
         </fieldset>
       </div>
     </div>
@@ -50,6 +50,7 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
     // draft：一种牺牲隐写容量提高鲁棒性和隐写效果的方法：部分截取片段直接使用，不尝试映射
     // todo：textarea调整为支持富文本之类的能控制文本样式的组件。
     // todo:寻找通用的system prompt注入方式
+    // 不想引入故意的错别字，实现复杂、手动维护还不通用。
     const generateKeyPairMsg = t("generateKeyPairMsg");
     const failMsg = t("failMsg");
     $('generateKeyPair').textContent = t('generateKey');
@@ -143,7 +144,7 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
     let targetBits, currentPrompt, currentShuffle, done, allowInsertion;
     async function dfs(bitPos, accChars, accScore, pending) {
       $('progress').value = bitPos / targetBits.length * 100;
-      const candidates = await completion(currentPrompt, false); //不想引入故意的错别字，实现复杂、手动维护还不通用。
+      const candidates = await completion(currentPrompt, false);
       for (let j = 0; j < candidates.length; j++) {
 if (done) return;
         let tokenText, needsDeeperDecode;

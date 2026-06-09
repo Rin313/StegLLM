@@ -8,6 +8,7 @@ const {title,alert} = Astro.props;
     <meta name="viewport" content="width=device-width">
     <link rel="icon" href="data:,">
     <title>{title}</title>
+    <meta name="description" content={title}>
     <style is:global>
       @import "tailwindcss" source("..");
       @plugin "daisyui" {
@@ -18,7 +19,7 @@ const {title,alert} = Astro.props;
     </style>
   </head>
   <body>
-    <slot/>
+    <main><slot/></main>
     {alert &&
       <dialog id="alert" class="modal">
         <div class="modal-box">
