@@ -12,9 +12,6 @@ export default defineConfig({
   },
   vite: {
     plugins: [tailwindcss()],
-    // esbuild:{
-    //   drop: ["console"],//移除console.log
-    // }
   },
   site: 'https://Rin313.github.io',
   base: '/StegLLM',

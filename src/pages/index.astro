@@ -43,7 +43,7 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
       </div>
   </div>
   <script>
-    import { $,get,post,getLocal,setLocal,moveStrToEnd,generateKeyPair, unishoxCompress, eccEncryptToUint8Array, eccDecryptToUint8Array, shuffle, toBinary, toBytes, findSublist, unishoxDecompress,alert,magicNum1,magicNum2} from "../assets/commonUtils";
+    import { $,get,post,getLocal,setLocal,moveToEnd,generateKeyPair, unishoxCompress, eccEncryptToUint8Array, eccDecryptToUint8Array, shuffle, toBinary, toBytes, findSublist, unishoxDecompress,showAlert,magicNum1,magicNum2} from "../assets/commonUtils";
     import { t } from "../assets/i18n";
     // draft：将尾部补全修改为输出到底，目前的尾部补全的机制不适合所有语言。
     // draft：通过添加随机序列来移除shuffle，但是目前生成稍长的文本已经很困难了。
@@ -65,17 +65,17 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
     $('hide').dataset.tip = t('hideTip');
     $('insertion').checked = getLocal("insertion", true);
     $('insertion').addEventListener("change", () => setLocal("insertion", $('insertion').checked));
-    let prompts = getLocal("prompts", []),i = prompts.length-1;
-    if(i>=0) $('prompt').value = prompts[i];
+    let prompts = getLocal("prompts", []), promptIndex = prompts.length - 1;
+    if (promptIndex >= 0) $('prompt').value = prompts[promptIndex];
     $('up').onclick = () => {
-      if(i>0) $('prompt').value = prompts[--i];
+      if (promptIndex > 0) $('prompt').value = prompts[--promptIndex];
     };
     $('down').onclick = () => {
-      if(i<prompts.length-1) $('prompt').value = prompts[++i];
+      if (promptIndex < prompts.length - 1) $('prompt').value = prompts[++promptIndex];
     };
     $('generateKeyPair').onclick = async () => {
       await generateKeyPair();
-      alert(generateKeyPairMsg);
+      showAlert(generateKeyPairMsg);
     };
     async function getParity(str) {//直接%2无法利用哈希值的全部位，会破坏哈希函数的均匀性，必须使用奇偶校验或者可扩展输出函数 (XOF)
         const hashBuffer = await crypto.subtle.digest('SHA-512', new TextEncoder().encode(str));
@@ -90,11 +90,11 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
     }
     function getWeight(code) {
       if (code === 32 ||code === 44 ||code === 46 || (code >= 65 && code <= 90) ||(code >= 97 && code <= 122) )//必须保留的字符（中断将严重破坏语义）：普通空格、英文逗号、英文句号、大写字母、小写字母
-        return 1;//score值越小，字符被保留的概率越高
-      if (code === 65292 || code === 12290 || code === 8221 || code === 30340)//尽量保留的字符（哪怕不中断也还有可能续写）：中文逗号，中文句号，中文右双引号、的、中文右单引号(||code===8217)
+        return 1;
+      if (code === 65292 || code === 12290 || code === 8221 || code === 30340)//尽量保留的字符（哪怕不中断也还有可能续写）：中文逗号，中文句号，中文右双引号、的
         return 2;
       return 3;
-    }    // console.log('的'.codePointAt(0));
+    }
     async function tokenize(str) {
         return (await post('/tokenize',{content:str})).tokens;
     }
@@ -102,13 +102,13 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
         return (await post('/detokenize',{tokens: tokens})).content;
     }
     const logitBias=[];
-    let eosToken,think=false;
+    let eosToken,hasThinkTag=false;
     if (window.location.hostname === "127.0.0.1") {
         const props=await get("/props");
-        eosToken=props.eos_token,think=(props.chat_template_caps?.reasoning)||props.chat_template.includes("</think>");
-        logitBias.push([(await tokenize("�"))[0], false]);//避免在判断不可解码的token时产生干扰
+        eosToken=props.eos_token,hasThinkTag=(props.chat_template_caps?.reasoning)||props.chat_template.includes("</think>");
+        logitBias.push([(await tokenize("\uFFFD"))[0], false]);//避免在判断不可解码的token时产生干扰
     }
-    if(think)logitBias.push(...[[(await tokenize("<think>"))[0], false],[(await tokenize("</think>"))[0], false]]);
+    if(hasThinkTag)logitBias.push(...[[(await tokenize("<think>"))[0], false],[(await tokenize("</think>"))[0], false]]);
     const punctuations = ["？", "?", "！", "!", "。", "）", ")", "…", "}", "]", "."]; //"\n"和"”"有时候并不代表结尾
     async function completion(prompt, tailCompletion) {
       let body = {
@@ -131,78 +131,77 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
         if (json.stop_type && json.stop_type !== "none") return json.content;
         return await completion(prompt, true);
       }
-      const t = json.completion_probabilities;
-      if (!t) return [{id: json.tokens[0],token: ""},];
-      let result = t[0].top_probs; //主要影响输出token数的采样：top_p;min_p（相对于最可能标记的概率，考虑标记的最小概率。）;
+      const probs = json.completion_probabilities;
+      if (!probs) return [{id: json.tokens[0],token: ""},];
+      let result = probs[0].top_probs; //主要影响输出token数的采样：top_p;min_p（相对于最可能标记的概率，考虑标记的最小概率。）;
       if (currentShuffle < Math.floor(result.length/4)) {
         currentShuffle++;
         return shuffle(result, 0, Math.floor(result.length/4));
       }
       return result;
     }
-    let base, currentPrompt,currentShuffle, status, allowInsertion;
-    async function dfs(i, tstr, tscore, incomplete) {
-      $('progress').value=i / base.length * 100;
-      const list = await completion(currentPrompt,false); //不想引入故意的错别字，实现复杂、手动维护还不通用。
-      for (let j = 0; j < list.length; j++) {
-        if (status) return;
-        let t, needsDeeperDecode;
-        if (incomplete > 0) {
-          t = await detokenize([...currentPrompt.slice(-incomplete), list[j].id]);
-          needsDeeperDecode = t.includes("�");
+    let targetBits, currentPrompt, currentShuffle, done, allowInsertion;
+    async function dfs(bitPos, accChars, accScore, pending) {
+      $('progress').value = bitPos / targetBits.length * 100;
+      const candidates = await completion(currentPrompt, false); //不想引入故意的错别字，实现复杂、手动维护还不通用。
+      for (let j = 0; j < candidates.length; j++) {
+if (done) return;
+        let tokenText, needsDeeperDecode;
+        if (pending > 0) {
+          tokenText = await detokenize([...currentPrompt.slice(-pending), candidates[j].id]);
+          needsDeeperDecode = tokenText.includes("\uFFFD");
         } else {
-          t = list[j].token;
-          needsDeeperDecode = t === "" || (t.includes("�") && t[0] !== "�");
+          tokenText = candidates[j].token;
+          needsDeeperDecode = tokenText === "" || (tokenText.includes("\uFFFD") && tokenText[0] !== "\uFFFD");
         }
         if (needsDeeperDecode) {
-          if (incomplete === 0) {
-            const extra = await detokenize([list[j].id]);//特殊符号不detokenize的话显示为""
+          if (pending === 0) {
+            const extra = await detokenize([candidates[j].id]);//特殊符号不detokenize的话显示为""
             if (extra.includes(eosToken) || extra.includes("<|endoftext|>")) continue;//禁止中断时会输出大量无意义token，应手动处理使其自动回溯
           }
-          currentPrompt.push(list[j].id);
-          await dfs(i, tstr, tscore, incomplete + 1);
+          currentPrompt.push(candidates[j].id);
+          await dfs(bitPos, accChars, accScore, pending + 1);
           currentPrompt.pop();
           continue;
         }
-        let ttstr = tstr,
-          ttscore = tscore,
-          sections = 0;
-        const chars = [...t];
+        let groupChars = accChars,
+          groupScore = accScore,
+          bitsMatched = 0;
+        const codePoints = [...tokenText];
         for (let k = 0; ; k++) {
-          if (k >= chars.length) {
-            currentPrompt.push(list[j].id);
-            $('coverText').value += t;
-            await dfs(i + sections, ttstr, ttscore, 0);
-            if (status) return; //在这里return避免逐层回溯，导致文本框内容变化
+          if (k >= codePoints.length) {
+            currentPrompt.push(candidates[j].id);
+            $('coverText').value += tokenText;
+            await dfs(bitPos + bitsMatched, groupChars, groupScore, 0);
+            if (done) return; //在这里return避免逐层回溯，导致文本框内容变化
             currentPrompt.pop();
-            $('coverText').value = $('coverText').value.slice(0, -t.length);
+            $('coverText').value = $('coverText').value.slice(0, -tokenText.length);
             break; //减少dfs传递的内存占用
           }
-          ttstr += chars[k];
-          ttscore += getWeight(chars[k].codePointAt(0));
-          if (ttscore >= 3) {
-            if ((await getParity(ttstr)) !== base[i + sections]) break;
-            sections++;
-            ttstr = "";
-            ttscore = 0; //使用-=3会提高token的平均映射次数，长短token的不平衡会更加明显
-            if (i + sections === base.length) {
-              status = true;
+          groupChars += codePoints[k];
+          groupScore += getWeight(codePoints[k].codePointAt(0));
+          if (groupScore >= 3) {
+            if ((await getParity(groupChars)) !== targetBits[bitPos + bitsMatched]) break;
+            bitsMatched++;
+            groupChars = "";
+            groupScore = 0; //使用-=3会提高token的平均映射次数，长短token的不平衡会更加明显
+            if (bitPos + bitsMatched === targetBits.length) {
+              done = true;
               if (allowInsertion) {
-                currentPrompt.push(list[j].id);
-                $('coverText').value += t;
+                currentPrompt.push(candidates[j].id);
+                $('coverText').value += tokenText;
                 if (!punctuations.includes($('coverText').value[$('coverText').value.length - 1]))                  //如果不在dfs中处理，那么取消隐写时仍然会额外执行补全。
                   $('coverText').value += await completion(currentPrompt, true);
-              } else $('coverText').value += chars.slice(0, k + 1).join('');
+              } else $('coverText').value += codePoints.slice(0, k + 1).join('');
               return;
             }
           }
         }
       }
-      // console.log('测试映射失败次数')
     }
     async function encrypt(prompt, plainText) {
       if (!$('progress').classList.contains("invisible")) {
-        status = true;
+        done = true;
         return;
       }
       if (!plainText) {
@@ -213,55 +212,53 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
         $('prompt').focus();
         return;
       }
-      moveStrToEnd(prompts,prompt,100);
+      moveToEnd(prompts,prompt,100);
       setLocal('prompts',prompts);
-      i=prompts.length-1;
+      promptIndex = prompts.length - 1;
       let [data, useUnishox] = await unishoxCompress(plainText);
       const key = await ($('publicKey').files?.[0]?.text() ?? null);
       if (key) data = await eccEncryptToUint8Array(data, JSON.parse(key));
-      // console.log(data);
-      base = toBinary(data); //base=[useUnishox,...toBinary(data)];//处理为二进制序列，在映射时粒度更细，但建议每次只映射1位，减少映射失败率。
+      targetBits = toBinary(data); //targetBits=[useUnishox,...toBinary(data)];//处理为二进制序列，在映射时粒度更细，但建议每次只映射1位，减少映射失败率。
       allowInsertion = $('insertion').checked;
-      const end=base.lastIndexOf(useUnishox||key?0:1)+1;
-      base=base.slice(0,base.length-end<=7?end:base.length-7);
-      if (allowInsertion) base = [...magicNum1,...base,...magicNum2];
-      console.log(base);
-      if(think) prompt+="<think>\n</think>\n\n";//支持思考模式会导致输出token数减少
+      const trimIdx = targetBits.lastIndexOf(useUnishox || key ? 0 : 1) + 1;
+      targetBits = targetBits.slice(0, targetBits.length - trimIdx <= 7 ? trimIdx : targetBits.length - 7);
+      if (allowInsertion) targetBits = [...magicNum1, ...targetBits, ...magicNum2];
+      if(hasThinkTag) prompt+="<think>\n</think>\n\n";//支持思考模式会导致输出token数减少
       currentPrompt = await tokenize(prompt);
       $('coverText').value = "";
       currentShuffle = 0;
-      status = false;
+      done = false;
       $('progress').value="0";
       $('progress').classList.remove("invisible");
       $('hide').classList.add("tooltip");
       await dfs(0, "", 0, 0);
       $('hide').classList.remove("tooltip");
       $('progress').classList.add("invisible");
-      if (!status) alert(failMsg);
+      if (!done) showAlert(failMsg);
     }
     async function extract(coverText) {
       if (!coverText) {
         $('coverText').focus();
         return;
       }
-      let base=[], tstr = "", tscore = 0;
+      let extractedBits = [], groupChars = "", groupScore = 0;
       for (const char of coverText) {
-        tstr += char;
-        tscore += getWeight(char.codePointAt(0));
-        if (tscore >= 3) {
-          base.push((await getParity(tstr)));
-          tstr = "";
-          tscore = 0;
+        groupChars += char;
+        groupScore += getWeight(char.codePointAt(0));
+        if (groupScore >= 3) {
+          extractedBits.push((await getParity(groupChars)));
+          groupChars = "";
+          groupScore = 0;
         }
       }
-      let index1 = findSublist(base, magicNum1);
-      let index2 = findSublist(base, magicNum2);
-      if(index1!==-1&&index2!==-1&&index2>index1+magicNum1.length)
-          base = base.slice(index1+magicNum1.length, index2);
-      // console.log(base)// let useUnishox=base[0];base=base.slice(1);
+      let index1 = findSublist(extractedBits, magicNum1);
+      let index2 = findSublist(extractedBits, magicNum2);
+      if (index1 !== -1 && index2 !== -1 && index2 > index1 + magicNum1.length)
+          extractedBits = extractedBits.slice(index1 + magicNum1.length, index2);
+      // let useUnishox=extractedBits[0];extractedBits=extractedBits.slice(1);
       const key = await ($('privateKey').files?.[0]?.text() ?? null);
-      if(key) base = await eccDecryptToUint8Array(toBytes([...base, ...Array((8 - base.length % 8) % 8).fill(1)]), JSON.parse(key));
-      $('secret').value = await unishoxDecompress(base);
+      if (key) extractedBits = await eccDecryptToUint8Array(toBytes([...extractedBits, ...Array((8 - extractedBits.length % 8) % 8).fill(1)]), JSON.parse(key));
+      $('secret').value = await unishoxDecompress(extractedBits);
     }
     $('hide').onclick = async () => {
       await encrypt($('prompt').value, $('secret').value);
