@@ -14,7 +14,7 @@ const inflateRawP = promisify(inflateRaw);
 // Config
 // ============================================================
 const BASE_URL = 'http://127.0.0.1:8090';
-const SECRET = 'stegllm test 12345';
+const SECRET = 'test';
 const PROMPT = 'What is the capital of France?';
 
 // ============================================================
@@ -272,6 +272,38 @@ async function queryCompletion(promptTokens, tailCompletion) {
   return apiPost('/completion', body);
 }
 
+// --- Llama.cpp token-byte quirk ------------------------------------------
+//
+// Some model tokens have raw bytes that form INCOMPLETE UTF-8 sequences.
+// For example, in Qwen3-0.6B:
+//   token 70467  bytes=[0xE2,0x85]                 → 2 bytes of a 3-byte seq
+//   token 26525  bytes=[0x20,0xF0,0x9F,0x98]       → space + 3 bytes of a 4-byte seq
+//   token 11162  bytes=[0x20,0xF0,0x9F,0x99,0x82]  → space + an incomplete emoji
+//
+// When the llama.cpp server receives a /completion prompt containing such
+// a token ID, it internally attempts to decode the token bytes as UTF-8
+// and fails with HTTP 500: "Failed to parse input at pos 0: �".
+//
+// Compounding this, the /completion JSON response's "token" field is
+// unreliable for these tokens:
+//   token 26525 → "token":" "   (the leading space)  but bytes include 0xF0,0x9F,0x98
+//   token 11162 → "token":""   (empty)               detokenize gives " �" (space+U+FFFD)
+//
+// Therefore the code MUST NOT rely on cand.token alone to detect
+// problematic tokens.  We use two complementary checks:
+//   1. cand.bytes → decode as UTF-8 → reject if result contains U+FFFD
+//      (catches tokens from the completion_probabilities path)
+//   2. detokenize([cand.id]) → reject if result contains U+FFFD
+//      (catches tokens from the tokens-only fallback path, where cand.bytes
+//       is unavailable)
+//
+// Additionally, the model may have MULTIPLE token IDs that decode to
+// U+FFFD.  init() only biases against the one discovered by calling
+// tokenize("\uFFFD").  Other U+FFFD tokens (e.g. 70467) remain unbias'd,
+// so the DFS will encounter them naturally — these two checks must
+// intercept them.
+// --------------------------------------------------------------------------
+
 function hasFFFD(s) {
   return s.includes('\uFFFD');
 }
@@ -282,6 +314,17 @@ async function dfs(bitPos, accChars, accScore, pending, depth = 0) {
 
   const json = await queryCompletion(currentPrompt, false);
   const probs = json.completion_probabilities;
+
+  // llama.cpp /completion returns two different shapes:
+  //   Format A (normal):  {"completion_probabilities":[{top_probs:[{id,token,bytes,prob},...]}], "tokens":[...]}
+  //   Format B (forced):  {"tokens":[id]}   — no completion_probabilities, no bytes
+  //
+  // Format B occurs when the model has essentially no choice, e.g. a
+  // continuation byte that must follow a partial UTF-8 prefix.  In that
+  // case we synthesise a single candidate with token="" and WITHOUT a
+  // "bytes" field.  The byte-level U+FFFD check in the DFS loop is
+  // skipped for these candidates, so the detokenize-level check inside
+  // the needsDeeperDecode branch serves as the safety net.
   let candidates;
   if (!probs) {
     candidates = [{id: json.tokens[0], token: ""}];
@@ -301,11 +344,27 @@ async function dfs(bitPos, accChars, accScore, pending, depth = 0) {
     if (done) { LOG.raw(`${indent}  ◊ done, returning`); return; }
 
     const cand = candidates[j];
+
+    // Defence layer #1: validate token bytes (Format A candidates only).
+    // If the raw bytes decode to text containing U+FFFD the token
+    // carries an incomplete UTF-8 sequence; pushing it into currentPrompt
+    // and sending the next /completion will crash the llama.cpp server.
+    if (cand.bytes && cand.bytes.length > 0) {
+      const byteDecoded = new TextDecoder().decode(new Uint8Array(cand.bytes));
+      if (byteDecoded.includes('\uFFFD')) {
+        LOG.raw(`${indent}  [${j}] ⛔ skipping token ${cand.id} (invalid UTF-8 bytes)`);
+        continue;
+      }
+    }
     let tokenText, needsDeeperDecode;
 
     if (pending > 0) {
       const combined = [...currentPrompt.slice(-pending), cand.id];
       tokenText = await detokenize(combined);
+      if (hasFFFD(tokenText)) {
+        LOG.raw(`${indent}  [${j}] ⛔ skipping (\uFFFD in combined result)`);
+        continue;
+      }
       needsDeeperDecode = hasFFFD(tokenText);
     } else {
       tokenText = cand.token;
@@ -323,6 +382,15 @@ async function dfs(bitPos, accChars, accScore, pending, depth = 0) {
         const extra = await detokenize([cand.id]);
         if (extra.includes(eosToken) || extra.includes('<|endoftext|>')) {
           LOG.raw(`${indent}    ⛔ skipping (EOS token)`);
+          continue;
+        }
+        // Defence layer #2: detokenize a single token and reject it
+        // if the result contains U+FFFD anywhere.  A pure-U+FFFD regex
+        // (e.g. /^\uFFFD+$/) is NOT sufficient — some tokens decode to
+        // hybrids like " �" (space + U+FFFD) where the stray byte
+        // after the printable prefix still crashes the server.
+        if (hasFFFD(extra)) {
+          LOG.raw(`${indent}    ⛔ skipping (\uFFFD token)`);
           continue;
         }
       }
@@ -493,7 +561,14 @@ async function init() {
   LOG.val('eos_token', eosToken);
   LOG.val('hasThinkTag', hasThinkTag);
 
-  // logitBias: avoid undecodable token
+  // logitBias: forbid the primary U+FFFD replacement-character token.
+  //
+  // NOTE: the model may have SEVERAL token IDs that all decode to
+  // U+FFFD (e.g. Qwen3-0.6B has at least 5691 and 70467).  tokenize()
+  // only discovers one of them.  The other U+FFFD-tokens are NOT
+  // added to the bias and will appear among candidates during DFS.
+  // The two defence layers inside dfs() (byte-level check and
+  // detokenize-level check) are responsible for intercepting them.
   const ffId = (await tokenize('\uFFFD'))[0];
   logitBias.push([ffId, false]);
   LOG.val('FFFD token id', ffId);
