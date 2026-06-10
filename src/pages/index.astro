@@ -104,13 +104,12 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
         return (await post('/apply-template', { messages })).prompt;
     }
     const logitBias=[];
-    let eosToken,hasThinkTag=false;
+    let eosToken;
     if (window.location.hostname === "127.0.0.1") {
         const props=await get("/props");
-        eosToken=props.eos_token,hasThinkTag=(props.chat_template_caps?.reasoning)||props.chat_template.includes("</think>");
+        eosToken=props.eos_token;
         logitBias.push([(await tokenize("\uFFFD"))[0], false]);//避免在判断不可解码的token时产生干扰
     }
-    if(hasThinkTag)logitBias.push(...[[(await tokenize("<think>"))[0], false],[(await tokenize("</think>"))[0], false]]);
     const punctuations = ["？", "?", "！", "!", "。", "）", ")", "…", "}", "]", "."]; //"\n"和"”"有时候并不代表结尾
     async function completion(prompt, tailCompletion) {
       let body = {
@@ -232,7 +231,6 @@ if (done) return;
       //if (systemPrompt) messages.push({ role: "system", content: systemPrompt });
       messages.push({ role: "user", content: prompt });
       finalPrompt = await applyTemplate(messages);
-      if(hasThinkTag) finalPrompt+="<think>\n</think>\n\n";//支持思考模式会导致输出token数减少
       currentPrompt = await tokenize(finalPrompt);
       $('coverText').value = "";
       done = false;

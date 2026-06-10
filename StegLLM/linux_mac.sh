@@ -58,8 +58,7 @@ port=8090
     --host 127.0.0.1 \
     --port "$port" \
     -c 4096 \
-    --reasoning-budget 0 \
-    --reasoning-format none \
+    --reasoning off \
     --sampling-seq edskymxt \
     --min-p 0.0001 \
     --repeat-penalty 1.18 \

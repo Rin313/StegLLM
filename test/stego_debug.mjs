@@ -227,7 +227,6 @@ let targetBits = [];
 let done = false;
 let allowInsertion = true;
 let eosToken = null;
-let hasThinkTag = false;
 let logitBias = [];
 
 let coverText = ''; // simulated textarea
@@ -422,14 +421,11 @@ async function encrypt(prompt, plainText, pubKey = null) {
   LOG.val('Total target bits', targetBits.length);
   // LOG.val('Full target bits', _fmt(targetBits));
 
-  // 5. Add think tag if supported
-  if (hasThinkTag) prompt += "<think>\n</think>\n\n";
-
-  // 6. Tokenize prompt
+  // 5. Tokenize prompt
   currentPrompt = await tokenize(prompt);
   // LOG.val('Prompt tokens', currentPrompt);
 
-  // 7. Run DFS
+  // 6. Run DFS
   coverText = '';
   done = false;
   await dfs(0, [], 0);
@@ -476,9 +472,7 @@ async function init() {
   const props = await apiGet('/props');
   // LOG.val('chat_template', props.chat_template);
   eosToken = props.eos_token;
-  hasThinkTag = (props.chat_template_caps?.reasoning) || props.chat_template.includes('</think>');
   LOG.val('eos_token', eosToken);
-  LOG.val('hasThinkTag', hasThinkTag);
 
   // logitBias: forbid the primary U+FFFD replacement-character token.
   // The byte-level filter in dfs() also skips any candidate whose
@@ -487,12 +481,6 @@ async function init() {
   const ffId = (await tokenize('\uFFFD'))[0];
   logitBias.push([ffId, false]);
   LOG.val('FFFD token id', ffId);
-  if (hasThinkTag) {
-    const th = (await tokenize('<think>'))[0];
-    const th2 = (await tokenize('</think>'))[0];
-    logitBias.push([th, false], [th2, false]);
-    LOG.val('Think token ids', [th, th2]);
-  }
 }
 
 // ============================================================

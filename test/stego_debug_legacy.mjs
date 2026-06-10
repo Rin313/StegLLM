@@ -242,7 +242,6 @@ let targetBits = [];
 let done = false;
 let allowInsertion = true;
 let eosToken = null;
-let hasThinkTag = false;
 let logitBias = [];
 
 let coverText = ''; // simulated textarea
@@ -497,14 +496,11 @@ async function encrypt(prompt, plainText, pubKey = null, systemPrompt = null) {
   finalPrompt = await applyTemplate(messages);
   LOG.val('Template-formatted prompt', finalPrompt);
 
-  // 6. Add think tag if supported
-  if (hasThinkTag) finalPrompt += "<think>\n</think>\n\n";
-
-  // 7. Tokenize prompt
+  // 6. Tokenize prompt
   currentPrompt = await tokenize(finalPrompt);
   // LOG.val('Prompt tokens', currentPrompt);
 
-  // 8. Run DFS
+  // 7. Run DFS
   coverText = '';
   done = false;
   await dfs(0, '', 0, 0);
@@ -556,9 +552,7 @@ async function init() {
   const props = await apiGet('/props');
   // LOG.val('chat_template', props.chat_template);
   eosToken = props.eos_token;
-  hasThinkTag = (props.chat_template_caps?.reasoning) || props.chat_template.includes('</think>');
   LOG.val('eos_token', eosToken);
-  LOG.val('hasThinkTag', hasThinkTag);
 
   // logitBias: forbid the primary U+FFFD replacement-character token.
   //
@@ -571,12 +565,6 @@ async function init() {
   const ffId = (await tokenize('\uFFFD'))[0];
   logitBias.push([ffId, false]);
   LOG.val('FFFD token id', ffId);
-  if (hasThinkTag) {
-    const th = (await tokenize('<think>'))[0];
-    const th2 = (await tokenize('</think>'))[0];
-    logitBias.push([th, false], [th2, false]);
-    LOG.val('Think token ids', [th, th2]);
-  }
 }
 
 // ============================================================
