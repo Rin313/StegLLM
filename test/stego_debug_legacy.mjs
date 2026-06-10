@@ -20,7 +20,7 @@ const PROMPT = 'What is the capital of France?';
 // ============================================================
 // Logging helpers
 // ============================================================
-const LOG_FILE = dirname(fileURLToPath(import.meta.url)) + '/stego_debug_log.txt';
+const LOG_FILE = dirname(fileURLToPath(import.meta.url)) + '/stego_debug_legacy_log.txt';
 writeFileSync(LOG_FILE, '', 'utf-8');
 
 const LOG = {
@@ -70,12 +70,22 @@ async function apiGet(path) {
 // ============================================================
 // Core algorithm functions (replicated from index.astro)
 // ============================================================
-const BYTES_PER_BIT = 3;
+function getWeight(code) {
+  // Weight 1: must-keep chars (breaking severely breaks semantics)
+  if (code === 32 || code === 44 || code === 46 ||
+      (code >= 65 && code <= 90) || (code >= 97 && code <= 122))
+    return 1;
+  // Weight 2: prefer-keep chars
+  if (code === 65292 || code === 12290 || code === 8221 || code === 30340)
+    return 2;
+  return 3;
+}
 
-function getParityFromBytes(bytes) {
-  const hash = createHash('sha512').update(Buffer.from(bytes)).digest();
+function getParity(str) {
+  const hash = createHash('sha512').update(str, 'utf-8').digest();
   let xorAll = 0;
   for (let i = 0; i < hash.length; i++) xorAll ^= hash[i];
+  // popcount (Brian Kernighan)
   for (let c = 0; ; c++) {
     if (xorAll === 0) return c & 1;
     xorAll &= xorAll - 1;
@@ -274,42 +284,56 @@ async function queryCompletion(promptTokens, tailCompletion) {
 // a token ID, it internally attempts to decode the token bytes as UTF-8
 // and fails with HTTP 500: "Failed to parse input at pos 0: �".
 //
-// Byte-level parity avoids this entirely:
-//   – Parity is computed from cand.bytes (raw bytes), never from cand.token
-//   – Tokens with incomplete UTF-8 in cand.bytes are simply skipped (filtered)
-//   – No need for multi-token detokenize or "defence layers"
-//   – pendingBytes carries leftover bytes (< BYTES_PER_BIT) across tokens
+// Compounding this, the /completion JSON response's "token" field is
+// unreliable for these tokens:
+//   token 26525 → "token":" "   (the leading space)  but bytes include 0xF0,0x9F,0x98
+//   token 11162 → "token":""   (empty)               detokenize gives " �" (space+U+FFFD)
+//
+// Therefore the code MUST NOT rely on cand.token alone to detect
+// problematic tokens.  We use two complementary checks:
+//   1. cand.bytes → decode as UTF-8 → reject if result contains U+FFFD
+//      (catches tokens from the completion_probabilities path)
+//   2. detokenize([cand.id]) → reject if result contains U+FFFD
+//      (catches tokens from the tokens-only fallback path, where cand.bytes
+//       is unavailable)
+//
+// Additionally, the model may have MULTIPLE token IDs that decode to
+// U+FFFD.  init() only biases against the one discovered by calling
+// tokenize("\uFFFD").  Other U+FFFD tokens (e.g. 70467) remain unbias'd,
+// so the DFS will encounter them naturally — these two checks must
+// intercept them.
 // --------------------------------------------------------------------------
 
-async function dfs(bitPos, pendingBytes = [], depth = 0) {
+function hasFFFD(s) {
+  return s.includes('\uFFFD');
+}
+
+async function dfs(bitPos, accChars, accScore, pending, depth = 0) {
   const indent = '  '.repeat(depth);
-  LOG.raw(`${indent}[dfs depth=${depth}] bitPos=${bitPos}/${targetBits.length} pendingBytes=[${pendingBytes.join(',')}]`);
+  LOG.raw(`${indent}[dfs depth=${depth}] bitPos=${bitPos}/${targetBits.length} accChars="${accChars}" accScore=${accScore} pending=${pending}`);
 
   const json = await queryCompletion(currentPrompt, false);
   const probs = json.completion_probabilities;
 
   // llama.cpp /completion returns two different shapes:
-  //   Format A (normal): {"completion_probabilities":[{top_probs:[{id,token,bytes,prob},...]}], ...}
-  //   Format B (forced): {"tokens":[id]} — only one choice, no probs/bytes
+  //   Format A (normal):  {"completion_probabilities":[{top_probs:[{id,token,bytes,prob},...]}], "tokens":[...]}
+  //   Format B (forced):  {"tokens":[id]}   — no completion_probabilities, no bytes
+  //
+  // Format B occurs when the model has essentially no choice, e.g. a
+  // continuation byte that must follow a partial UTF-8 prefix.  In that
+  // case we synthesise a single candidate with token="" and WITHOUT a
+  // "bytes" field.  The byte-level U+FFFD check in the DFS loop is
+  // skipped for these candidates, so the detokenize-level check inside
+  // the needsDeeperDecode branch serves as the safety net.
   let candidates;
   if (!probs) {
-    const tokId = json.tokens[0];
-    const tokText = await detokenize([tokId]);
-    if (tokText.includes('\uFFFD')) {
-      LOG.raw(`${indent}  ⛔ Format B token ${tokId} has invalid UTF-8, branch dead`);
-      return;
-    }
-    if (tokText.includes(eosToken) || tokText.includes('<|endoftext|>')) {
-      LOG.raw(`${indent}  ⛔ Format B token ${tokId} is EOS, branch dead`);
-      return;
-    }
-    const tokBytes = Array.from(new TextEncoder().encode(tokText));
-    candidates = [{id: tokId, token: tokText, bytes: tokBytes, probability: 1}];
+    candidates = [{id: json.tokens[0], token: ""}];
   } else {
     candidates = probs[0].top_probs;
   }
   LOG.val(`${indent}candidates count`, candidates.length);
 
+  // shuffle early candidates (same as browser)
   if (currentShuffle < Math.floor(candidates.length / 4)) {
     currentShuffle++;
     candidates = shuffle(candidates, 0, Math.floor(candidates.length / 4));
@@ -321,10 +345,10 @@ async function dfs(bitPos, pendingBytes = [], depth = 0) {
 
     const cand = candidates[j];
 
-    // Filter: reject tokens whose raw bytes are incomplete UTF-8.
-    // Pushing such a token into currentPrompt would crash the llama.cpp server
-    // on the next /completion call.  With byte-level parity we never need to
-    // push partial-UTF-8 tokens; we simply skip them.
+    // Defence layer #1: validate token bytes (Format A candidates only).
+    // If the raw bytes decode to text containing U+FFFD the token
+    // carries an incomplete UTF-8 sequence; pushing it into currentPrompt
+    // and sending the next /completion will crash the llama.cpp server.
     if (cand.bytes && cand.bytes.length > 0) {
       const byteDecoded = new TextDecoder().decode(new Uint8Array(cand.bytes));
       if (byteDecoded.includes('\uFFFD')) {
@@ -332,72 +356,111 @@ async function dfs(bitPos, pendingBytes = [], depth = 0) {
         continue;
       }
     }
-    // If bytes are missing, reconstruct from token text
-    if (!cand.bytes || cand.bytes.length === 0) {
-      const txt = cand.token || await detokenize([cand.id]);
-      if (txt.includes('\uFFFD')) continue;
-      cand.bytes = Array.from(new TextEncoder().encode(txt));
-      cand.token = txt;
+    let tokenText, needsDeeperDecode;
+
+    if (pending > 0) {
+      const combined = [...currentPrompt.slice(-pending), cand.id];
+      tokenText = await detokenize(combined);
+      if (hasFFFD(tokenText)) {
+        LOG.raw(`${indent}  [${j}] ⛔ skipping (\uFFFD in combined result)`);
+        continue;
+      }
+      needsDeeperDecode = hasFFFD(tokenText);
+    } else {
+      tokenText = cand.token;
+      needsDeeperDecode = tokenText === '' || (hasFFFD(tokenText) && tokenText[0] !== '\uFFFD');
     }
 
     const prob = cand.probability !== undefined
-      ? (typeof cand.probability === 'number' ? cand.probability.toFixed(6) : String(cand.probability))
+      ? (typeof cand.probability === 'number' ? cand.probability.toFixed(6) : cand.probability)
       : (cand.logprob !== undefined ? `logprob=${cand.logprob.toFixed(4)}` : '?');
 
-    LOG.raw(`${indent}  [${j}] token_id=${cand.id} prob=${prob} bytes=[${cand.bytes.join(',')}] token="${_fmt(cand.token)}"`);
+    LOG.raw(`${indent}  [${j}] token_id=${cand.id} prob=${prob} token="${_fmt(tokenText)}" pending=${pending} needsDeeper=${needsDeeperDecode}`);
 
-    // Prepend pending bytes from prior tokens, then test 3-byte groups
-    const allBytes = [...pendingBytes, ...cand.bytes];
+    if (needsDeeperDecode) {
+      if (pending === 0) {
+        const extra = await detokenize([cand.id]);
+        if (extra.includes(eosToken) || extra.includes('<|endoftext|>')) {
+          LOG.raw(`${indent}    ⛔ skipping (EOS token)`);
+          continue;
+        }
+        // Defence layer #2: detokenize a single token and reject it
+        // if the result contains U+FFFD anywhere.  A pure-U+FFFD regex
+        // (e.g. /^\uFFFD+$/) is NOT sufficient — some tokens decode to
+        // hybrids like " �" (space + U+FFFD) where the stray byte
+        // after the printable prefix still crashes the server.
+        if (hasFFFD(extra)) {
+          LOG.raw(`${indent}    ⛔ skipping (\uFFFD token)`);
+          continue;
+        }
+      }
+      currentPrompt.push(cand.id);
+      await dfs(bitPos, accChars, accScore, pending + 1, depth + 1);
+      currentPrompt.pop();
+      continue;
+    }
+
+    // Token is decodable — try to embed bits in its characters
+    let gChars = accChars;
+    let gScore = accScore;
     let bitsMatched = 0;
-    let consumed = 0;
+    const codePoints = [...tokenText];
+    LOG.raw(`${indent}    codePoints=[${codePoints.map(c=>'U+' + c.codePointAt(0).toString(16)).join(', ')}]`);
 
-    while (consumed + BYTES_PER_BIT <= allBytes.length) {
-      const group = allBytes.slice(consumed, consumed + BYTES_PER_BIT);
-      const parity = getParityFromBytes(group);
-      const targetBit = targetBits[bitPos + bitsMatched];
-
-      LOG.raw(`${indent}    grp [${group.join(',')}] parity=${parity} want=${targetBit} ${parity === targetBit ? '✓' : '✗'}`);
-
-      if (parity !== targetBit) {
-        bitsMatched = -1;
+    for (let k = 0; ; k++) {
+      if (k >= codePoints.length) {
+        // Token fully consumed without matching all bits; accumulate and continue DFS
+        currentPrompt.push(cand.id);
+        coverText += tokenText;
+        LOG.raw(`${indent}    → token consumed, push+recurse (bitsMatched=${bitsMatched})`);
+        await dfs(bitPos + bitsMatched, gChars, gScore, 0, depth + 1);
+        if (done) return;
+        currentPrompt.pop();
+        coverText = coverText.slice(0, -tokenText.length);
         break;
       }
 
-      consumed += BYTES_PER_BIT;
-      bitsMatched++;
+      gChars += codePoints[k];
+      const cp = codePoints[k].codePointAt(0);
+      const w = getWeight(cp);
+      gScore += w;
+      LOG.raw(`${indent}      char[${k}]="${codePoints[k]}" U+${cp.toString(16)} weight=${w} gChars="${gChars}" gScore=${gScore}`);
 
-      if (bitPos + bitsMatched === targetBits.length) {
-        done = true;
-        currentPrompt.push(cand.id);
-        coverText += cand.token;
-        LOG.raw(`${indent}      ✓ ALL ${targetBits.length} BITS EMBEDDED`);
-        if (allowInsertion) {
-          if (!punctuations.includes(coverText[coverText.length - 1])) {
-            const tail = await tailComplete(currentPrompt);
-            coverText += tail;
-            LOG.raw(`${indent}      → tail completion: "${_fmt(tail)}"`);
-          }
-        } else {
-          const usedText = new TextDecoder().decode(new Uint8Array(allBytes.slice(0, consumed)));
-          LOG.raw(`${indent}      extraction mode, used: "${_fmt(usedText)}"`);
+      if (gScore >= 3) {
+        const parity = getParity(gChars);
+        const targetBit = targetBits[bitPos + bitsMatched];
+        LOG.raw(`${indent}        gScore>=3 → parity=${parity} targetBit=${targetBit} match=${parity === targetBit}`);
+
+        if (parity !== targetBit) {
+          LOG.raw(`${indent}        ✗ mismatch, break`);
+          break;
         }
-        LOG.val(`${indent}      Final coverText`, coverText);
-        return;
+
+        bitsMatched++;
+        gChars = '';
+        gScore = 0;
+
+        if (bitPos + bitsMatched === targetBits.length) {
+          done = true;
+          const usedChars = codePoints.slice(0, k + 1).join('');
+          if (allowInsertion) {
+            currentPrompt.push(cand.id);
+            coverText += tokenText;
+            LOG.raw(`${indent}      ✓ ALL BITS EMBEDDED (insertion mode)`);
+            if (!punctuations.includes(coverText[coverText.length - 1])) {
+              const tail = await tailComplete(currentPrompt);
+              coverText += tail;
+              LOG.raw(`${indent}      → tail completion: "${_fmt(tail)}"`);
+            }
+          } else {
+            coverText += usedChars;
+            LOG.raw(`${indent}      ✓ ALL BITS EMBEDDED (extraction mode), used chars: "${_fmt(usedChars)}"`);
+          }
+          LOG.val(`${indent}      Final coverText`, coverText);
+          return;
+        }
       }
     }
-
-    if (bitsMatched === -1) continue;  // parity mismatch — try next candidate
-
-    // Remaining bytes (< BYTES_PER_BIT) carry forward to the next token
-    const remainingBytes = allBytes.slice(consumed);
-    LOG.raw(`${indent}    → +${bitsMatched} bit(s), ${remainingBytes.length} bytes pending`);
-
-    currentPrompt.push(cand.id);
-    coverText += cand.token;
-    await dfs(bitPos + bitsMatched, remainingBytes, depth + 1);
-    if (done) return;
-    currentPrompt.pop();
-    coverText = coverText.slice(0, -cand.token.length);
   }
 }
 
@@ -445,7 +508,7 @@ async function encrypt(prompt, plainText, pubKey = null) {
   coverText = '';
   currentShuffle = 0;
   done = false;
-  await dfs(0, [], 0);
+  await dfs(0, '', 0, 0);
   return coverText;
 }
 
@@ -453,11 +516,16 @@ async function encrypt(prompt, plainText, pubKey = null) {
 // Steganography: Extract
 // ============================================================
 async function extract(coverText, privKey = null) {
-  const bytes = new TextEncoder().encode(coverText);
-  let exBits = [];
-  for (let i = 0; i + BYTES_PER_BIT <= bytes.length; i += BYTES_PER_BIT) {
-    const group = bytes.slice(i, i + BYTES_PER_BIT);
-    exBits.push(getParityFromBytes(group));
+
+  let exBits = [], gChars = '', gScore = 0;
+  for (const ch of coverText) {
+    gChars += ch;
+    gScore += getWeight(ch.codePointAt(0));
+    if (gScore >= 3) {
+      exBits.push(getParity(gChars));
+      gChars = '';
+      gScore = 0;
+    }
   }
   LOG.val('Extracted raw bits', _fmt(exBits));
   LOG.val('Raw bit length', exBits.length);
@@ -494,9 +562,13 @@ async function init() {
   LOG.val('hasThinkTag', hasThinkTag);
 
   // logitBias: forbid the primary U+FFFD replacement-character token.
-  // The byte-level filter in dfs() also skips any candidate whose
-  // cand.bytes decode to text containing U+FFFD.  This bias reduces
-  // how often such tokens appear as candidates in the first place.
+  //
+  // NOTE: the model may have SEVERAL token IDs that all decode to
+  // U+FFFD (e.g. Qwen3-0.6B has at least 5691 and 70467).  tokenize()
+  // only discovers one of them.  The other U+FFFD-tokens are NOT
+  // added to the bias and will appear among candidates during DFS.
+  // The two defence layers inside dfs() (byte-level check and
+  // detokenize-level check) are responsible for intercepting them.
   const ffId = (await tokenize('\uFFFD'))[0];
   logitBias.push([ffId, false]);
   LOG.val('FFFD token id', ffId);
