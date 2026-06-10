@@ -24,10 +24,10 @@ const LOG_FILE = dirname(fileURLToPath(import.meta.url)) + '/stego_debug_log.txt
 writeFileSync(LOG_FILE, '', 'utf-8');
 
 const LOG = {
-  title: (s) => appendFileSync(LOG_FILE, `\n${'='.repeat(70)}\n  ${s}\n${'='.repeat(70)}\n`, 'utf-8'),
-  step: (s) => appendFileSync(LOG_FILE, `\n--- ${s} ---\n`, 'utf-8'),
-  req: (method, url, body) => appendFileSync(LOG_FILE, `\n>> ${method} ${url}\n${JSON.stringify(body)}\n`, 'utf-8'),
-  res: (data) => appendFileSync(LOG_FILE, `<< ${JSON.stringify(data)}\n`, 'utf-8'),
+  title: (s) => appendFileSync(LOG_FILE, `\n[${s}]\n`, 'utf-8'),
+  step: (s) => appendFileSync(LOG_FILE, `\n[${s}]\n`, 'utf-8'),
+  // req: (method, url, body) => appendFileSync(LOG_FILE, `\n>> ${method} ${url}\n${JSON.stringify(body)}\n`, 'utf-8'),
+  // res: (data) => appendFileSync(LOG_FILE, `<< ${JSON.stringify(data)}\n`, 'utf-8'),
   val: (name, val) => appendFileSync(LOG_FILE, `  ${name} = ${_fmt(val)}\n`, 'utf-8'),
   raw: (s) => appendFileSync(LOG_FILE, s + '\n', 'utf-8'),
 };
@@ -43,7 +43,7 @@ function _fmt(v) {
 // HTTP helpers
 // ============================================================
 async function apiPost(path, body) {
-  LOG.req('POST', BASE_URL + path, body);
+  // LOG.req('POST', BASE_URL + path, body);
   const r = await fetch(BASE_URL + path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -54,16 +54,16 @@ async function apiPost(path, body) {
     throw new Error(`HTTP ${r.status}: ${text}`);
   }
   const data = await r.json();
-  LOG.res(data);
+  // LOG.res(data);
   return data;
 }
 
 async function apiGet(path) {
-  LOG.req('GET', BASE_URL + path, null);
+  // LOG.req('GET', BASE_URL + path, null);
   const r = await fetch(BASE_URL + path);
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
   const data = await r.json();
-  LOG.res(data);
+  // LOG.res(data);
   return data;
 }
 
@@ -162,7 +162,7 @@ async function unishoxCompress(str) {
   LOG.val('Unishox2 size', usxResult.length);
   LOG.val('Deflate size', deflateResult.length);
   LOG.val('Chosen method', useUnishox ? 'unishox2' : 'deflate');
-  LOG.val('Chosen data bytes', _fmt(chosen));
+  // LOG.val('Chosen data bytes', _fmt(chosen));
   return [chosen, useUnishox];
 }
 
@@ -252,6 +252,7 @@ async function queryCompletion(promptTokens, tailCompletion) {
   };
   if (tailCompletion) {
     body.stop = punctuations;
+    body.n_predict = 32;
   } else {
     body.n_predict = 1;
     body.top_k = 120;
@@ -282,8 +283,7 @@ async function queryCompletion(promptTokens, tailCompletion) {
 // --------------------------------------------------------------------------
 
 async function dfs(bitPos, pendingBytes = [], depth = 0) {
-  const indent = '  '.repeat(depth);
-  LOG.raw(`${indent}[dfs depth=${depth}] bitPos=${bitPos}/${targetBits.length} pendingBytes=[${pendingBytes.join(',')}]`);
+  // LOG.raw(`[dfs depth=${depth}] bitPos=${bitPos}/${targetBits.length} pendingBytes=[${pendingBytes.join(',')}]`);
 
   const json = await queryCompletion(currentPrompt, false);
   const probs = json.completion_probabilities;
@@ -296,11 +296,11 @@ async function dfs(bitPos, pendingBytes = [], depth = 0) {
     const tokId = json.tokens[0];
     const tokText = await detokenize([tokId]);
     if (tokText.includes('\uFFFD')) {
-      LOG.raw(`${indent}  ⛔ Format B token ${tokId} has invalid UTF-8, branch dead`);
+      // LOG.raw(`⛔ Format B token ${tokId} has invalid UTF-8`);
       return;
     }
     if (tokText.includes(eosToken) || tokText.includes('<|endoftext|>')) {
-      LOG.raw(`${indent}  ⛔ Format B token ${tokId} is EOS, branch dead`);
+      // LOG.raw(`⛔ Format B token ${tokId} is EOS`);
       return;
     }
     const tokBytes = Array.from(new TextEncoder().encode(tokText));
@@ -308,16 +308,16 @@ async function dfs(bitPos, pendingBytes = [], depth = 0) {
   } else {
     candidates = probs[0].top_probs;
   }
-  LOG.val(`${indent}candidates count`, candidates.length);
+  // LOG.val(`candidates count`, candidates.length);
 
   if (currentShuffle < Math.floor(candidates.length / 4)) {
     currentShuffle++;
     candidates = shuffle(candidates, 0, Math.floor(candidates.length / 4));
-    LOG.val(`${indent}shuffle applied (${currentShuffle})`, null);
+    // LOG.val(`shuffle applied (${currentShuffle})`, null);
   }
 
   for (let j = 0; j < candidates.length; j++) {
-    if (done) { LOG.raw(`${indent}  ◊ done, returning`); return; }
+    if (done) { /* LOG.raw(`  ◊ done, returning`); */ return; }
 
     const cand = candidates[j];
 
@@ -328,7 +328,7 @@ async function dfs(bitPos, pendingBytes = [], depth = 0) {
     if (cand.bytes && cand.bytes.length > 0) {
       const byteDecoded = new TextDecoder().decode(new Uint8Array(cand.bytes));
       if (byteDecoded.includes('\uFFFD')) {
-        LOG.raw(`${indent}  [${j}] ⛔ skipping token ${cand.id} (invalid UTF-8 bytes)`);
+        // LOG.raw(`  [${j}] ⛔ skipping token ${cand.id} (invalid UTF-8 bytes)`);
         continue;
       }
     }
@@ -344,7 +344,7 @@ async function dfs(bitPos, pendingBytes = [], depth = 0) {
       ? (typeof cand.probability === 'number' ? cand.probability.toFixed(6) : String(cand.probability))
       : (cand.logprob !== undefined ? `logprob=${cand.logprob.toFixed(4)}` : '?');
 
-    LOG.raw(`${indent}  [${j}] token_id=${cand.id} prob=${prob} bytes=[${cand.bytes.join(',')}] token="${_fmt(cand.token)}"`);
+    // LOG.raw(`  [${j}] token_id=${cand.id} prob=${prob} bytes=[${cand.bytes.join(',')}] token="${_fmt(cand.token)}"`);
 
     // Prepend pending bytes from prior tokens, then test 3-byte groups
     const allBytes = [...pendingBytes, ...cand.bytes];
@@ -356,7 +356,7 @@ async function dfs(bitPos, pendingBytes = [], depth = 0) {
       const parity = getParityFromBytes(group);
       const targetBit = targetBits[bitPos + bitsMatched];
 
-      LOG.raw(`${indent}    grp [${group.join(',')}] parity=${parity} want=${targetBit} ${parity === targetBit ? '✓' : '✗'}`);
+      // LOG.raw(`    grp [${group.join(',')}] parity=${parity} want=${targetBit} ${parity === targetBit ? '✓' : '✗'}`);
 
       if (parity !== targetBit) {
         bitsMatched = -1;
@@ -370,18 +370,21 @@ async function dfs(bitPos, pendingBytes = [], depth = 0) {
         done = true;
         currentPrompt.push(cand.id);
         coverText += cand.token;
-        LOG.raw(`${indent}      ✓ ALL ${targetBits.length} BITS EMBEDDED`);
+        LOG.raw(`✓ ALL ${targetBits.length} BITS EMBEDDED`);
+        const coreLen = coverText.length;
         if (allowInsertion) {
           if (!punctuations.includes(coverText[coverText.length - 1])) {
             const tail = await tailComplete(currentPrompt);
             coverText += tail;
-            LOG.raw(`${indent}      → tail completion: "${_fmt(tail)}"`);
+            LOG.raw(`→ tail completion: "${_fmt(tail)}"`);
           }
         } else {
           const usedText = new TextDecoder().decode(new Uint8Array(allBytes.slice(0, consumed)));
-          LOG.raw(`${indent}      extraction mode, used: "${_fmt(usedText)}"`);
+          LOG.raw(`extraction mode, used: "${_fmt(usedText)}"`);
         }
-        LOG.val(`${indent}      Final coverText`, coverText);
+        LOG.raw(`Core coverText length = ${coreLen}`);
+        LOG.raw(`Full coverText length = ${coverText.length}`);
+        LOG.raw(`Full coverText = ${JSON.stringify(coverText)}`);
         return;
       }
     }
@@ -390,7 +393,7 @@ async function dfs(bitPos, pendingBytes = [], depth = 0) {
 
     // Remaining bytes (< BYTES_PER_BIT) carry forward to the next token
     const remainingBytes = allBytes.slice(consumed);
-    LOG.raw(`${indent}    → +${bitsMatched} bit(s), ${remainingBytes.length} bytes pending`);
+    // LOG.raw(`    → +${bitsMatched} bit(s), ${remainingBytes.length} bytes pending`);
 
     currentPrompt.push(cand.id);
     coverText += cand.token;
@@ -425,21 +428,21 @@ async function encrypt(prompt, plainText, pubKey = null) {
   const trimBit = (useUnishox || pubKey) ? 0 : 1;
   const trimIdx = bits.lastIndexOf(trimBit) + 1;
   bits = bits.slice(0, bits.length - trimIdx <= 7 ? trimIdx : bits.length - 7);
-  LOG.val('Binary bits before magic', _fmt(bits));
+  // LOG.val('Binary bits before magic', _fmt(bits));
   LOG.val('Bit length before magic', bits.length);
 
   // 4. Wrap with magic markers (insertion mode)
   if (allowInsertion) bits = [...magicNum1, ...bits, ...magicNum2];
   targetBits = bits;
   LOG.val('Total target bits', targetBits.length);
-  LOG.val('Full target bits', _fmt(targetBits));
+  // LOG.val('Full target bits', _fmt(targetBits));
 
   // 5. Add think tag if supported
   if (hasThinkTag) prompt += "<think>\n</think>\n\n";
 
   // 6. Tokenize prompt
   currentPrompt = await tokenize(prompt);
-  LOG.val('Prompt tokens', currentPrompt);
+  // LOG.val('Prompt tokens', currentPrompt);
 
   // 7. Run DFS
   coverText = '';
@@ -459,7 +462,7 @@ async function extract(coverText, privKey = null) {
     const group = bytes.slice(i, i + BYTES_PER_BIT);
     exBits.push(getParityFromBytes(group));
   }
-  LOG.val('Extracted raw bits', _fmt(exBits));
+  // LOG.val('Extracted raw bits', _fmt(exBits));
   LOG.val('Raw bit length', exBits.length);
 
   // Find magic markers
@@ -487,7 +490,7 @@ async function extract(coverText, privKey = null) {
 // ============================================================
 async function init() {
   const props = await apiGet('/props');
-  LOG.val('chat_template', props.chat_template);
+  // LOG.val('chat_template', props.chat_template);
   eosToken = props.eos_token;
   hasThinkTag = (props.chat_template_caps?.reasoning) || props.chat_template.includes('</think>');
   LOG.val('eos_token', eosToken);
@@ -516,10 +519,14 @@ async function main() {
     // Parse CLI args
     const args = process.argv.slice(2);
     let pubKeyPath, privKeyPath;
+    let secret = SECRET;
+    let prompt = PROMPT;
     for (let i = 0; i < args.length; i++) {
       if (args[i] === '--pubkey' && args[i+1]) pubKeyPath = args[++i];
       else if (args[i] === '--privkey' && args[i+1]) privKeyPath = args[++i];
       else if (args[i] === '--no-insertion') allowInsertion = false;
+      else if (args[i] === '--secret' && args[i+1]) secret = args[++i];
+      else if (args[i] === '--prompt' && args[i+1]) prompt = args[++i];
     }
 
     let pubKey = null, privKey = null;
@@ -529,7 +536,7 @@ async function main() {
     await init();
 
     // Encode
-    const ct = await encrypt(PROMPT, SECRET, pubKey);
+    const ct = await encrypt(prompt, secret, pubKey);
     if (!done) {
       LOG.raw('\nCover text generation FAILED — cannot test extraction');
       process.exit(1);
@@ -539,9 +546,9 @@ async function main() {
     const extracted = await extract(ct, privKey);
 
     LOG.title('ROUNDTRIP RESULT');
-    LOG.val('Original secret', SECRET);
+    LOG.val('Original secret', secret);
     LOG.val('Extracted secret', extracted);
-    LOG.val('Roundtrip success', extracted === SECRET ? 'YES' : 'NO');
+    LOG.val('Roundtrip success', extracted === secret ? 'YES' : 'NO');
   } catch (err) {
     console.error('\n❌ ERROR:', err.message);
     console.error(err.stack);

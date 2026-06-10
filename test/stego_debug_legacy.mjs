@@ -24,10 +24,10 @@ const LOG_FILE = dirname(fileURLToPath(import.meta.url)) + '/stego_debug_legacy_
 writeFileSync(LOG_FILE, '', 'utf-8');
 
 const LOG = {
-  title: (s) => appendFileSync(LOG_FILE, `\n${'='.repeat(70)}\n  ${s}\n${'='.repeat(70)}\n`, 'utf-8'),
-  step: (s) => appendFileSync(LOG_FILE, `\n--- ${s} ---\n`, 'utf-8'),
-  req: (method, url, body) => appendFileSync(LOG_FILE, `\n>> ${method} ${url}\n${JSON.stringify(body)}\n`, 'utf-8'),
-  res: (data) => appendFileSync(LOG_FILE, `<< ${JSON.stringify(data)}\n`, 'utf-8'),
+  title: (s) => appendFileSync(LOG_FILE, `\n[${s}]\n`, 'utf-8'),
+  step: (s) => appendFileSync(LOG_FILE, `\n[${s}]\n`, 'utf-8'),
+  // req: (method, url, body) => appendFileSync(LOG_FILE, `\n>> ${method} ${url}\n${JSON.stringify(body)}\n`, 'utf-8'),
+  // res: (data) => appendFileSync(LOG_FILE, `<< ${JSON.stringify(data)}\n`, 'utf-8'),
   val: (name, val) => appendFileSync(LOG_FILE, `  ${name} = ${_fmt(val)}\n`, 'utf-8'),
   raw: (s) => appendFileSync(LOG_FILE, s + '\n', 'utf-8'),
 };
@@ -43,7 +43,7 @@ function _fmt(v) {
 // HTTP helpers
 // ============================================================
 async function apiPost(path, body) {
-  LOG.req('POST', BASE_URL + path, body);
+  // LOG.req('POST', BASE_URL + path, body);
   const r = await fetch(BASE_URL + path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -54,16 +54,16 @@ async function apiPost(path, body) {
     throw new Error(`HTTP ${r.status}: ${text}`);
   }
   const data = await r.json();
-  LOG.res(data);
+  // LOG.res(data);
   return data;
 }
 
 async function apiGet(path) {
-  LOG.req('GET', BASE_URL + path, null);
+  // LOG.req('GET', BASE_URL + path, null);
   const r = await fetch(BASE_URL + path);
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
   const data = await r.json();
-  LOG.res(data);
+  // LOG.res(data);
   return data;
 }
 
@@ -172,7 +172,7 @@ async function unishoxCompress(str) {
   LOG.val('Unishox2 size', usxResult.length);
   LOG.val('Deflate size', deflateResult.length);
   LOG.val('Chosen method', useUnishox ? 'unishox2' : 'deflate');
-  LOG.val('Chosen data bytes', _fmt(chosen));
+  // LOG.val('Chosen data bytes', _fmt(chosen));
   return [chosen, useUnishox];
 }
 
@@ -262,6 +262,7 @@ async function queryCompletion(promptTokens, tailCompletion) {
   };
   if (tailCompletion) {
     body.stop = punctuations;
+    body.n_predict = 32;
   } else {
     body.n_predict = 1;
     body.top_k = 120;
@@ -309,8 +310,7 @@ function hasFFFD(s) {
 }
 
 async function dfs(bitPos, accChars, accScore, pending, depth = 0) {
-  const indent = '  '.repeat(depth);
-  LOG.raw(`${indent}[dfs depth=${depth}] bitPos=${bitPos}/${targetBits.length} accChars="${accChars}" accScore=${accScore} pending=${pending}`);
+  // LOG.raw(`[dfs depth=${depth}] bitPos=${bitPos}/${targetBits.length} accChars="${accChars}" accScore=${accScore} pending=${pending}`);
 
   const json = await queryCompletion(currentPrompt, false);
   const probs = json.completion_probabilities;
@@ -331,17 +331,17 @@ async function dfs(bitPos, accChars, accScore, pending, depth = 0) {
   } else {
     candidates = probs[0].top_probs;
   }
-  LOG.val(`${indent}candidates count`, candidates.length);
+  // LOG.val(`candidates count`, candidates.length);
 
   // shuffle early candidates (same as browser)
   if (currentShuffle < Math.floor(candidates.length / 4)) {
     currentShuffle++;
     candidates = shuffle(candidates, 0, Math.floor(candidates.length / 4));
-    LOG.val(`${indent}shuffle applied (${currentShuffle})`, null);
+    // LOG.val(`shuffle applied (${currentShuffle})`, null);
   }
 
   for (let j = 0; j < candidates.length; j++) {
-    if (done) { LOG.raw(`${indent}  ◊ done, returning`); return; }
+    if (done) { /* LOG.raw(`  ◊ done, returning`); */ return; }
 
     const cand = candidates[j];
 
@@ -352,7 +352,7 @@ async function dfs(bitPos, accChars, accScore, pending, depth = 0) {
     if (cand.bytes && cand.bytes.length > 0) {
       const byteDecoded = new TextDecoder().decode(new Uint8Array(cand.bytes));
       if (byteDecoded.includes('\uFFFD')) {
-        LOG.raw(`${indent}  [${j}] ⛔ skipping token ${cand.id} (invalid UTF-8 bytes)`);
+        // LOG.raw(`  [${j}] ⛔ skipping token ${cand.id} (invalid UTF-8 bytes)`);
         continue;
       }
     }
@@ -362,7 +362,7 @@ async function dfs(bitPos, accChars, accScore, pending, depth = 0) {
       const combined = [...currentPrompt.slice(-pending), cand.id];
       tokenText = await detokenize(combined);
       if (hasFFFD(tokenText)) {
-        LOG.raw(`${indent}  [${j}] ⛔ skipping (\uFFFD in combined result)`);
+        // LOG.raw(`  [${j}] ⛔ skipping (\uFFFD in combined result)`);
         continue;
       }
       needsDeeperDecode = hasFFFD(tokenText);
@@ -375,13 +375,13 @@ async function dfs(bitPos, accChars, accScore, pending, depth = 0) {
       ? (typeof cand.probability === 'number' ? cand.probability.toFixed(6) : cand.probability)
       : (cand.logprob !== undefined ? `logprob=${cand.logprob.toFixed(4)}` : '?');
 
-    LOG.raw(`${indent}  [${j}] token_id=${cand.id} prob=${prob} token="${_fmt(tokenText)}" pending=${pending} needsDeeper=${needsDeeperDecode}`);
+    // LOG.raw(`  [${j}] token_id=${cand.id} prob=${prob} token="${_fmt(tokenText)}" pending=${pending} needsDeeper=${needsDeeperDecode}`);
 
     if (needsDeeperDecode) {
       if (pending === 0) {
         const extra = await detokenize([cand.id]);
         if (extra.includes(eosToken) || extra.includes('<|endoftext|>')) {
-          LOG.raw(`${indent}    ⛔ skipping (EOS token)`);
+          // LOG.raw(`    ⛔ skipping (EOS token)`);
           continue;
         }
         // Defence layer #2: detokenize a single token and reject it
@@ -390,7 +390,7 @@ async function dfs(bitPos, accChars, accScore, pending, depth = 0) {
         // hybrids like " �" (space + U+FFFD) where the stray byte
         // after the printable prefix still crashes the server.
         if (hasFFFD(extra)) {
-          LOG.raw(`${indent}    ⛔ skipping (\uFFFD token)`);
+          // LOG.raw(`    ⛔ skipping (\uFFFD token)`);
           continue;
         }
       }
@@ -405,14 +405,14 @@ async function dfs(bitPos, accChars, accScore, pending, depth = 0) {
     let gScore = accScore;
     let bitsMatched = 0;
     const codePoints = [...tokenText];
-    LOG.raw(`${indent}    codePoints=[${codePoints.map(c=>'U+' + c.codePointAt(0).toString(16)).join(', ')}]`);
+    // LOG.raw(`    codePoints=[${codePoints.map(c=>'U+' + c.codePointAt(0).toString(16)).join(', ')}]`);
 
     for (let k = 0; ; k++) {
       if (k >= codePoints.length) {
         // Token fully consumed without matching all bits; accumulate and continue DFS
         currentPrompt.push(cand.id);
         coverText += tokenText;
-        LOG.raw(`${indent}    → token consumed, push+recurse (bitsMatched=${bitsMatched})`);
+        // LOG.raw(`    → token consumed, push+recurse (bitsMatched=${bitsMatched})`);
         await dfs(bitPos + bitsMatched, gChars, gScore, 0, depth + 1);
         if (done) return;
         currentPrompt.pop();
@@ -424,15 +424,15 @@ async function dfs(bitPos, accChars, accScore, pending, depth = 0) {
       const cp = codePoints[k].codePointAt(0);
       const w = getWeight(cp);
       gScore += w;
-      LOG.raw(`${indent}      char[${k}]="${codePoints[k]}" U+${cp.toString(16)} weight=${w} gChars="${gChars}" gScore=${gScore}`);
+      // LOG.raw(`      char[${k}]="${codePoints[k]}" U+${cp.toString(16)} weight=${w} gChars="${gChars}" gScore=${gScore}`);
 
       if (gScore >= 3) {
         const parity = getParity(gChars);
         const targetBit = targetBits[bitPos + bitsMatched];
-        LOG.raw(`${indent}        gScore>=3 → parity=${parity} targetBit=${targetBit} match=${parity === targetBit}`);
+        // LOG.raw(`        gScore>=3 → parity=${parity} targetBit=${targetBit} match=${parity === targetBit}`);
 
         if (parity !== targetBit) {
-          LOG.raw(`${indent}        ✗ mismatch, break`);
+          // LOG.raw(`        ✗ mismatch, break`);
           break;
         }
 
@@ -446,17 +446,20 @@ async function dfs(bitPos, accChars, accScore, pending, depth = 0) {
           if (allowInsertion) {
             currentPrompt.push(cand.id);
             coverText += tokenText;
-            LOG.raw(`${indent}      ✓ ALL BITS EMBEDDED (insertion mode)`);
+            LOG.raw(`✓ ALL BITS EMBEDDED (insertion mode)`);
+            const coreLen = coverText.length;
             if (!punctuations.includes(coverText[coverText.length - 1])) {
-              const tail = await tailComplete(currentPrompt);
-              coverText += tail;
-              LOG.raw(`${indent}      → tail completion: "${_fmt(tail)}"`);
+              coverText += await tailComplete(currentPrompt);
             }
+            LOG.raw(`Core coverText length = ${coreLen}`);
+            LOG.raw(`Full coverText length = ${coverText.length}`);
           } else {
             coverText += usedChars;
-            LOG.raw(`${indent}      ✓ ALL BITS EMBEDDED (extraction mode), used chars: "${_fmt(usedChars)}"`);
+            LOG.raw(`✓ ALL BITS EMBEDDED (extraction mode), used chars: "${_fmt(usedChars)}"`);
+            LOG.raw(`Core coverText length = ${coverText.length}`);
+            LOG.raw(`Full coverText length = ${coverText.length}`);
           }
-          LOG.val(`${indent}      Final coverText`, coverText);
+          LOG.raw(`Full coverText = ${JSON.stringify(coverText)}`);
           return;
         }
       }
@@ -488,21 +491,21 @@ async function encrypt(prompt, plainText, pubKey = null) {
   const trimBit = (useUnishox || pubKey) ? 0 : 1;
   const trimIdx = bits.lastIndexOf(trimBit) + 1;
   bits = bits.slice(0, bits.length - trimIdx <= 7 ? trimIdx : bits.length - 7);
-  LOG.val('Binary bits before magic', _fmt(bits));
+  // LOG.val('Binary bits before magic', _fmt(bits));
   LOG.val('Bit length before magic', bits.length);
 
   // 4. Wrap with magic markers (insertion mode)
   if (allowInsertion) bits = [...magicNum1, ...bits, ...magicNum2];
   targetBits = bits;
   LOG.val('Total target bits', targetBits.length);
-  LOG.val('Full target bits', _fmt(targetBits));
+  // LOG.val('Full target bits', _fmt(targetBits));
 
   // 5. Add think tag if supported
   if (hasThinkTag) prompt += "<think>\n</think>\n\n";
 
   // 6. Tokenize prompt
   currentPrompt = await tokenize(prompt);
-  LOG.val('Prompt tokens', currentPrompt);
+  // LOG.val('Prompt tokens', currentPrompt);
 
   // 7. Run DFS
   coverText = '';
@@ -527,7 +530,7 @@ async function extract(coverText, privKey = null) {
       gScore = 0;
     }
   }
-  LOG.val('Extracted raw bits', _fmt(exBits));
+  // LOG.val('Extracted raw bits', _fmt(exBits));
   LOG.val('Raw bit length', exBits.length);
 
   // Find magic markers
@@ -555,7 +558,7 @@ async function extract(coverText, privKey = null) {
 // ============================================================
 async function init() {
   const props = await apiGet('/props');
-  LOG.val('chat_template', props.chat_template);
+  // LOG.val('chat_template', props.chat_template);
   eosToken = props.eos_token;
   hasThinkTag = (props.chat_template_caps?.reasoning) || props.chat_template.includes('</think>');
   LOG.val('eos_token', eosToken);
@@ -588,10 +591,14 @@ async function main() {
     // Parse CLI args
     const args = process.argv.slice(2);
     let pubKeyPath, privKeyPath;
+    let secret = SECRET;
+    let prompt = PROMPT;
     for (let i = 0; i < args.length; i++) {
       if (args[i] === '--pubkey' && args[i+1]) pubKeyPath = args[++i];
       else if (args[i] === '--privkey' && args[i+1]) privKeyPath = args[++i];
       else if (args[i] === '--no-insertion') allowInsertion = false;
+      else if (args[i] === '--secret' && args[i+1]) secret = args[++i];
+      else if (args[i] === '--prompt' && args[i+1]) prompt = args[++i];
     }
 
     let pubKey = null, privKey = null;
@@ -601,7 +608,7 @@ async function main() {
     await init();
 
     // Encode
-    const ct = await encrypt(PROMPT, SECRET, pubKey);
+    const ct = await encrypt(prompt, secret, pubKey);
     if (!done) {
       LOG.raw('\nCover text generation FAILED — cannot test extraction');
       process.exit(1);
@@ -611,9 +618,9 @@ async function main() {
     const extracted = await extract(ct, privKey);
 
     LOG.title('ROUNDTRIP RESULT');
-    LOG.val('Original secret', SECRET);
+    LOG.val('Original secret', secret);
     LOG.val('Extracted secret', extracted);
-    LOG.val('Roundtrip success', extracted === SECRET ? 'YES' : 'NO');
+    LOG.val('Roundtrip success', extracted === secret ? 'YES' : 'NO');
   } catch (err) {
     console.error('\n❌ ERROR:', err.message);
     console.error(err.stack);
