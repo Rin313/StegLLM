@@ -147,9 +147,15 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
       const candidates = await completion(currentPrompt, false);
       for (let j = 0; j < candidates.length; j++) {
 if (done) return;
+        if (candidates[j].bytes && candidates[j].bytes.length > 0) {
+          const byteDecoded = new TextDecoder().decode(new Uint8Array(candidates[j].bytes));
+          if (byteDecoded.includes("\uFFFD")) continue;
+        }
         let tokenText, needsDeeperDecode;
         if (pending > 0) {
-          tokenText = await detokenize([...currentPrompt.slice(-pending), candidates[j].id]);
+          const combined = [...currentPrompt.slice(-pending), candidates[j].id];
+          tokenText = await detokenize(combined);
+          if (tokenText.includes("\uFFFD")) continue;
           needsDeeperDecode = tokenText.includes("\uFFFD");
         } else {
           tokenText = candidates[j].token;
@@ -159,6 +165,7 @@ if (done) return;
           if (pending === 0) {
             const extra = await detokenize([candidates[j].id]);//特殊符号不detokenize的话显示为""
             if (extra.includes(eosToken) || extra.includes("<|endoftext|>")) continue;//禁止中断时会输出大量无意义token，应手动处理使其自动回溯
+            if (extra.includes("\uFFFD")) continue;
           }
           currentPrompt.push(candidates[j].id);
           await dfs(bitPos, accChars, accScore, pending + 1);

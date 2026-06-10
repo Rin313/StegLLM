@@ -31,7 +31,8 @@ start "" "%llamaServer%" ^
     -c 4096 ^
     --reasoning-budget 0 ^
     --reasoning-format none ^
-    --sampling-seq edskypmt ^
+    --sampling-seq edskymxt ^
+    --min-p 0.0001 ^
     --repeat-penalty 1.18 ^
     --no-perf ^
     --flash-attn auto ^
