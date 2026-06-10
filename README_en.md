@@ -5,17 +5,6 @@
 An offline AI tool that cleverly disguises your secret messages as a piece of ordinary text.
 > Unlike encryption, the essence of steganography is **to hide the very existence of a message**.
 
-## Some Fun Use Cases
-
-- **Share a Little Secret:**  
-  Want to send a friend a private message that "only we understand"? Hide it in seemingly normal text, making it completely invisible to others.
-- **Add a Watermark:**  
-  Embed an invisible signature or date in your novels or articles to prove your original authorship.
-- **A Game of Hide-and-Seek:**  
-  Hide your true opinions in a movie or food review on a public forum or social media.
-- **Code Pranks:**  
-  Hide secret instructions in log files or code comments to assign secret tasks to your program
-
 ## Quick Start
 
 - **Decryption Only:** Visit https://rin313.github.io/StegLLM/
@@ -32,7 +21,7 @@ For Linux/MacOS: Run `linux_mac.sh`
 
 ## Using a Custom Model (Optional)
 
-Obtain a **gguf** file from any source, such as **Hugging Face** or **ModelScope**, and replace the gguf file in the **data** folder of the project directory.
+Obtain a **gguf** file from any source, such as **Hugging Face**, and replace the gguf file in the **data** folder of the project directory.
 
 ## Workflow Diagram
 
