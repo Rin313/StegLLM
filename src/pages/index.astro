@@ -48,7 +48,6 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
     // draft：将尾部补全修改为输出到底，目前的尾部补全的机制不适合所有语言。
     // draft：一种牺牲隐写容量提高鲁棒性和隐写效果的方法：部分截取片段直接使用，不尝试映射
     // todo：textarea调整为支持富文本之类的能控制文本样式的组件。
-    // todo:寻找通用的system prompt注入方式
     // 不想引入故意的错别字，实现复杂、手动维护还不通用。
     const generateKeyPairMsg = t("generateKeyPairMsg");
     const failMsg = t("failMsg");
@@ -99,7 +98,10 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
         return (await post('/tokenize',{content:str})).tokens;
     }
     async function detokenize(tokens) {//不返回bytes
-        return (await post('/detokenize',{tokens: tokens})).content;
+        return (await post('/detokenize',{tokens})).content;
+    }
+    async function applyTemplate(messages) {
+        return (await post('/apply-template', { messages })).prompt;
     }
     const logitBias=[];
     let eosToken,hasThinkTag=false;
@@ -225,8 +227,13 @@ if (done) return;
       const trimIdx = targetBits.lastIndexOf(useUnishox || key ? 0 : 1) + 1;
       targetBits = targetBits.slice(0, targetBits.length - trimIdx <= 7 ? trimIdx : targetBits.length - 7);
       if (allowInsertion) targetBits = [...magicNum1, ...targetBits, ...magicNum2];
-      if(hasThinkTag) prompt+="<think>\n</think>\n\n";//支持思考模式会导致输出token数减少
-      currentPrompt = await tokenize(prompt);
+      let finalPrompt;
+      const messages = [];
+      //if (systemPrompt) messages.push({ role: "system", content: systemPrompt });
+      messages.push({ role: "user", content: prompt });
+      finalPrompt = await applyTemplate(messages);
+      if(hasThinkTag) finalPrompt+="<think>\n</think>\n\n";//支持思考模式会导致输出token数减少
+      currentPrompt = await tokenize(finalPrompt);
       $('coverText').value = "";
       done = false;
       $('progress').value="0";

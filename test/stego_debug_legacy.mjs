@@ -102,6 +102,11 @@ async function detokenize(tokens) {
   return r.content;
 }
 
+async function applyTemplate(messages) {
+  const r = await apiPost('/apply-template', { messages });
+  return r.prompt;
+}
+
 const magicNum1 = [1,0,1,1,0,0,1,0,0,1,1,0,0,1,1,0,1,0,1,1];
 const magicNum2 = [0,0,1,0,1,1,0,1,0,0,1,0,1,1,0,1,1,1,0,0];
 const punctuations = ["？", "?", "！", "!", "。", "）", ")", "…", "}", "]", "."];
@@ -462,7 +467,7 @@ async function tailComplete(promptTokens) {
 // ============================================================
 // Steganography: Encrypt entry point
 // ============================================================
-async function encrypt(prompt, plainText, pubKey = null) {
+async function encrypt(prompt, plainText, pubKey = null, systemPrompt = null) {
 
   // 1. Compress
   let [data, useUnishox] = await unishoxCompress(plainText);
@@ -484,14 +489,22 @@ async function encrypt(prompt, plainText, pubKey = null) {
   LOG.val('Total target bits', targetBits.length);
   // LOG.val('Full target bits', _fmt(targetBits));
 
-  // 5. Add think tag if supported
-  if (hasThinkTag) prompt += "<think>\n</think>\n\n";
+  // 5. Apply chat template (or fall back to raw prompt)
+  let finalPrompt;
+  const messages = [];
+  if (systemPrompt) messages.push({ role: "system", content: systemPrompt });
+  messages.push({ role: "user", content: prompt });
+  finalPrompt = await applyTemplate(messages);
+  LOG.val('Template-formatted prompt', finalPrompt);
 
-  // 6. Tokenize prompt
-  currentPrompt = await tokenize(prompt);
+  // 6. Add think tag if supported
+  if (hasThinkTag) finalPrompt += "<think>\n</think>\n\n";
+
+  // 7. Tokenize prompt
+  currentPrompt = await tokenize(finalPrompt);
   // LOG.val('Prompt tokens', currentPrompt);
 
-  // 7. Run DFS
+  // 8. Run DFS
   coverText = '';
   done = false;
   await dfs(0, '', 0, 0);
@@ -576,12 +589,14 @@ async function main() {
     let pubKeyPath, privKeyPath;
     let secret = SECRET;
     let prompt = PROMPT;
+    let systemPrompt = null;
     for (let i = 0; i < args.length; i++) {
       if (args[i] === '--pubkey' && args[i+1]) pubKeyPath = args[++i];
       else if (args[i] === '--privkey' && args[i+1]) privKeyPath = args[++i];
       else if (args[i] === '--no-insertion') allowInsertion = false;
       else if (args[i] === '--secret' && args[i+1]) secret = args[++i];
       else if (args[i] === '--prompt' && args[i+1]) prompt = args[++i];
+      else if (args[i] === '--system' && args[i+1]) systemPrompt = args[++i];
     }
 
     let pubKey = null, privKey = null;
@@ -591,7 +606,7 @@ async function main() {
     await init();
 
     // Encode
-    const ct = await encrypt(prompt, secret, pubKey);
+    const ct = await encrypt(prompt, secret, pubKey, systemPrompt);
     if (!done) {
       LOG.raw('\nCover text generation FAILED — cannot test extraction');
       process.exit(1);
