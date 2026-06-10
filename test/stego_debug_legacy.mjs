@@ -132,14 +132,6 @@ function findSublist(mainList, subList) {
   return -1;
 }
 
-function shuffle(array, start = 0, end = array.length) {
-  for (let i = end - 1; i > start; i--) {
-    const j = Math.floor(Math.random() * (i - start + 1)) + start;
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-  return array;
-}
-
 // ============================================================
 // Compression (replicated from commonUtils.js)
 // ============================================================
@@ -244,7 +236,6 @@ let currentPrompt = [];
 let targetBits = [];
 let done = false;
 let allowInsertion = true;
-let currentShuffle = 0;
 let eosToken = null;
 let hasThinkTag = false;
 let logitBias = [];
@@ -332,13 +323,6 @@ async function dfs(bitPos, accChars, accScore, pending, depth = 0) {
     candidates = probs[0].top_probs;
   }
   // LOG.val(`candidates count`, candidates.length);
-
-  // shuffle early candidates (same as browser)
-  if (currentShuffle < Math.floor(candidates.length / 4)) {
-    currentShuffle++;
-    candidates = shuffle(candidates, 0, Math.floor(candidates.length / 4));
-    // LOG.val(`shuffle applied (${currentShuffle})`, null);
-  }
 
   for (let j = 0; j < candidates.length; j++) {
     if (done) { /* LOG.raw(`  ◊ done, returning`); */ return; }
@@ -509,7 +493,6 @@ async function encrypt(prompt, plainText, pubKey = null) {
 
   // 7. Run DFS
   coverText = '';
-  currentShuffle = 0;
   done = false;
   await dfs(0, '', 0, 0);
   return coverText;

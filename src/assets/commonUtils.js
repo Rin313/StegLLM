@@ -44,13 +44,6 @@ export async function generateKeyPair() {// 生成 ECC 密钥对
     exportFile(JSON.stringify(publicKey),"public_"+kid)//导出为文件而不是字符串，避免剪切板风险//公钥可以从私钥计算得到，但没有必要额外开发找回公钥的功能
     exportFile(JSON.stringify(privateKey),"private_"+kid)
 }
-export function shuffle(array, start = 0, end = array.length) {
-    for (let i = end - 1; i > start; i--) {
-        const j = Math.floor(Math.random() * (i - start + 1)) + start;
-        [array[i], array[j]] = [array[j], array[i]];
-    }
-    return array;
-}
 async function compress(uint8Array, format = 'deflate-raw') {//format:`gzip`,`deflate`,`deflate-raw`
     const compressedStream = new Response(uint8Array).body.pipeThrough(new CompressionStream(format));
     return new Uint8Array(await new Response(compressedStream).arrayBuffer());

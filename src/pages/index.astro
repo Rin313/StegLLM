@@ -43,10 +43,9 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
       </div>
   </div>
   <script>
-    import { $,get,post,getLocal,setLocal,moveToEnd,generateKeyPair, unishoxCompress, eccEncryptToUint8Array, eccDecryptToUint8Array, shuffle, toBinary, toBytes, findSublist, unishoxDecompress,showAlert,magicNum1,magicNum2} from "../assets/commonUtils";
+    import { $,get,post,getLocal,setLocal,moveToEnd,generateKeyPair, unishoxCompress, eccEncryptToUint8Array, eccDecryptToUint8Array, toBinary, toBytes, findSublist, unishoxDecompress,showAlert,magicNum1,magicNum2} from "../assets/commonUtils";
     import { t } from "../assets/i18n";
     // draft：将尾部补全修改为输出到底，目前的尾部补全的机制不适合所有语言。
-    // draft：通过添加随机序列来移除shuffle，但是目前生成稍长的文本已经很困难了。
     // draft：一种牺牲隐写容量提高鲁棒性和隐写效果的方法：部分截取片段直接使用，不尝试映射
     // todo：textarea调整为支持富文本之类的能控制文本样式的组件。
     // todo:寻找通用的system prompt注入方式
@@ -134,14 +133,9 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
       }
       const probs = json.completion_probabilities;
       if (!probs) return [{id: json.tokens[0],token: ""},];
-      let result = probs[0].top_probs; //主要影响输出token数的采样：top_p;min_p（相对于最可能标记的概率，考虑标记的最小概率。）;
-      if (currentShuffle < Math.floor(result.length/4)) {
-        currentShuffle++;
-        return shuffle(result, 0, Math.floor(result.length/4));
-      }
-      return result;
+      return probs[0].top_probs;
     }
-    let targetBits, currentPrompt, currentShuffle, done, allowInsertion;
+    let targetBits, currentPrompt, done, allowInsertion;
     async function dfs(bitPos, accChars, accScore, pending) {
       $('progress').value = bitPos / targetBits.length * 100;
       const candidates = await completion(currentPrompt, false);
@@ -234,7 +228,6 @@ if (done) return;
       if(hasThinkTag) prompt+="<think>\n</think>\n\n";//支持思考模式会导致输出token数减少
       currentPrompt = await tokenize(prompt);
       $('coverText').value = "";
-      currentShuffle = 0;
       done = false;
       $('progress').value="0";
       $('progress').classList.remove("invisible");
