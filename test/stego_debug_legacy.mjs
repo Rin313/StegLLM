@@ -242,7 +242,6 @@ let targetBits = [];
 let done = false;
 let allowInsertion = true;
 let eosToken = null;
-let logitBias = [];
 
 let coverText = ''; // simulated textarea
 let progressLog = [];
@@ -253,7 +252,6 @@ async function queryCompletion(promptTokens, tailCompletion) {
     response_fields: tailCompletion
       ? ['content', 'stopping_word', 'stop_type']
       : ['completion_probabilities', 'tokens'],
-    logit_bias: logitBias,
   };
   if (tailCompletion) {
     body.stop = punctuations;
@@ -554,17 +552,14 @@ async function init() {
   eosToken = props.eos_token;
   LOG.val('eos_token', eosToken);
 
-  // logitBias: forbid the primary U+FFFD replacement-character token.
-  //
-  // NOTE: the model may have SEVERAL token IDs that all decode to
-  // U+FFFD (e.g. Qwen3-0.6B has at least 5691 and 70467).  tokenize()
-  // only discovers one of them.  The other U+FFFD-tokens are NOT
-  // added to the bias and will appear among candidates during DFS.
-  // The two defence layers inside dfs() (byte-level check and
-  // detokenize-level check) are responsible for intercepting them.
-  const ffId = (await tokenize('\uFFFD'))[0];
-  logitBias.push([ffId, false]);
-  LOG.val('FFFD token id', ffId);
+  // We deliberately do NOT use logit_bias to forbid U+FFFD tokens,
+  // because a model may have MULTIPLE token IDs that decode to U+FFFD
+  // (e.g. Qwen3-0.6B has at least 5691 and 70467) and tokenize('\uFFFD')
+  // only discovers one of them.  The two defence layers inside dfs()
+  // (byte-level check and detokenize-level check) already intercept
+  // ALL such tokens comprehensively — a single logit_bias would not add
+  // meaningful protection and would only distort the probability
+  // distribution.
 }
 
 // ============================================================

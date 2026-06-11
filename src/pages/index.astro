@@ -103,26 +103,23 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
     async function applyTemplate(messages) {
         return (await post('/apply-template', { messages })).prompt;
     }
-    const logitBias=[];
     let eosToken;
     if (window.location.hostname === "127.0.0.1") {
         const props=await get("/props");
         eosToken=props.eos_token;
-        logitBias.push([(await tokenize("\uFFFD"))[0], false]);//避免在判断不可解码的token时产生干扰
     }
     const punctuations = ["？", "?", "！", "!", "。", "）", ")", "…", "}", "]", "."]; //"\n"和"”"有时候并不代表结尾
     async function completion(prompt, tailCompletion) {
       let body = {
         prompt: prompt, //支持输入多个prompt
         response_fields: tailCompletion ? ["content", "stopping_word", "stop_type"] : ["completion_probabilities","tokens"],
-        logit_bias: logitBias,
       };
       if (tailCompletion) {
-        body["stop"] = punctuations; //chat模式stop可设为["</s>", "Llama:", "User:"]
+        body["stop"] = punctuations;
       } else {
         body["n_predict"] = 1;//预测的最大token数，如果最后一个标记是部分多字节字符，则可能会略微超过设置的限制。
         body["top_k"] = 120;
-        body["n_probs"] = 120;//按概率排序的前n个选词，如果top_k不够好像会拿0开始的token补全
+        body["n_probs"] = 120;
         body["post_sampling_probs"] = true;//返回应用采样链后token的概率，不开启时返回的logprob是和采样无关的，logitBias也不会生效
         body["return_tokens"] = true;//概率非常小的情况下，不会返回采样列表completion_probabilities
       }
@@ -141,7 +138,7 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
       $('progress').value = bitPos / targetBits.length * 100;
       const candidates = await completion(currentPrompt, false);
       for (let j = 0; j < candidates.length; j++) {
-if (done) return;
+        if (done) return;
         if (candidates[j].bytes && candidates[j].bytes.length > 0) {
           const byteDecoded = new TextDecoder().decode(new Uint8Array(candidates[j].bytes));
           if (byteDecoded.includes("\uFFFD")) continue;
@@ -179,7 +176,7 @@ if (done) return;
             if (done) return; //在这里return避免逐层回溯，导致文本框内容变化
             currentPrompt.pop();
             $('coverText').value = $('coverText').value.slice(0, -tokenText.length);
-            break; //减少dfs传递的内存占用
+            break;
           }
           groupChars += codePoints[k];
           groupScore += getWeight(codePoints[k].codePointAt(0));

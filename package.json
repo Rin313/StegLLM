@@ -9,7 +9,7 @@
   "dependencies": {
     "@lucide/astro": "^1.17.0",
     "@tailwindcss/vite": "^4.3.0",
-    "astro": "^6.4.4",
+    "astro": "^6.4.6",
     "daisyui": "^5.5.23",
     "unishox2.siara.cc": "^1.1.5",
     "vite-plugin-singlefile": "^2.3.3"
