@@ -45,7 +45,6 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
   <script>
     import { $,get,post,getLocal,setLocal,moveToEnd,generateKeyPair, unishoxCompress, eccEncryptToUint8Array, eccDecryptToUint8Array, toBinary, toBytes, findSublist, unishoxDecompress,showAlert,magicNum1,magicNum2} from "../assets/commonUtils";
     import { t } from "../assets/i18n";
-    // draft：将尾部补全修改为输出到底，目前的尾部补全的机制不适合所有语言。
     // draft：一种牺牲隐写容量提高鲁棒性和隐写效果的方法：部分截取片段直接使用，不尝试映射
     // todo：textarea调整为支持富文本之类的能控制文本样式的组件。
     // 不想引入故意的错别字，实现复杂、手动维护还不通用。
@@ -108,14 +107,13 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
         const props=await get("/props");
         eosToken=props.eos_token;
     }
-    const punctuations = ["？", "?", "！", "!", "。", "）", ")", "…", "}", "]", "."]; //"\n"和"”"有时候并不代表结尾
-    async function completion(prompt, tailCompletion) {
+    async function completion(prompt, tailNpredict = 0) {
       let body = {
         prompt: prompt, //支持输入多个prompt
-        response_fields: tailCompletion ? ["content", "stopping_word", "stop_type"] : ["completion_probabilities","tokens"],
+        response_fields: tailNpredict ? ["content", "stopping_word", "stop_type"] : ["completion_probabilities","tokens"],
       };
-      if (tailCompletion) {
-        body["stop"] = punctuations;
+      if (tailNpredict) {
+        body["n_predict"] = tailNpredict;
       } else {
         body["n_predict"] = 1;//预测的最大token数，如果最后一个标记是部分多字节字符，则可能会略微超过设置的限制。
         body["top_k"] = 120;
@@ -124,10 +122,10 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
         body["return_tokens"] = true;//概率非常小的情况下，不会返回采样列表completion_probabilities
       }
       const json = await post("/completion",body);
-      if (tailCompletion) {
-        if (json.stopping_word) return json.content + json.stopping_word;
-        if (json.stop_type && json.stop_type !== "none") return json.content;
-        return await completion(prompt, true);
+      if (tailNpredict) {
+        if (json.stop_type === "eos") return json.content;
+        if (tailNpredict < 256) return await completion(prompt, tailNpredict * 2);
+        return json.content;
       }
       const probs = json.completion_probabilities;
       if (!probs) return [{id: json.tokens[0],token: ""},];
@@ -136,7 +134,7 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
     let targetBits, currentPrompt, done, allowInsertion;
     async function dfs(bitPos, accChars, accScore, pending) {
       $('progress').value = bitPos / targetBits.length * 100;
-      const candidates = await completion(currentPrompt, false);
+      const candidates = await completion(currentPrompt);
       for (let j = 0; j < candidates.length; j++) {
         if (done) return;
         if (candidates[j].bytes && candidates[j].bytes.length > 0) {
@@ -155,7 +153,7 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
         }
         if (needsDeeperDecode) {
           if (pending === 0) {
-            const extra = await detokenize([candidates[j].id]);//特殊符号不detokenize的话显示为""
+            const extra = await detokenize([candidates[j].id]);
             if (extra.includes(eosToken) || extra.includes("<|endoftext|>")) continue;//禁止中断时会输出大量无意义token，应手动处理使其自动回溯
             if (extra.includes("\uFFFD")) continue;
           }
@@ -190,8 +188,7 @@ import {LockKeyhole,LockKeyholeOpen} from "@lucide/astro"
               if (allowInsertion) {
                 currentPrompt.push(candidates[j].id);
                 $('coverText').value += tokenText;
-                if (!punctuations.includes($('coverText').value[$('coverText').value.length - 1]))                  //如果不在dfs中处理，那么取消隐写时仍然会额外执行补全。
-                  $('coverText').value += await completion(currentPrompt, true);
+                $('coverText').value += await completion(currentPrompt, 1);
               } else $('coverText').value += codePoints.slice(0, k + 1).join('');
               return;
             }

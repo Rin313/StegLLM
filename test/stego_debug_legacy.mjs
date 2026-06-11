@@ -109,8 +109,6 @@ async function applyTemplate(messages) {
 
 const magicNum1 = [1,0,1,1,0,0,1,0,0,1,1,0,0,1,1,0,1,0,1,1];
 const magicNum2 = [0,0,1,0,1,1,0,1,0,0,1,0,1,1,0,1,1,1,0,0];
-const punctuations = ["？", "?", "！", "!", "。", "）", ")", "…", "}", "]", "."];
-
 function toBinary(bytes) {
   return Array.from(bytes).flatMap(b =>
     Array.from({ length: 8 }, (_, i) => (b >> (7 - i)) & 1)
@@ -246,16 +244,15 @@ let eosToken = null;
 let coverText = ''; // simulated textarea
 let progressLog = [];
 
-async function queryCompletion(promptTokens, tailCompletion) {
+async function queryCompletion(promptTokens, tailNpredict = 0) {
   const body = {
     prompt: promptTokens,
-    response_fields: tailCompletion
+    response_fields: tailNpredict
       ? ['content', 'stopping_word', 'stop_type']
       : ['completion_probabilities', 'tokens'],
   };
-  if (tailCompletion) {
-    body.stop = punctuations;
-    body.n_predict = 32;
+  if (tailNpredict) {
+    body.n_predict = tailNpredict;
   } else {
     body.n_predict = 1;
     body.top_k = 120;
@@ -305,7 +302,7 @@ function hasFFFD(s) {
 async function dfs(bitPos, accChars, accScore, pending, depth = 0) {
   // LOG.raw(`[dfs depth=${depth}] bitPos=${bitPos}/${targetBits.length} accChars="${accChars}" accScore=${accScore} pending=${pending}`);
 
-  const json = await queryCompletion(currentPrompt, false);
+  const json = await queryCompletion(currentPrompt);
   const probs = json.completion_probabilities;
 
   // llama.cpp /completion returns two different shapes:
@@ -434,9 +431,7 @@ async function dfs(bitPos, accChars, accScore, pending, depth = 0) {
             coverText += tokenText;
             LOG.raw(`✓ ALL BITS EMBEDDED (insertion mode)`);
             const coreLen = coverText.length;
-            if (!punctuations.includes(coverText[coverText.length - 1])) {
-              coverText += await tailComplete(currentPrompt);
-            }
+            coverText += await tailComplete(currentPrompt);
             LOG.raw(`Core coverText length = ${coreLen}`);
             LOG.raw(`Full coverText length = ${coverText.length}`);
           } else {
@@ -454,11 +449,17 @@ async function dfs(bitPos, accChars, accScore, pending, depth = 0) {
 }
 
 async function tailComplete(promptTokens) {
-  LOG.step('Tail completion');
-  const json = await queryCompletion(promptTokens, true);
-  if (json.stopping_word) return json.content + json.stopping_word;
-  if (json.stop_type && json.stop_type !== 'none') return json.content;
-  return await tailComplete(promptTokens);
+  // Incremental n_predict: start small, double on each EOS miss.
+  // Relies solely on the EOS token as the language-agnostic stop signal.
+  const MAX_N_PREDICT = 256;
+  for (let nPredict = 1; nPredict <= MAX_N_PREDICT; nPredict *= 2) {
+    LOG.step(`Tail completion (n_predict=${nPredict})`);
+    const json = await queryCompletion(promptTokens, nPredict);
+    if (json.stop_type === 'eos') return json.content;
+  }
+  // Exhausted retries — return content from the max-attempt capped generation
+  const json = await queryCompletion(promptTokens, MAX_N_PREDICT);
+  return json.content;
 }
 
 // ============================================================
